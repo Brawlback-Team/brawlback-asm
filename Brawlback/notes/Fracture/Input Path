@@ -1,0 +1,67 @@
+updateLow[gfPadsystem]:
+    updates all controller inputs each frame
+    updateLowGC:
+        updates GCCs
+        PADRead:
+            reads raw values of all GCCs and converts them to normal buttons
+            for each GCC:
+                SIGetResponse(port):
+                    reads raw GCC values
+                    Stores value to 805b9ae0 (part of stack, but always the same in practice)
+                    SPEC2_MakeStatus:
+                        inputs are processed and moved to 805b9b30 + 0x18 * port (also part of stack)
+                        Processed inputs are also copied to 804f67b0 + 0x18 * port (this seems to be unused for most things)
+
+        Button values are copied to gfPadStatus array
+
+    {Wii Stuff}
+
+    buttons are pushed to gfPadStatusQueue
+
+    All 8 gfPadStatuses are also copied to themselves!? This game is dumb
+    Oh wait, this might be an input buffer thing that was coded out.  Too lazy to check
+
+
+update[gfPadSystem]:
+    This updates a different set of gfPadStatuses in the gfPadSystem array using the gfPadStatus set in updateLowGC
+    Some values are copied directly, and it does other logic like finding the just pressed or just released buttons
+    I have never used this set before, so it's probably not important, at least for games
+    Maybe used in menus or something, or it might be part of the buffer system
+
+
+update[ipSwitch]:
+    Takes button inputs and converts them to simplified statuses
+    These are what I refer to as "inputs"
+    They are things like "attack" and "special", compare to "A" and "B"
+    The controller type differences are removed after this, except for a few potential flag bits that aren't really used for anything
+
+    for each controller (GCC and Wii):
+        getGamePadStatus[gfPadSystem]:
+            Copies the gfPadStatus for the port onto the stack
+
+        getPadInput[ipSwitch]:
+            Converts the copied gfPadStatus and sets the ipSwitch::pasStatus value for that player number
+            Custom controls mapping takes place here
+
+        GCCs get the same player number as their port
+        Wii controllers get the smallest availible player number after the GCCs
+
+    if IpKeyRecorder.recordMode == 2:
+        record padStatus
+    elif IpKeyRecorder.recordMode == 1:
+        overwrite padStatus from button with recorded padStatus
+
+
+update[soControllerImpl]:
+    update[aiInput]:
+        if human:
+            update[IpHuman]:
+                Reads ipSwitch::padStatus
+        else:
+            decide inputs based on AI
+
+        aiInput inherits IpHuman, so both methods set the appropriate IpHuman values
+
+    A bunch of logic using the IpHuman values to set the soControllerImpl values
+
+    the soControllerImpl values are used in the logic to update the Fighter

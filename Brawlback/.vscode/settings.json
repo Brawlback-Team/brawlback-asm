@@ -1,0 +1,10 @@
+{
+  "cmake.configureOnOpen": true,
+  "cmake.generator": "MinGW Makefiles",
+  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+  "files.associations": {
+    "*.ksy": "yaml",
+    "vector": "cpp"
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
+}
