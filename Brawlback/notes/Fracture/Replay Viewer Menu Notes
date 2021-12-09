@@ -1,0 +1,44 @@
+_proccessSummary[gfCollectionIO]:
+    if _proccessLoad[gfCollectionIO]:
+        Creates a new nteSection and calls setSection @ 8003c050
+        Calls extractData[nteSection] @ 8003c064
+        ....
+
+
+_processLoad[gfCollectionIO]:
+    Read Request call @ 8003b028
+
+    Decryption handled from 8003b0b4 to 8003b1a4
+    Quits out if setup fails
+
+    nteSection from 8003b1b8 to 8003b1ec
+    if data is not in correct format, load will fail
+
+    data should have data type at 0x15 (should be 2 for replays)
+
+
+0: 2
+4: heap
+8: 80461690
+C: replay* (placeholder, then copy of uncompressed replay)
+10: replay size (placeholder, then size)
+
+
+
+Replay Data Header Requirments:
+    Whole thing should be encrypted
+
+    nteSection:
+        0: (long) WiiID
+        8: high time word
+        C: low time word
+        10: CRC32 (with 0xDEADBEEF as this value during the function)
+        14: globalRumble | ((WiiDistubutionType << 5) & 0xFF)
+        15: (byte) 2 (data type, 2 for replays)
+        16: (byte) 0 (state type)
+        17: (byte) DB (magic number?)
+        18: origonal buffer size (not including this header)
+        1C: buffer size after compression
+
+    remainder should be compressed:
+
