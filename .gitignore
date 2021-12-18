@@ -9,6 +9,8 @@ cmake-build*/
 ./.vscode/
 Dolphin/
 pf/
+rp/
+st/
 *.gct
 
 # User-specific files
