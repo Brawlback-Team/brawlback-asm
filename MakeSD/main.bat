@@ -36,16 +36,22 @@ ROBOCOPY "%BUILD_DIR:\=\\%" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\." ^
     %PURGE_COMMAND%
 IF %ERRORLEVEL% GEQ 8 goto error
 
-"%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\GCTRealMate.exe" -q "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\Project+RSBE01.txt"
-"%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\GCTRealMate.exe" -q "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\Project+BOOST.txt"
-"%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\GCTRealMate.exe" -q "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\vBrawlRSBE01.txt"
-"%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\GCTRealMate.exe" -q "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\vBrawlBOOST.txt"
+cd ../
 
-MOVE "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\Project+RSBE01.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\RSBE01.gct"
-MOVE "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\Project+BOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\BOOST.gct"
-MOVE "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\vBrawlRSBE01.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\RSBE01.gct"
-MOVE "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\GCTRM\vBrawlBOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\BOOST.gct"
+".\GCTRM\GCTRealMate.exe" -q ".\GCTRM\Project+RSBE01.txt"
+".\GCTRM\GCTRealMate.exe" -q ".\GCTRM\Project+BOOST.txt"
+".\GCTRM\GCTRealMate.exe" -q ".\GCTRM\vBrawlRSBE01.txt"
+".\GCTRM\GCTRealMate.exe" -q ".\GCTRM\vBrawlBOOST.txt"
 
+COPY ".\GCTRM\Project+RSBE01.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\RSBE01.gct"
+COPY ".\\GCTRM\Project+BOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\BOOST.gct"
+COPY ".\\GCTRM\vBrawlRSBE01.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\RSBE01.gct"
+COPY ".\\GCTRM\vBrawlBOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\BOOST.gct"
+
+ROBOCOPY ".\cmake-build-debug-mingw\Output" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\codes" /mir
+ROBOCOPY ".\cmake-build-debug-mingw\Output" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\codes" /mir
+
+cd /d %~dp0
 
 ::timeout /t %MIN_EXEC_TIME% /nobreak > NUL
 
