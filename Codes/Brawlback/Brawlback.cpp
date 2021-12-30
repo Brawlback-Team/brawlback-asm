@@ -19,8 +19,8 @@ namespace FrameAdvance {
     )");
     extern "C" void handleFrameAdvance() {
         asm("mr r24, %0"
-            :
-            : "r" (framesToAdvance)
+        :
+        : "r" (framesToAdvance)
         );
     }
 
@@ -32,7 +32,7 @@ namespace FrameLogic {
     // called at the beginning of the game logic in a frame
     // a this point, inputs are populated for this frame
     void BeginFrame() {
-        
+
         gfPadSystem* padSystem = PAD_SYSTEM;
         bool is_b_press = padSystem->pads[0].buttons.B;
         //FrameAdvance::framesToAdvance = is_b_press ? 15 : 1;
@@ -47,7 +47,7 @@ namespace FrameLogic {
             inputPckt.Send();
         }
         */
-        
+
         if (padSystem->pads[0].buttons.R) { // save state
             EXIPacket saveSavePckt = EXIPacket(EXICommand::CMD_CAPTURE_SAVESTATE, nullptr, 0);
             saveSavePckt.Send();
@@ -66,5 +66,5 @@ namespace FrameLogic {
     }
 
     SIMPLE_INJECTION(beginFrame, 0x80147394, "li r0, 0x1") { BeginFrame(); }
-    SIMPLE_INJECTION(endFrame,   0x801473a0, "li r0, 0x0") { EndFrame(); }
+SIMPLE_INJECTION(endFrame,   0x801473a0, "li r0, 0x0") { EndFrame(); }
 }
