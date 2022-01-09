@@ -14,6 +14,10 @@ ftOwner* Fighter::getOwner() {
 	return getOwner_Fighter(this);
 }
 
+int Fighter::getFtKind() {
+    return _getFtKind_Fighter(this);
+}
+
 #define OSReport ((void (*)(const char* text, ...)) 0x801d8600)
 ftCancelModule* Fighter::getCancelModule() {
 	return ((ftCancelModule* (*)(void* ft)) this->vtable18->cancelModuleFn)(this);
