@@ -1,16 +1,18 @@
-
 #ifndef PROJECTMCODES_ITMANAGER_H
 #define PROJECTMCODES_ITMANAGER_H
 
 #include "Brawl/IT/BaseItem.h"
+#include "Containers/ArrayList.h"
 
 struct itManager {
     BaseItem* getItemFromIndex(u32 index);
     BaseItem* createItem(itemIdName itemID, u32 variantID);
     void preloadAssist(itemIdName itemId);
     void preloadItemKindArchive(itemIdName itemId);
-
-    char _spacer[0x10BC];
+    char _spacer[0x6D8];
+    ArrayList<BaseItem*> baseItemArrayList;
+    // 0x10BC - 0x6D8 - 0x4
+    char _spacer2[0x9E0];
     itemIdName nextAssist;
 };
 

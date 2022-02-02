@@ -16,3 +16,11 @@ float BaseItem::getParamF(int paramIdx) {
 int BaseItem::getParamI(int paramIdx) {
   return _iGetParam_BaseItem(this, paramIdx);
 }
+
+itemIdName BaseItem::getItKind() {
+    return _getItKind_BaseItem(this);
+}
+
+u16 BaseItem::getItVariation() {
+    return _getItVariation_BaseItem(this);
+}

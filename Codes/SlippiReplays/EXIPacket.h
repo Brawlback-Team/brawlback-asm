@@ -1,46 +1,46 @@
-#ifndef __EXIPACKET
-#define __EXIPACKET
+#ifndef PROJECTMCODES_EXIPACKET_H
+#define PROJECTMCODES_EXIPACKET_H
 
 #include "stddef.h"
 
-enum EXICommand
+// Adapted code from Pine
+
+enum EXIStatus
 {
-    CMD_UNKNOWN = 0,
-    // Online
-    CMD_ONLINE_INPUTS = 1,
-    CMD_CAPTURE_SAVESTATE = 2,
-    CMD_LOAD_SAVESTATE = 3,
-    CMD_GET_MATCH_STATE = 4,
-    CMD_FIND_OPPONENT = 5,
-    CMD_SET_MATCH_SELECTIONS = 6,
-    CMD_OPEN_LOGIN = 7,
-    CMD_LOGOUT = 8,
-    CMD_UPDATE = 9,
-    CMD_GET_ONLINE_STATUS = 10,
-    CMD_CLEANUP_CONNECTION = 11,
-    CMD_SEND_CHAT_MESSAGE = 12,
-    CMD_GET_NEW_SEED = 13,
-    CMD_REPORT_GAME = 14,
+    INPUTS = 17,
+    STAGE = 18,
+    RANDOM = 19,
+    FIGHTER = 20,
+    GAME = 21,
+    ENDGAME = 22,
+    STARTPOS = 23,
+    POS = 24,
+    STARTFIGHTER = 25,
+    STICK = 26,
+    ACTIONSTATE = 27,
+    ITEM_IDS = 28,
+    ITEM_VARIENTS = 29,
+    ITEM_TYPE = 30
 };
 
 
 class EXIPacket {
 
 public:
-    // EXICmd: EXICommand enum (implicit cast to byte)
-    EXIPacket(u8 EXICmd, void* source, u32 size);
+    // EXIStatus: EXIStatus enum (implicit cast to byte)
+    EXIPacket(u8 EXIStatus, void* source, u32 size);
     ~EXIPacket();
 
     void Send();
+    void Receive();
+
+    void* source = nullptr;
 
 private:
 
-    u8* source = nullptr;
     u32 size = 0;
 
 };
 
 
-
-
-#endif
+#endif //PROJECTMCODES_EXIPACKET_H
