@@ -12,6 +12,7 @@ pf/
 rp/
 st/
 *.gct
+MakeSD/Config.ini
 
 # User-specific files
 *.rsuser

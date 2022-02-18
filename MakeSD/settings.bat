@@ -22,6 +22,8 @@ for /f "tokens=1,2 delims==" %%a in (config.ini) do (
     if %%a==PURGE set PURGE=%%b
     :: Should the CLI be paused on completion
     if %%a==SHOW_RESULTS set SHOW_RESULTS=%%b
+    :: The folder CMAKE built to
+    if %%a==CMAKE_BUILD_DIR set CMAKE_BUILD_DIR=%%b
     :: The path to your Dolphin emulator
     if %%a==DOLPHIN_PATH set DOLPHIN_PATH=%%b
     :: Should the Dolphin emulator automatically launch

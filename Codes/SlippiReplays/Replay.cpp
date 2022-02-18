@@ -5,7 +5,7 @@
 #include "Replay.h"
 #include "EXIPacket.h"
 
-namespace FrameLogic {
+namespace ReplaysLogic {
     bool recordInputs;
     bool entryFrame;
 

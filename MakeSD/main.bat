@@ -48,8 +48,8 @@ COPY ".\\GCTRM\Project+BOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\
 COPY ".\\GCTRM\vBrawlRSBE01.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\RSBE01.gct"
 COPY ".\\GCTRM\vBrawlBOOST.gct" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\BOOST.gct"
 
-ROBOCOPY ".\cmake-build-debug-mingw\Output" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\codes" /mir
-ROBOCOPY ".\cmake-build-debug-mingw\Output" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\codes" /mir
+ROBOCOPY "%CMAKE_BUILD_DIR%" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\Project+\codes" /mir
+ROBOCOPY "%CMAKE_BUILD_DIR%" "%SD_CARD_MOUNT_DRIVE_LETTER:\=\\%:\\vBrawl\codes" /mir
 
 cd /d %~dp0
 

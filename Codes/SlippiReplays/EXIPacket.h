@@ -7,20 +7,20 @@
 
 enum EXIStatus
 {
-    INPUTS = 17,
-    STAGE = 18,
-    RANDOM = 19,
-    FIGHTER = 20,
-    GAME = 21,
-    ENDGAME = 22,
-    STARTPOS = 23,
-    POS = 24,
-    STARTFIGHTER = 25,
-    STICK = 26,
-    ACTIONSTATE = 27,
-    ITEM_IDS = 28,
-    ITEM_VARIENTS = 29,
-    ITEM_TYPE = 30
+    INPUTS = 18,
+    STAGE = 19,
+    RANDOM = 20,
+    FIGHTER = 21,
+    GAME = 22,
+    ENDGAME = 23,
+    STARTPOS = 24,
+    POS = 25,
+    STARTFIGHTER = 26,
+    STICK = 27,
+    ACTIONSTATE = 28,
+    ITEM_IDS = 29,
+    ITEM_VARIENTS = 30,
+    ITEM_TYPE = 31
 };
 
 
