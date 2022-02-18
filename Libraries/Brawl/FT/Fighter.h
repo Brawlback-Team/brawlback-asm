@@ -30,8 +30,6 @@ struct Fighter : public StageObject {
 	Fighter_vtable18* vtable18;
 
 	char _spacer_ft[0x110 - 0x100 - 4];
-
-    int getFtKind();
 };
 
 #define _getFtKind_Fighter ((int (*)(Fighter * This)) 0x8076b00c)

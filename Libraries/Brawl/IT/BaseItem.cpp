@@ -1,4 +1,3 @@
-
 #include "BaseItem.h"
 
 void BaseItem::warp(Vec3f* location) {
