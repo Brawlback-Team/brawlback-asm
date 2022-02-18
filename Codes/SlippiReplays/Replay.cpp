@@ -10,20 +10,20 @@ namespace FrameLogic {
     bool entryFrame;
 
     // called when match starts
-    void StartMatch() {
+    void InitiateMatch() {
         recordInputs = true;
         entryFrame = true;
     }
 
     // called when match ends
-    void EndMatch() {
+    void FinishMatch() {
         recordInputs = false;
         EXIPacket stagePacket = EXIPacket(EXIStatus::ENDGAME, nullptr, 0);
         stagePacket.Send();
     }
 
     // called at the beginning of the logic in a frame
-    void BeginFrame() {
+    void StartFrame() {
         if(recordInputs && FIGHTER_MANAGER->getEntryCount() > 0)
         {
             if(entryFrame)
@@ -161,7 +161,7 @@ namespace FrameLogic {
             delete[] itemType;
         }
     }
-    SIMPLE_INJECTION(startMatch, 0x800dc590, "li r9, 0x2") { StartMatch(); } // when exiting match
-    SIMPLE_INJECTION(endMatch, 0x806d4844, "li r4, 0") { EndMatch(); } // when exiting match
-    SIMPLE_INJECTION(beginFrame, 0x80147394, "li r0, 0x1") { BeginFrame(); }
+    SIMPLE_INJECTION(initiateMatch, 0x800dc590, "li r9, 0x2") { InitiateMatch(); } // when starting match
+    SIMPLE_INJECTION(finishMatch, 0x806d4844, "li r4, 0") { FinishMatch(); } // when exiting match
+    SIMPLE_INJECTION(startFrame, 0x80147394, "li r0, 0x1") { StartFrame(); } // when frame starts
 }

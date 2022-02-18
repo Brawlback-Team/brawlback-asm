@@ -45,6 +45,8 @@ public:
     size_t index(const T& val);
     //size_t findIf(bool (*condition)(const T& x));
 
+    T* getPtr();
+
 private:
     size_t length = 0;
     size_t maxLength = 10;
@@ -89,8 +91,6 @@ bool vector<T>::operator>(const vector<T>& other);
 bool vector<T>::operator<=(const vector<T>& other);
 bool vector<T>::operator>=(const vector<T>& other);*/
 
-
-#define OSReport ((void (*)(const char* text, ...)) 0x801d8600)
 
 template<class T>
 bool vector<T>::push(const T& val) {
@@ -151,6 +151,11 @@ size_t vector<T>::index(const T& val) {
         }
     }
     return -1;
+}
+
+template<class T>
+T* vector<T>::getPtr() {
+    return Array;
 }
 
 

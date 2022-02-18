@@ -1,7 +1,7 @@
 #pragma once
 
 
-enum PADButtonBits {
+enum PADButtonBits : u16 {
     Start = 0x1000,
     Y = 0x800,
     X = 0x400,

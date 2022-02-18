@@ -39,7 +39,7 @@ struct ftEntry {
     //TODO determine which playernum is correct
     // 0x58
     unsigned int playerNum;
-    char _loadStatus;
+    char _loadStatus; // team?
 
 
     //0x70

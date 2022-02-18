@@ -15,7 +15,7 @@ INJECTION("setup", 0x80017504, R"(
 
 INJECTIONS* injections;
 
-// #define OSReport ((void (*)(const char* text, ...)) 0x801d8600)
+#define OSReport ((void (*)(const char* text, ...)) 0x801d8600)
 
 //Changing this name requires changing the build system
 extern "C" void _INITIALIZE_(INITIALIZATION_INFO* initializationInfo) {
@@ -23,9 +23,9 @@ extern "C" void _INITIALIZE_(INITIALIZATION_INFO* initializationInfo) {
 
     _INITIALIZE_MEMORY_(heapInfo->heapAddress, heapInfo->heapSize);
 
-    // OSReport("SPECIFIED HEAP ADDR: %08x\n", heapInfo->heapAddress);
-    // OSReport("SPECIFIED HEAP SIZE: %08x\n", heapInfo->heapSize);
-    // OSReport("INITIAL FREE SIZE: %08x\n", getFreeSize(mainHeap));
+    OSReport("SPECIFIED HEAP ADDR: %08x\n", heapInfo->heapAddress);
+    OSReport("SPECIFIED HEAP SIZE: %08x\n", heapInfo->heapSize);
+    OSReport("INITIAL FREE SIZE: %08x\n", getFreeSize(mainHeap));
 
     auto startups = initializationInfo->startups;
     for(int i = 0; i < startups->numStartups; i++) {
