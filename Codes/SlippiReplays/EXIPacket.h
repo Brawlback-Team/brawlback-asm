@@ -20,7 +20,9 @@ enum EXIStatus
     ACTIONSTATE = 28,
     ITEM_IDS = 29,
     ITEM_VARIENTS = 30,
-    ITEM_TYPE = 31
+    NUM_PLAYERS = 31,
+    STOCK_COUNT = 32,
+    INDEX = 33
 };
 
 

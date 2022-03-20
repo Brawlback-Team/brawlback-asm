@@ -15,3 +15,7 @@ void ftOwner::setDamage(double newValue, int shouldLog) {
 bool ftOwner::isCpu() {
     return _isOperationCpu_ftOwner(this);
 }
+
+int ftOwner::getStockCount() {
+    return _getStockCount_ftOwner(this);
+}
