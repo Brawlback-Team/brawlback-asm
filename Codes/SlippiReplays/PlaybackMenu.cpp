@@ -121,6 +121,7 @@ SIMPLE_INJECTION(displayReplayFiles, 0x8119795c, "stwu sp, -0x0020(sp)") {
         free(cmd_byte_read);
     } while(cmd_byte != REPLAY_NAMES);
 
+    read_data_size = 0;
     for(int i = 0; i < numElements; i++)
     {
         read_data_size += sizeOfElements[i];
