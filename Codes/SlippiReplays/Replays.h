@@ -20,15 +20,23 @@ private:
     char** replays;
     u32 numReplays;
     u8* sizeOfReplays;
+    char** names;
+    u8* sizeOfNames;
 
 public:
-    Replays(u32, u8*);
+    Replays(u32, u8*, u8*);
+
     char** GetReplays();
     u32 GetNumReplays();
     u8* GetSizeOfReplays();
+    u8* GetSizeOfNames();
+    char **GetNames();
+
     void SetReplays(char**);
     void SetNumReplays(u32);
     void SetSizeOfReplays(u8*);
+    void SetNames(char**);
+    void SetSizeOfNames(u8*);
 };
 
 
