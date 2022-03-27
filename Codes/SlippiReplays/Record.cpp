@@ -1,4 +1,4 @@
-#include "Replay.h"
+#include "Record.h"
 
 namespace ReplaysLogic {
     bool recordInputs;

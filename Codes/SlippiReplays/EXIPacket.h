@@ -7,6 +7,7 @@
 
 enum EXIStatus
 {
+    // SEND
     INPUTS = 18,
     STAGE = 19,
     RANDOM = 20,
@@ -22,7 +23,15 @@ enum EXIStatus
     ITEM_VARIENTS = 30,
     NUM_PLAYERS = 31,
     STOCK_COUNT = 32,
-    INDEX = 33
+    INDEX = 33,
+    GET_NUMBER_REPLAY_FILES = 34,
+    GET_REPLAY_FILES = 37,
+    GET_REPLAY_FILES_SIZE = 38,
+
+    // RECEIVE
+    NUM_REPLAYS = 35,
+    REPLAYS = 36,
+    REPLAY_FILES_SIZE = 39
 };
 
 
