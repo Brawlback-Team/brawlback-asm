@@ -16,5 +16,4 @@
 #include "Wii/OS/OSInterrupt.h"
 #include "Replays.h"
 
-
 #endif //PROJECTMCODES_PLAYBACKMENU_H

@@ -72,7 +72,6 @@ SIMPLE_INJECTION(displayReplayFiles, 0x8119795c, "stwu sp, -0x0020(sp)") {
     {
         read_data_size += sizeOfElements[i];
     }
-    read_data_size /= sizeof(char*);
     u8* dataVec = (u8*)malloc(read_data_size);
     readEXI(dataVec, read_data_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
     _OSDisableInterrupts();
@@ -126,7 +125,6 @@ SIMPLE_INJECTION(displayReplayFiles, 0x8119795c, "stwu sp, -0x0020(sp)") {
     {
         read_data_size += sizeOfElements[i];
     }
-    read_data_size /= sizeof(char*);
     u8* dataNameVec = (u8*)malloc(read_data_size);
     readEXI(dataNameVec, read_data_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
     _OSDisableInterrupts();
@@ -135,4 +133,6 @@ SIMPLE_INJECTION(displayReplayFiles, 0x8119795c, "stwu sp, -0x0020(sp)") {
 
     replaysObj->SetNames((char**)dataNameVec);
     free(dataNameVec);
+    free(sizeOfElements);
+    free(sizeOfNames);
 }
