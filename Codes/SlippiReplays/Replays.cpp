@@ -58,11 +58,12 @@ void Replays::SetSizeOfReplays(u8* sizeOfReplays)
 
 Replays::Replays(u32 numReplays, u8* sizeOfReplays, u8* sizeOfNames)
 {
-    this->replays = new char*();
+    this->replays = new char*[numReplays];
+    this->names = new char*[numReplays];
     for(int i = 0; i < numReplays; i++)
     {
-        this->replays[i] = new char(sizeOfReplays[i]);
-        this->names[i] = new char(sizeOfNames[i]);
+        this->replays[i] = new char[sizeOfReplays[i]];
+        this->names[i] = new char[sizeOfNames[i]];
     }
     SetNumReplays(numReplays);
     SetSizeOfReplays(sizeOfReplays);
