@@ -2,6 +2,10 @@
 
 namespace replayMenus {
     Replays* replaysObj;
+    Menu* replaysMenu;
+    bool replaysOpen = false;
+    bool visible = false;
+    bool instantResponse = true;
     SIMPLE_INJECTION(pullReplayStrings, 0x8119795c, "stwu sp, -0x0020(sp)") {
         _OSDisableInterrupts();
         OSReport("  ~~~~~~~~~~~~~~~~  DISPLAY REPLAY FILES  ~~~~~~~~~~~~~~~~  \n");
@@ -137,9 +141,152 @@ namespace replayMenus {
         free(dataNameVec);
         free(sizeOfElements);
         free(sizeOfNames);
+        replaysOpen = true;
     }
+    INJECTION("frameUpdate", 0x8001792c, R"(
+        bl updateOnFrame
+        addi r3, r30, 280
+    )");
+    extern "C" void updateOnFrame() {
+        if(replaysOpen)
+        {
+            if (replaysMenu == nullptr)
+            {
+                replaysMenu = new Menu();
+                Page* mainPage = new Page(replaysMenu);
+                mainPage->setTitle((char*)"main");
+                ReplaysMenu* replaysPage = new ReplaysMenu(replaysMenu);
+                PageLink* replaysPageLink = new PageLink((char*)"replays", replaysPage);
+                mainPage->addOption(replaysPageLink);
+                replaysMenu->nextPage(mainPage);
+            }
 
-    SIMPLE_INJECTION(overwriteMenu, 0x811979c8, "li r5, 5") {
+            printer.setup();
+            printer.drawBoundingBoxes(0);
 
+            startNormalDraw();
+
+            printer.setup();
+
+            Message * message = &printer.message;
+            message->fontScaleX = 0.1;
+            message->fontScaleY = 0.1;
+            printer.lineHeight = 20 * message->fontScaleY;
+
+            char buffer[200] = {};
+            char aiInputBuffer[100] = {};
+
+            message->xPos = 1;
+            message->yPos = 1;
+            message->zPos = 0;
+
+            setupDrawPrimitives();
+
+            PADButtons btn;
+            btn.bits = PREVIOUS_PADS[0].button.bits | PREVIOUS_PADS[1].button.bits | PREVIOUS_PADS[2].button.bits | PREVIOUS_PADS[3].button.bits;
+            visible = replaysMenu->visible;
+            bool selected = replaysMenu->selected;
+            if (btn.L && btn.R && btn.UpDPad && btn.B)
+            {
+                if (instantResponse)
+                {
+                    replaysMenu->toggle();
+                    instantResponse = false;
+                    SOUND_SYSTEM->playSE(34);
+                }
+            }
+            else if (btn.L && btn.R && btn.DownDPad)
+            {
+                if (instantResponse)
+                {
+                    if (selected) replaysMenu->deselect();
+                    replaysMenu->visible = false;
+                    instantResponse = false;
+                }
+            }
+            else if (visible)
+            {
+                if (btn.B && replaysMenu->path.size() <= 1 && !selected)
+                {
+                    if (instantResponse)
+                    {
+                        replaysMenu->toggle();
+                        instantResponse = false;
+                        SOUND_SYSTEM->playSE(34);
+                    }
+                }
+                else if (btn.A)
+                {
+                    if (instantResponse)
+                    {
+                        replaysMenu->select();
+                        instantResponse = false;
+                        SOUND_SYSTEM->playSE(1);
+                    }
+                }
+                else if (btn.DownDPad)
+                {
+                    if (instantResponse)
+                    {
+                        replaysMenu->down();
+                        instantResponse = false;
+                        SOUND_SYSTEM->playSE(0);
+                    }
+                }
+                else if (btn.UpDPad)
+                {
+                    if (instantResponse)
+                    {
+                        replaysMenu->up();
+                        instantResponse = false;
+                        SOUND_SYSTEM->playSE(0);
+                    }
+                }
+                else
+                {
+                    instantResponse = true;
+                }
+            }
+            else
+            {
+                instantResponse = true;
+            }
+            renderables.renderAll();
+            startNormalDraw();
+            if (visible)
+            {
+                printer.setup();
+                printer.start2D();
+
+                message->fontScaleY = RENDER_SCALE_Y;
+                message->fontScaleX = RENDER_SCALE_X;
+                printer.lineHeight = 20 * message->fontScaleY;
+                message->xPos = LEFT_PADDING;
+                message->yPos = TOP_PADDING;
+                replaysMenu->render(&printer, buffer);
+            }
+
+            startNormalDraw();
+        }
+    }
+    void ReplayOption::render(TextPrinter* printer, char* buffer)
+    {
+        sprintf(buffer, "%s", name);
+        printer->printLine(buffer);
+    }
+    ReplayOption::ReplayOption(char* name)
+    {
+        sprintf(this->name, "%.19s", name);
+    }
+    void ReplayOption::select()
+    {
+
+    }
+    ReplaysMenu::ReplaysMenu(Menu *myMenu) : Page(myMenu)
+    {
+        for(int i = 0; i < replaysObj->GetNumReplays(); i++)
+        {
+            this->addOption(new ReplayOption(replaysObj->GetNames()[i]));
+        }
     }
 }
