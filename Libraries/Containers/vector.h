@@ -9,6 +9,7 @@
 #include "stdtypes.h"
 #include "CLibs/InitializerList.h"
 
+#include <cstdlib>
 
 template<class T>
 class vector {

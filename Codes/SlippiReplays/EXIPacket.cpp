@@ -6,13 +6,16 @@
 #include "CLibs/cstring.h"
 #include "Wii/OS/OSInterrupt.h"
 
+#include <cstring>
+#include <cstdlib>
+
 // Adapted code from Pine
 
 EXIPacket::EXIPacket(u8 EXIStatus, void* source, u32 size) {
     // enough for the EXIStatus byte + size of the packet
     u32 new_size = sizeof(EXIStatus) + size;
 
-    u8* new_packet = (u8*)malloc(new_size, 32);
+    u8* new_packet = (u8*)allocFromExpHeap(mainHeap, new_size, 32);
 
     // copy EXIStatus byte into packet
     memcpy(new_packet, &EXIStatus, sizeof(EXIStatus));

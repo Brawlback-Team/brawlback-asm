@@ -10,7 +10,9 @@
 #include "Wii/PAD/PADStatus.h"
 #include "./hitboxHeatmap.h"
 
-#define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
+//TODO: reimplement more cleanly..
+// #define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
+
 #define OSReport ((void (*)(const char* text, ...)) 0x801d8600)
 
 class ResetFudgeAIOption : public StandardOption {

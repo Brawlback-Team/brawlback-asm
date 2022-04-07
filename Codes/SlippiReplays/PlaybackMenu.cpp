@@ -1,5 +1,7 @@
 #include "PlaybackMenu.h"
 
+// #define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
+
 namespace replayMenus {
     Replays* replaysObj;
     Menu* replaysMenu;

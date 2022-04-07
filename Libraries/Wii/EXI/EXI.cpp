@@ -4,10 +4,12 @@
 
 #include "EXI.h"
 
+#include <cstring>
+#include <cstdlib>
 
 void writeEXI(void* data, u32 size, EXIChannel channel, EXIDevice device, EXIFrequency frequency) {
     //need to make new buffer to ensure data is aligned to cache block
-    void* alignedData = malloc(size, 32);
+    void* alignedData = allocFromExpHeap(mainHeap, size, 32);
     memcpy(alignedData, data, size);
 
     flushDataCache(alignedData, size);
@@ -20,7 +22,7 @@ void writeEXI(void* data, u32 size, EXIChannel channel, EXIDevice device, EXIFre
 }
 
 void readEXI(void* destination, u32 size, EXIChannel channel, EXIDevice device, EXIFrequency frequency) {
-    void* alignedDestination = malloc(size, 32);
+    void* alignedDestination = allocFromExpHeap(mainHeap, size, 32);
 
     setupEXIDevice(channel, device, frequency);
     transferDataEXI(channel, alignedDestination, size, EXITransfer::read);

@@ -21,10 +21,10 @@
 #include "./FudgeMenu.h"
 #include "./hitboxHeatmap.h"
 
-#define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
-#define strcat ((int (*)(char* destination, const char* source)) 0x803fa384)
-#define strcmp ((int (*)(const char* str1, const char* str2)) 0x803fa3fc)
-#define atof ((float (*)(const char* buffer)) 0x803fbbf8)
+// #define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
+// #define strcat ((int (*)(char* destination, const char* source)) 0x803fa384)
+// #define strcmp ((int (*)(const char* str1, const char* str2)) 0x803fa3fc)
+// #define atof ((float (*)(const char* buffer)) 0x803fbbf8)
 
 extern float ai_customFnInjection[0x10];
 extern bool ai_customFnInjectionToggle[0x10];
