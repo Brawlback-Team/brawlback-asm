@@ -4,6 +4,3 @@
 [submodule "Libraries/container"]
 	path = Libraries/container
 	url = https://github.com/boostorg/container.git
-[submodule "Libraries/--force"]
-	path = Libraries/--force
-	url = https://github.com/ETLCPP/etl.git
