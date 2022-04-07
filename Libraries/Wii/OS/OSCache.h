@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_OSCACHE_H
 #define PROJECTMCODES_OSCACHE_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 void invalidateDataCache(void* startAddress, u32 size);
 void flushDataCache(void* startAddress, u32 size);

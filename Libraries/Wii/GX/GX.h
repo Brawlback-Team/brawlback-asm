@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_GX_H
 #define PROJECTMCODES_GX_H
 
-#include "../../../Globals/stddef.h"
+#include "../../../Globals/stdtypes.h"
 
 //Alpha is ignored if not used
 union GXColor {

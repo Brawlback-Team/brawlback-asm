@@ -33,7 +33,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 extern "C" {
 #endif
 
-#include <stddef.h>
+#include <stdlib.h>
 
 /* The current version of the GNU Objective-C Runtime library in
    compressed ISO date format.  This should be updated any time a new

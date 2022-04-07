@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_GFMEMORYPOOL_H
 #define PROJECTMCODES_GFMEMORYPOOL_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 struct gfMemoryPool {
     void* alloc(size_t size, u32 alignment=0x20);

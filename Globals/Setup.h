@@ -7,7 +7,7 @@
 
 #include "Assembly.h"
 #include "Memory.h"
-#include "stddef.h"
+#include "stdtypes.h"
 
 //These structs are puposly inaccurate
 //The arrays are not actually empty, they are created after compilation

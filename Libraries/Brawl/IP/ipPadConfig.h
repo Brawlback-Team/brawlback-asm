@@ -6,7 +6,7 @@
 #define PROJECTMCODES_IPPADCONFIG_H
 
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 //custom controls
 struct ipPadConfig {

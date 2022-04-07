@@ -42,8 +42,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define _ANSI_STDDEF_H
 #endif
 
-#ifndef __sys_stdtypes_h
-/* This avoids lossage on SunOS but only if stdtypes.h comes first.
+#ifndef __sys_stdlib_h
+/* This avoids lossage on SunOS but only if stdlib.h comes first.
    There's no way to win with the other order!  Sun lossage.  */
 
 #if defined(__NetBSD__)
@@ -382,7 +382,7 @@ typedef __WINT_TYPE__ wint_t;
 #endif
 #endif /* __NetBSD__ */
 
-#endif /* __sys_stdtypes_h */
+#endif /* __sys_stdlib_h */
 
 /* A null pointer constant.  */
 

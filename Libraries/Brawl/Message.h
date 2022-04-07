@@ -6,7 +6,7 @@
 #define PROJECTMCODES_MESSAGE_H
 
 
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Brawl/GF/gfCameraManager.h"
 #include "Memory.h"
 #include "Assembly.h"

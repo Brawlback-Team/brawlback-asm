@@ -9,11 +9,11 @@
 
 #include <machine/ieeefp.h>
 #include "_ansi.h"
+#include <cwchar>
 
 #define __need_size_t
 #define __need_wchar_t
 #define __need_NULL
-#include <stddef.h>
 
 #include <sys/reent.h>
 #include <sys/cdefs.h>
@@ -28,6 +28,8 @@
 
 #if __GNU_VISIBLE
 #include <sys/_locale.h>
+#include <cwctype>
+
 #endif
 
 _BEGIN_STD_C
@@ -105,7 +107,6 @@ int	getsubopt (char **, char * const *, char **);
 #endif
 long	labs (long);
 ldiv_t	ldiv (long __numer, long __denom);
-void	*malloc(size_t) __malloc_like __result_use_check __alloc_size(1) _NOTHROW;
 int	mblen (const char *, size_t);
 int	_mblen_r (struct _reent *, const char *, size_t, _mbstate_t *);
 int	mbtowc (wchar_t *__restrict, const char *__restrict, size_t);

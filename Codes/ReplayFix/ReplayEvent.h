@@ -7,7 +7,7 @@
 
 
 #include <Wii/PAD/PADButtons.h>
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Brawl/gmGlobalModeMelee.h"
 
 

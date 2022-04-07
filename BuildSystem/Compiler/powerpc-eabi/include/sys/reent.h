@@ -11,7 +11,7 @@ extern "C" {
 #define _SYS_REENT_H_
 
 #include <_ansi.h>
-#include <stddef.h>
+#include <stdlib.h>
 #include <sys/_types.h>
 
 #define _NULL 0

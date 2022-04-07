@@ -14,7 +14,7 @@
 
 #define __need_size_t
 #define __need_NULL
-#include <stddef.h>
+#include <stdlib.h>
 
 #if __POSIX_VISIBLE >= 200809
 #include <sys/_locale.h>

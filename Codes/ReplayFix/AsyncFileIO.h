@@ -8,7 +8,7 @@
 
 #include <Wii/FILE/FILE.h>
 #include "Wii/OS/OSThread.h"
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Assembly.h"
 #include "CircularBuffer.h"
 #include "Wii/OS/OSInterrupt.h"

@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #define __need_NULL
-#include <stddef.h>
+#include <stdlib.h>
 
 #define LC_ALL	    0
 #define LC_COLLATE  1

@@ -45,7 +45,7 @@
 
 #pragma GCC visibility push(default)
 
-#include <stddef.h>
+#include <stdlib.h>
 #include <bits/c++config.h>
 #include <bits/cxxabi_tweaks.h>
 #include <bits/cxxabi_forced.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Assembly.h"
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Wii/expHeap.h"
 
 #define MAIN_HEAP_ADDRESS ((void*) 0x93604000)

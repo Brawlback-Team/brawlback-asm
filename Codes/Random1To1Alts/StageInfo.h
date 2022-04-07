@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_STAGEINFO_H
 #define PROJECTMCODES_STAGEINFO_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Wii/PAD/PADButtons.h"
 
 

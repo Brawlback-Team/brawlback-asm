@@ -6,7 +6,7 @@
 #define PROJECTMCODES_SOSTATUSMODULEIMPL_H
 
 
-#include "../../../Globals/stddef.h"
+#include "../../../Globals/stdtypes.h"
 #include "soModuleAccessor.h"
 
 struct soModuleAccessor;

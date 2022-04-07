@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 struct MEMLink{
 	void* prevObject;
