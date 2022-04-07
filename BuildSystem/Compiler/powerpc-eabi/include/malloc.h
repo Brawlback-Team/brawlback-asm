@@ -7,7 +7,7 @@
 #include <sys/reent.h>
 
 #define __need_size_t
-#include <stdlib.h>
+#include <stddef.h>
 
 /* include any machine-specific extensions */
 #include <machine/malloc.h>

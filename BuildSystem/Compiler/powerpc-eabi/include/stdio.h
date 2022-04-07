@@ -33,7 +33,7 @@
 #define __need_size_t
 #define __need_NULL
 #include <sys/cdefs.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 /* typedef only __gnuc_va_list, used throughout the header */
 #define __need___va_list

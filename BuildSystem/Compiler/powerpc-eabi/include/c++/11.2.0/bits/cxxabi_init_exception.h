@@ -35,7 +35,7 @@
 
 #pragma GCC visibility push(default)
 
-#include <stdlib.h>
+#include <stddef.h>
 #include <bits/c++config.h>
 
 #ifndef _GLIBCXX_CDTOR_CALLABI

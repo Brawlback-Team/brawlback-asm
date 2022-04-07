@@ -5,7 +5,7 @@
 #include <sys/_types.h>
 
 #define __need_wint_t
-#include <stdlib.h>
+#include <stddef.h>
 
 #if __POSIX_VISIBLE >= 200809
 #include <sys/_locale.h>

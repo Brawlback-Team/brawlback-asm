@@ -179,7 +179,7 @@ extern "C" {
 #define	LOCK_UN		0x08		/* unlock file */
 #endif
 
-/*#include <sys/stdlib.h>*/
+/*#include <sys/stdtypes.h>*/
 
 #ifndef __CYGWIN__
 /* file segment locking set data type - information passed to system by user */

@@ -9,7 +9,7 @@
 #define __need_wchar_t
 #define __need_wint_t
 #define __need_NULL
-#include <stdlib.h>
+#include <stddef.h>
 
 /* For _mbstate_t definition. */
 #include <sys/_types.h>

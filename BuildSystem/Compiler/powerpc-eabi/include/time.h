@@ -13,7 +13,7 @@
 
 #define __need_size_t
 #define __need_NULL
-#include <stdlib.h>
+#include <stddef.h>
 
 /* Get _CLOCKS_PER_SEC_ */
 #include <machine/time.h>

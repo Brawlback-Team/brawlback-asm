@@ -21,7 +21,7 @@
 
 #define __need_size_t
 #define __need_wint_t
-#include <stdlib.h>
+#include <stddef.h>
 #include <newlib.h>
 #include <sys/config.h>
 #include <machine/_types.h>

@@ -95,7 +95,7 @@ extern "C" {
 
 #define __need_size_t
 #define __need_ptrdiff_t
-#include <stdlib.h>
+#include <stddef.h>
 
 /* FIXME: not namespace clean */
 struct stat;

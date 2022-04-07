@@ -44,7 +44,7 @@
 
 #include <machine/_default_types.h>
 #include <sys/features.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 #define __PMT(args)	args
 #define __DOTS    	, ...

@@ -47,7 +47,7 @@
 #undef __need_NULL
 #undef __need_wint_t
 #include <bits/c++config.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 extern "C++"
 {
