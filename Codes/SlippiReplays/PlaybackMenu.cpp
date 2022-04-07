@@ -31,8 +31,8 @@ namespace replayMenus {
         OSReport("  ~~~~~~~~~~~~~~~~  GET THE NUMBER OF REPLAYS  ~~~~~~~~~~~~~~~~  \n");
         _OSEnableInterrupts();
 
-        u8* data = (u8*)malloc(1);
-        readEXI(data, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+        u8* data = (u8*)malloc(sizeof(u8));
+        readEXI(data, sizeof(u8), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         numElements = data[0];
         free(data);
         sizeOfElements = new u8[numElements];
@@ -53,8 +53,8 @@ namespace replayMenus {
         OSReport("  ~~~~~~~~~~~~~~~~  GET THE SIZE OF REPLAYS  ~~~~~~~~~~~~~~~~  \n");
         _OSEnableInterrupts();
 
-        auto dataSize = (u8*)malloc(numElements);
-        readEXI(dataSize, numElements, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+        auto dataSize = (u8*)malloc(numElements * sizeof(u8));
+        readEXI(dataSize, numElements * sizeof(u8), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         for(int i = 0; i < numElements; i++)
         {
             _OSDisableInterrupts();
@@ -78,8 +78,8 @@ namespace replayMenus {
         {
             read_data_size += sizeOfElements[i];
         }
-        u8* dataVec = (u8*)malloc(read_data_size);
-        readEXI(dataVec, read_data_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+        u8* dataVec = (u8*)malloc(read_data_size * sizeof(char*));
+        readEXI(dataVec, read_data_size * sizeof(char*), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         _OSDisableInterrupts();
         OSReport("  ~~~~~~~~~~~~~~~~  GET THE REPLAYS  ~~~~~~~~~~~~~~~~  \n");
         _OSEnableInterrupts();
@@ -103,8 +103,8 @@ namespace replayMenus {
         OSReport("  ~~~~~~~~~~~~~~~~  GET THE SIZE OF REPLAY NAMES  ~~~~~~~~~~~~~~~~  \n");
         _OSEnableInterrupts();
 
-        auto dataNames = (u8*)malloc(numElements);
-        readEXI(dataNames, numElements, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+        auto dataNames = (u8*)malloc(numElements * sizeof(char*));
+        readEXI(dataNames, numElements * sizeof(char*), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         for(int i = 0; i < numElements; i++)
         {
             _OSDisableInterrupts();
@@ -113,7 +113,7 @@ namespace replayMenus {
             sizeOfNames[i] = dataNames[i];
         }
         replaysObj = new Replays(numElements, sizeOfElements, sizeOfNames);
-        replaysObj->SetReplays((char**)dataVec);
+        replaysObj->SetReplays(reinterpret_cast<char**>(dataVec));
         free(dataVec);
         free(dataNames);
         EXIPacket getReplayNamesPacket = EXIPacket(GET_REPLAY_NAMES, nullptr, 0);
@@ -137,7 +137,7 @@ namespace replayMenus {
         OSReport("  ~~~~~~~~~~~~~~~~  GET THE NAMES OF THE REPLAYS  ~~~~~~~~~~~~~~~~  \n");
         _OSEnableInterrupts();
 
-        replaysObj->SetNames((char**)dataNameVec);
+        replaysObj->SetNames(reinterpret_cast<char**>(dataNameVec));
         free(dataNameVec);
         free(sizeOfElements);
         free(sizeOfNames);
@@ -147,7 +147,8 @@ namespace replayMenus {
         bl updateOnFrame
         addi r3, r30, 280
     )");
-    extern "C" void updateOnFrame() {
+    extern "C" void updateOnFrame()
+    {
         if(replaysOpen)
         {
             if (replaysMenu == nullptr)
@@ -174,7 +175,6 @@ namespace replayMenus {
             printer.lineHeight = 20 * message->fontScaleY;
 
             char buffer[200] = {};
-            char aiInputBuffer[100] = {};
 
             message->xPos = 1;
             message->yPos = 1;

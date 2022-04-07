@@ -37,6 +37,7 @@ void Replays::SetNames(char** names)
     {
         for(int f = 0; f < this->sizeOfNames[i]; f++)
         {
+
             this->names[i][f] = names[i][f];
         }
     }
@@ -49,7 +50,7 @@ void Replays::SetNumReplays(u32 numReplays)
 
 void Replays::SetSizeOfReplays(u8* sizeOfReplays)
 {
-    this->sizeOfReplays = new u8[this->numReplays];
+    this->sizeOfReplays = new u8[(int)this->numReplays];
     for(int i = 0; i < this->numReplays; i++)
     {
         this->sizeOfReplays[i] = sizeOfReplays[i];
@@ -58,8 +59,8 @@ void Replays::SetSizeOfReplays(u8* sizeOfReplays)
 
 Replays::Replays(u32 numReplays, u8* sizeOfReplays, u8* sizeOfNames)
 {
-    this->replays = new char*[numReplays];
-    this->names = new char*[numReplays];
+    this->replays = new char*[(int)numReplays];
+    this->names = new char*[(int)numReplays];
     for(int i = 0; i < numReplays; i++)
     {
         this->replays[i] = new char[sizeOfReplays[i]];
@@ -77,7 +78,7 @@ u8 *Replays::GetSizeOfNames()
 
 void Replays::SetSizeOfNames(u8* sizeOfNames)
 {
-    this->sizeOfNames = new u8[this->numReplays];
+    this->sizeOfNames = new u8[(int)this->numReplays];
     for(int i = 0; i < this->numReplays; i++)
     {
         this->sizeOfNames[i] = sizeOfNames[i];
