@@ -19,6 +19,7 @@
 #include "Brawl/sndSystem.h"
 #include "Graphics/Drawable.h"
 #include <string>
+
 namespace replayMenus {
     class ReplayOption : public StandardOption {
     public:
