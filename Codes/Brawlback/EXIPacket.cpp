@@ -3,7 +3,6 @@
 #include "Assembly.h"
 #include "Debug.h"
 #include "Wii/EXI/EXI.h"
-#include "CLibs/cstring.h"
 #include "Wii/OS/OSInterrupt.h"
 
 #include <cstdlib>

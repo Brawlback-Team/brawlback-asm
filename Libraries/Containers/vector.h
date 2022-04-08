@@ -7,9 +7,9 @@
 
 #include "Memory.h"
 #include "stdtypes.h"
-#include "CLibs/InitializerList.h"
 
 #include <cstdlib>
+#include <initializer_list>
 
 template<class T>
 class vector {

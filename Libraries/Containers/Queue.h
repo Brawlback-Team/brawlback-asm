@@ -2,8 +2,6 @@
 #define __DEQUEIMPL
 
 #include "stdtypes.h"
-#include "CLibs/InitializerList.h"
-
 
 template<typename T>
 class Queue
