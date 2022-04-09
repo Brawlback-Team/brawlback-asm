@@ -31,7 +31,7 @@ SOFTWARE.
 #ifndef ETL_STRING_VIEW_INCLUDED
 #define ETL_STRING_VIEW_INCLUDED
 
-#include <stdint.h>
+// #include <stdint.h>
 
 #include "platform.h"
 #include "memory.h"

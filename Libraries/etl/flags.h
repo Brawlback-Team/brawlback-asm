@@ -31,7 +31,7 @@ SOFTWARE.
 #ifndef ETL_FLAGS_INCLUDED
 #define ETL_FLAGS_INCLUDED
 
-#include <string.h>
+// #include <string.h>
 #include <stddef.h>
 #include <stdint.h>
 

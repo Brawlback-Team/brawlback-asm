@@ -40,8 +40,8 @@ SOFTWARE.
 #include "alignment.h"
 #include "placement_new.h"
 
-#include <assert.h>
-#include <string.h>
+// #include <assert.h>
+// #include <string.h>
 
 #if defined(ETL_IN_UNIT_TEST) || ETL_USING_STL
   #include <memory>
@@ -2269,81 +2269,81 @@ namespace etl
                                              sizeof(typename etl::iterator_traits<TPointer>::value_type) * n));
   }
 
-  //***************************************************************************
-  /// Template wrapper for memchr.
-  /// \param sb    Source begin.
-  /// \param se    Source end.
-  /// \param value The value to find.
-  /// \return The position of the char or 'se'.
-  //***************************************************************************
-  template <typename TPointer, typename T>
-  ETL_NODISCARD
-    typename etl::enable_if<etl::is_pointer<TPointer>::value && !etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, char*>::type
-    mem_char(TPointer sb, TPointer se, T value) ETL_NOEXCEPT
-  {
-    void* result = memchr(reinterpret_cast<void*>(sb), 
-                          static_cast<char>(value),
-                          sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb));
+  // //***************************************************************************
+  // /// Template wrapper for memchr.
+  // /// \param sb    Source begin.
+  // /// \param se    Source end.
+  // /// \param value The value to find.
+  // /// \return The position of the char or 'se'.
+  // //***************************************************************************
+  // template <typename TPointer, typename T>
+  // ETL_NODISCARD
+  //   typename etl::enable_if<etl::is_pointer<TPointer>::value && !etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, char*>::type
+  //   mem_char(TPointer sb, TPointer se, T value) ETL_NOEXCEPT
+  // {
+  //   void* result = memchr(reinterpret_cast<void*>(sb), 
+  //                         static_cast<char>(value),
+  //                         sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb));
 
-    return (result == 0U) ? reinterpret_cast<char*>(se) : reinterpret_cast<char*>(result);
-  }
+  //   return (result == 0U) ? reinterpret_cast<char*>(se) : reinterpret_cast<char*>(result);
+  // }
 
-  //***************************************************************************
-  /// Template wrapper for memchr.
-  /// \param sb    Source begin.
-  /// \param se    Source end.
-  /// \param value The value to find.
-  /// \return The position of the char or 'se'.
-  //***************************************************************************
-  template <typename TPointer, typename T>
-  ETL_NODISCARD
-    typename etl::enable_if<etl::is_pointer<TPointer>::value && etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, const char*>::type
-    mem_char(TPointer sb, TPointer se, T value) ETL_NOEXCEPT
-  {
-    const void* result = memchr(reinterpret_cast<const void*>(sb),
-                                static_cast<char>(value),
-                                sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb));
+  // //***************************************************************************
+  // /// Template wrapper for memchr.
+  // /// \param sb    Source begin.
+  // /// \param se    Source end.
+  // /// \param value The value to find.
+  // /// \return The position of the char or 'se'.
+  // //***************************************************************************
+  // template <typename TPointer, typename T>
+  // ETL_NODISCARD
+  //   typename etl::enable_if<etl::is_pointer<TPointer>::value && etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, const char*>::type
+  //   mem_char(TPointer sb, TPointer se, T value) ETL_NOEXCEPT
+  // {
+  //   const void* result = memchr(reinterpret_cast<const void*>(sb),
+  //                               static_cast<char>(value),
+  //                               sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb));
 
-    return (result == 0U) ? reinterpret_cast<const char*>(se) : reinterpret_cast<const char*>(result);
-  }
+  //   return (result == 0U) ? reinterpret_cast<const char*>(se) : reinterpret_cast<const char*>(result);
+  // }
 
-  //***************************************************************************
-  /// Template wrapper for memchr.
-  /// \param sb    Source begin.
-  /// \param n     Source length.
-  /// \param value The value to find.
-  /// \return The position of the char or 'sb + n'
-  //***************************************************************************
-  template <typename TPointer, typename T>
-  ETL_NODISCARD
-    typename etl::enable_if<etl::is_pointer<TPointer>::value && !etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, char*>::type
-    mem_char(TPointer sb, size_t n, T value) ETL_NOEXCEPT
-  {
-    void* result = memchr(reinterpret_cast<void*>(sb), 
-                          static_cast<char>(value),
-                          sizeof(typename etl::iterator_traits<TPointer>::value_type) * n);
+  // //***************************************************************************
+  // /// Template wrapper for memchr.
+  // /// \param sb    Source begin.
+  // /// \param n     Source length.
+  // /// \param value The value to find.
+  // /// \return The position of the char or 'sb + n'
+  // //***************************************************************************
+  // template <typename TPointer, typename T>
+  // ETL_NODISCARD
+  //   typename etl::enable_if<etl::is_pointer<TPointer>::value && !etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, char*>::type
+  //   mem_char(TPointer sb, size_t n, T value) ETL_NOEXCEPT
+  // {
+  //   void* result = memchr(reinterpret_cast<void*>(sb), 
+  //                         static_cast<char>(value),
+  //                         sizeof(typename etl::iterator_traits<TPointer>::value_type) * n);
 
-    return (result == 0U) ? reinterpret_cast<char*>(sb + n) : reinterpret_cast<char*>(result);
-  }
+  //   return (result == 0U) ? reinterpret_cast<char*>(sb + n) : reinterpret_cast<char*>(result);
+  // }
 
-  //***************************************************************************
-  /// Template wrapper for memchr.
-  /// \param sb    Source begin.
-  /// \param n     Source length.
-  /// \param value The value to find.
-  /// \return The position of the char or 'sb + n'
-  //***************************************************************************
-  template <typename TPointer, typename T>
-  ETL_NODISCARD
-    typename etl::enable_if<etl::is_pointer<TPointer>::value && etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, const char*>::type
-    mem_char(TPointer sb, size_t n, T value) ETL_NOEXCEPT
-  {
-    const void* result = memchr(reinterpret_cast<const void*>(sb),
-                                static_cast<char>(value),
-                                sizeof(typename etl::iterator_traits<TPointer>::value_type) * n);
+  // //***************************************************************************
+  // /// Template wrapper for memchr.
+  // /// \param sb    Source begin.
+  // /// \param n     Source length.
+  // /// \param value The value to find.
+  // /// \return The position of the char or 'sb + n'
+  // //***************************************************************************
+  // template <typename TPointer, typename T>
+  // ETL_NODISCARD
+  //   typename etl::enable_if<etl::is_pointer<TPointer>::value && etl::is_const<typename etl::remove_pointer<TPointer>::type>::value, const char*>::type
+  //   mem_char(TPointer sb, size_t n, T value) ETL_NOEXCEPT
+  // {
+  //   const void* result = memchr(reinterpret_cast<const void*>(sb),
+  //                               static_cast<char>(value),
+  //                               sizeof(typename etl::iterator_traits<TPointer>::value_type) * n);
 
-    return (result == 0U) ? reinterpret_cast<const char*>(sb + n) : reinterpret_cast<const char*>(result);
-  }
+  //   return (result == 0U) ? reinterpret_cast<const char*>(sb + n) : reinterpret_cast<const char*>(result);
+  // }
 }
 
 #endif

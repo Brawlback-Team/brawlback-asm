@@ -39,7 +39,7 @@ SOFTWARE.
 ///\ingroup utilities
 
 #include <stdint.h>
-#include <string.h>
+// #include <string.h>
 
 #include "platform.h"
 #include "type_traits.h"

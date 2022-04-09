@@ -32,7 +32,7 @@ SOFTWARE.
 #define ETL_HASH_INCLUDED
 
 #include <stdint.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 
 #include "platform.h"
 

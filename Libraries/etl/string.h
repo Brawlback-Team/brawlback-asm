@@ -37,7 +37,7 @@ SOFTWARE.
 #include "hash.h"
 #include "initializer_list.h"
 
-#include <ctype.h>
+// #include <ctype.h>
 
 #include "private/minmax_push.h"
 

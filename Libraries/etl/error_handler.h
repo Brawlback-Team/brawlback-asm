@@ -36,7 +36,7 @@ SOFTWARE.
 /// Error handler for when throwing exceptions is not required.
 ///\ingroup utilities
 
-#include <assert.h>
+// #include <assert.h>
 
 #include "platform.h"
 #include "exception.h"

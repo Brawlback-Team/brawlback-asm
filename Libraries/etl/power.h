@@ -32,7 +32,7 @@ SOFTWARE.
 #define ETL_POW_INCLUDED
 
 #include <stddef.h>
-#include <stdint.h>
+// #include <stdint.h>
 
 #include "platform.h"
 #include "log.h"

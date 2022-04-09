@@ -32,10 +32,10 @@ SOFTWARE.
 #define ETL_DEBUG_COUNT_INCLUDED
 
 #include <stdint.h>
-#include <assert.h>
+// #include <assert.h>
 
 #include "platform.h"
-#include "atomic.h"
+// #include "atomic.h"
 
 ///\defgroup debug_count debug count
 ///\ingroup utilities

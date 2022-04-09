@@ -41,10 +41,11 @@ SOFTWARE.
   #define __USE_C99_MATH
 #endif
 
-#include <limits.h>
+// #include <limits.h>
 #include <stdint.h>
-#include <float.h>
-#include <math.h>
+#include "stdint.h"
+// #include <float.h>
+// #include <math.h>
 
 #include "private/minmax_push.h"
 
