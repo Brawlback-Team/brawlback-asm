@@ -144,6 +144,34 @@ extern "C" void aiCommandHandlers(aiAct* aiActInst, const int* args) { ... }
 
 the `lbz r4, 0x00(r30)` is the code that was there before I injected it. The exclusion of this would cause `r30` to have an unexpected value. The two `mr` statements then move some data from registers `r26` and `r30` to `r3` and `r4`, respectively. In this case they're pointers to an `aiAct` instance and the "args" of the custom AI command. This allows us to access them in our custom `aiCommandHandlers` function as the first and second arguments, because they're in `r3` and `r4`.
 
+## Using ETL (Embeeded Template Library) in Codes
+In Libraries/etl we've brought in headers files from https://github.com/ETLCPP/etl (slightly modified to work in our env) which give us STL style classes like string, vector etc. that do not perform heap allocations. These containers should be used when possible to avoid bugs common with manually memory management (raw `new` / `delete` / `malloc` / `free` is hard).
+
+### Limitations
+Because the containers do not perform heap allocations, their maximum size must be known at compile time and provided as a template argument. Example:
+```c++
+#include "etl/string.h"
+#include "etl/vector.h"
+
+//String that can grow to a maximum of 32 chars
+etl::string<32> str;
+
+//vector that can grow to a maximum of 128 u8s
+etl::vector<u8, 128> vec;
+```
+
+We can still use these clases for heap allocated data, but the whole container needs to be heap-allocated. This may be useful if the data would be too large to store on the stack. Example:
+
+```c++
+#include "etl/memory.h"
+#include "etl/vector.h"
+
+//Heap allocated buffer of 1000 bytes (there will be a few extra bytes allocated for whatever other bookeeping the etl::vector class does)
+//Prefer unique_ptr to raw pointer to avoid needing to call delete yourself
+etl::unique_ptr<etl::vector<u8, 1000>> heapAllocatedVec(new etl::vector<u8, 1000>);
+```
+
+
 ## That's All Folks
 
 Thank you for reading! We can't wait to see the amazing things you'll create with this new and powerful framework!
