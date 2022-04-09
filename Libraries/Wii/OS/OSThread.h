@@ -4,6 +4,8 @@
 #include "OSTime.h"
 #include "OSContext.h"
 
+#include <cstddef>
+
 #define OS_THREAD_SPECIFIC_MAX  2
 
 //0 highest, 31 lowest

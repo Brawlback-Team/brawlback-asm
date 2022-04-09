@@ -7,6 +7,7 @@
 
 
 #include <stdtypes.h>
+#include <cstddef>
 #include "Memory.h"
 
 //Returns dynamically allocated encryption, blocking

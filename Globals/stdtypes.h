@@ -39,7 +39,7 @@ struct Position3D {
     f32 z;
 };
 
-#define offsetof(type, member) (__builtin_offsetof(type, member))
+// #define offsetof(type, member) (__builtin_offsetof(type, member))
 
 // template<class> class function; // not defined
  
