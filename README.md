@@ -11,7 +11,11 @@ C++ Source is found in the *Codes* folder
 
 This build does not come with Project+ assets, it only includes the Project+ source code. You will have to extract the pf folder from the Project+ download and place it in *SDCard/Project+*.
 
-Set SD_CARD_PATH in *MakeSD/Config.ini* to the path of the sd.raw used by your configuration of Dolphin
+Duplicate the file located at `MakeSD/SAMPLE-Config.ini` and rename the copy to `Config.ini`
+
+Set SD_CARD_PATH in `MakeSD/Config.ini` to the path of the sd.raw used by your configuration of Dolphin
+
+Set CMAKE_BUILD_DIR in `MakeSD/Config.ini` to the path that cmake builds to (default should be `.\build\Output`)
 
 ## Build and Run
 
