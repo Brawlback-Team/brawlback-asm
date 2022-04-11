@@ -10,6 +10,12 @@ cd /d %~dp0
 
 call settings.bat
 
+:: check if settings.bat had an error
+IF %ERRORLEVEL%==1 exit \b 1
+
+:: check if CMAKE_BUILD_DIR is set to a valid directory
+IF NOT EXIST "..\%CMAKE_BUILD_DIR%" goto :NoBuildDirError
+
 IF EXIST "%SD_CARD_PATH%" goto :Continue
 IF NOT EXIST "%SD_CARD_PATH%" goto :MakeSD
 
@@ -64,3 +70,10 @@ color 0c
 pause > NUL 2> NUL
 color
 goto :eof
+
+:NoBuildDirError
+echo [91m ERROR: CMAKE_BUILD_DIR incorrectly set [0m
+echo Check Config.ini to ensure CMAKE_BUILD_DIR is set to a valid path
+echo.
+pause > NUL 2> NUL
+exit /b 1
