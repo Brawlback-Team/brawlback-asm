@@ -14,7 +14,7 @@
 #include "EXIPacket.h"
 #include "Containers/vector.h"
 #include "Wii/OS/OSInterrupt.h"
-#include "Replays.h"
+#include "Replay.h"
 #include "menu.h"
 #include "Brawl/sndSystem.h"
 #include "Graphics/Drawable.h"

@@ -46,7 +46,7 @@ namespace std
 {
     /// initializer_list
     template<class _E>
-    class initializer_list
+    class brawl_initializer_list
     {
     public:
         typedef _E 		value_type;
@@ -59,10 +59,10 @@ namespace std
         iterator			_M_array;
         size_type			_M_len;
         // The compiler can call a private constructor.
-        constexpr initializer_list(const_iterator __a, size_type __l)
+        constexpr brawl_initializer_list(const_iterator __a, size_type __l)
                 : _M_array(__a), _M_len(__l) { }
     public:
-        constexpr initializer_list() noexcept
+        constexpr brawl_initializer_list() noexcept
                 : _M_array(0), _M_len(0) { }
         // Number of elements.
         constexpr size_type
@@ -81,7 +81,7 @@ namespace std
      */
     template<class _Tp>
     constexpr const _Tp*
-    begin(initializer_list<_Tp> __ils) noexcept
+    begin(brawl_initializer_list<_Tp> __ils) noexcept
     { return __ils.begin(); }
     /**
      *  @brief  Return an iterator pointing to one past the last element
@@ -90,7 +90,7 @@ namespace std
      */
     template<class _Tp>
     constexpr const _Tp*
-    end(initializer_list<_Tp> __ils) noexcept
+    end(brawl_initializer_list<_Tp> __ils) noexcept
     { return __ils.end(); }
 }
 //#pragma GCC visibility pop

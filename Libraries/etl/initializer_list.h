@@ -161,7 +161,7 @@ namespace std
     //*************************************************************************
     /// Default constructor 
     //*************************************************************************
-    constexpr initializer_list() noexcept 
+    constexpr initializer_list() noexcept
       : pfirst(nullptr), length(0)
     {
     }

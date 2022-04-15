@@ -7,7 +7,7 @@
 
 #include "Memory.h"
 #include "stddef.h"
-#include "CLibs/InitializerList.h"
+#include "CLibs/BrawlInitializerList.h"
 
 
 template<class T>
@@ -19,7 +19,7 @@ public:
     explicit vector(size_t size);
     vector(size_t size, const T& val);
     vector(const vector<T>& other);
-    vector(std::initializer_list<T> list);
+    vector(std::brawl_initializer_list<T> list);
     ~vector<T>();
 
     T& operator[](u32 index) const;
@@ -213,7 +213,7 @@ vector<T>::vector(const vector<T> &other) {
 }
 
 template<class T>
-vector<T>::vector(std::initializer_list<T> list) {
+vector<T>::vector(std::brawl_initializer_list<T> list) {
     Array = allocate(maxLength);
     auto x = list.begin();
     while(x != list.end()) {
