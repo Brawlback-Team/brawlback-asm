@@ -1,0 +1,134 @@
+[
+  {
+    "name": "AI Kit",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "PRINT_GET_PARAMS": 0,
+      "CUSTOM_AI_FUNCTIONS": 1,
+      "PRINT_TEST": 1,
+      "SUPER_TRAINING": 0
+    }
+  },
+  {
+    "name": "Ft Params",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "PRINT_GET_PARAMS": 1,
+      "CUSTOM_AI_FUNCTIONS": 0,
+      "PRINT_TEST": 0,
+      "SUPER_TRAINING": 0,
+      "RANDOM_1_TO_1_ALTS": 0
+    }
+  },
+  {
+    "name": "SUPER TRAINING",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "PRINT_GET_PARAMS": 0,
+      "CUSTOM_AI_FUNCTIONS": 0,
+      "PRINT_TEST": 0,
+      "SUPER_TRAINING": 1,
+      "RANDOM_1_TO_1_ALTS": 0,
+      "DRAW_A_RECTANGLE": 0
+    }
+  },
+  {
+    "name": "TP",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "PRINT_GET_PARAMS": 0,
+      "CUSTOM_AI_FUNCTIONS": 0,
+      "PRINT_TEST": 0,
+      "SUPER_TRAINING": 1,
+      "RANDOM_1_TO_1_ALTS": 1
+    }
+  },
+  {
+    "name": "Demo",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "PRINT_GET_PARAMS": 0,
+      "CUSTOM_AI_FUNCTIONS": 0,
+      "PRINT_TEST": 0,
+      "SUPER_TRAINING": 0,
+      "RANDOM_1_TO_1_ALTS": 0,
+      "DRAW_A_RECTANGLE": 1
+    }
+  },
+  {
+    "name": "Brawlback",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "BRAWLBACK": 1,
+      "SLIPPIREPLAYS": 1
+    }
+  },
+  {
+    "name": "Replays Test",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "SLIPPIREPLAYS": 1
+    }
+  },
+  {
+    "name": "Networking Test",
+    "compilers": {
+      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "BRAWLBACK": 1
+    }
+  }
+]

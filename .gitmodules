@@ -1,0 +1,6 @@
+[submodule "Libraries/etl"]
+	path = Libraries/etl
+	url = https://github.com/ETLCPP/etl
+[submodule "Libraries/container"]
+	path = Libraries/container
+	url = https://github.com/boostorg/container.git
