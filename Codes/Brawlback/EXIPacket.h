@@ -23,8 +23,8 @@ enum EXICommand : u8
     CMD_GET_MATCH_STATE = 4,
     CMD_SET_MATCH_SELECTIONS = 6,
 
-    CMD_OPEN_LOGIN = 7,
-    CMD_LOGOUT = 8,
+    CMD_TIMER_START = 7,
+    CMD_TIMER_END = 8,
     CMD_UPDATE = 9,
     
     CMD_GET_ONLINE_STATUS = 10,
@@ -43,8 +43,6 @@ public:
     ~EXIPacket();
 
     bool Send();
-    u8* Receive(u32 size);
-    void Receive(u8* buf, u32 size);
 
     EXICommand getCmd();
 
