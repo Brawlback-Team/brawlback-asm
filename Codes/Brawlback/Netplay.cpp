@@ -1,5 +1,5 @@
 #include "Netplay.h"
-
+#include "GmGlobalModeMelee.h"
 
 
 
@@ -7,12 +7,20 @@
 
 
 namespace Netplay {
+    bool isInMatch = false;
+    bool IsInMatch() { return isInMatch; }
+    void SetIsInMatch(bool isMatch) { isInMatch = isMatch; }
+
     GameSettings gameSettings = GameSettings();
     GameSettings* getGameSettings() { return &gameSettings; }
     const u8 localPlayerIdxInvalid = 200;
     u8 localPlayerIdx = localPlayerIdxInvalid;
 
-    void StartMatch() {
+    void FixGameSettingsEndianness(GameSettings* settings) {
+        swapByteOrder(&settings->stageID);
+    }
+
+    void StartMatching() {
         OSReport("Filling in game settings from game\n");
         // populate game settings
         fillOutGameSettings(&gameSettings);
@@ -26,13 +34,22 @@ namespace Netplay {
         EXIPacket findOpponentPckt = EXIPacket(EXICommand::CMD_FIND_OPPONENT);
         findOpponentPckt.Send();
 
+        // Temporary. Atm, this just stalls main thread while we do our mm/connecting
+        // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
+        // will make more sense
+        while (!CheckIsMatched()) {}
+
+    }
+
+    
+    bool CheckIsMatched() {
+        bool matched = false;
         u8 cmd_byte = EXICommand::CMD_UNKNOWN;
         size_t read_size = sizeof(GameSettings) + 1;
         u8* read_data = (u8*)malloc(read_size); // cmd byte + game settings
 
-        OSReport("Attempting to read in SETUP_PLAYERS info...\n");
         // stall until we get game settings from opponent, then load those in and continue to boot up the match
-        while (cmd_byte != EXICommand::CMD_SETUP_PLAYERS) {
+        //while (cmd_byte != EXICommand::CMD_SETUP_PLAYERS) {
             readEXI(read_data, read_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
             cmd_byte = read_data[0];
             u8* data = &read_data[1];
@@ -40,23 +57,22 @@ namespace Netplay {
             if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
                 OSReport("SETUP PLAYERS GAMESIDE\n");
                 GameSettings* gameSettingsFromOpponent = (GameSettings*)data;
+                FixGameSettingsEndianness(gameSettingsFromOpponent);
                 MergeGameSettingsIntoGame(gameSettingsFromOpponent);
+                matched = true;
             }
             else {
                 //OSReport("Reading for setupplayers, didn't get it...\n");
             }
-        }
+        //}
         free(read_data);
-    
-    }
-
-    bool CheckShouldStartNetplay() {
-        bool isOnlineInputPressed = PAD_SYSTEM->pads[0].buttons.A || PAD_SYSTEM->pads[1].buttons.A;
-        return isOnlineInputPressed;
+        return matched;
     }
 
     void EndMatch() {
         localPlayerIdx = localPlayerIdxInvalid;
+        gameSettings = GameSettings();
+        GMMelee::ResetMatchChoicesPopulated();
     }
 
 }

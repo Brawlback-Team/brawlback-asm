@@ -9,4 +9,5 @@ add_code(BRAWLBACK
     Netplay.cpp
     NetMenu.cpp
     Hacks.cpp
+    GmGlobalModeMelee.cpp
 )

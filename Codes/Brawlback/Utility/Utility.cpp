@@ -25,7 +25,7 @@ const char* bit_rep[16] = {
 
 void print_byte(u8 byte)
 {
-    OSReport("Byte: %s%s\n", bit_rep[byte >> 4], bit_rep[byte & 0x0F]);
+    OSReport("%s%s", bit_rep[byte >> 4], bit_rep[byte & 0x0F]);
 }
 void print_half(u16 half) {
     u8 byte0 = half >> 8;

@@ -5,10 +5,12 @@
 
 namespace Netplay {
 
-    bool CheckShouldStartNetplay();
-
-    void StartMatch();
+    void StartMatching();
+    bool CheckIsMatched();
     void EndMatch();
+
+    bool IsInMatch();
+    void SetIsInMatch(bool isMatch);
 
     int getLocalPlayerIdx();
     GameSettings* getGameSettings();
