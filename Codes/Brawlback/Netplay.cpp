@@ -11,13 +11,13 @@ namespace Netplay {
     bool IsInMatch() { return isInMatch; }
     void SetIsInMatch(bool isMatch) { isInMatch = isMatch; }
 
-    GameSettings gameSettings = GameSettings();
-    GameSettings* getGameSettings() { return &gameSettings; }
+    GameSettingsImpl gameSettings = GameSettingsImpl();
+    GameSettingsImpl* getGameSettings() { return &gameSettings; }
     const u8 localPlayerIdxInvalid = 200;
     u8 localPlayerIdx = localPlayerIdxInvalid;
 
-    void FixGameSettingsEndianness(GameSettings* settings) {
-        swapByteOrder(&settings->stageID);
+    void FixGameSettingsEndianness(GameSettingsImpl* settings) {
+        swapByteOrder(&settings->_gameSettings.stageID);
     }
 
     void StartMatching() {
@@ -45,7 +45,7 @@ namespace Netplay {
     bool CheckIsMatched() {
         bool matched = false;
         u8 cmd_byte = EXICommand::CMD_UNKNOWN;
-        size_t read_size = sizeof(GameSettings) + 1;
+        size_t read_size = sizeof(GameSettingsImpl) + 1;
         u8* read_data = (u8*)malloc(read_size); // cmd byte + game settings
 
         // stall until we get game settings from opponent, then load those in and continue to boot up the match
@@ -56,7 +56,7 @@ namespace Netplay {
 
             if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
                 OSReport("SETUP PLAYERS GAMESIDE\n");
-                GameSettings* gameSettingsFromOpponent = (GameSettings*)data;
+                GameSettingsImpl* gameSettingsFromOpponent = (GameSettingsImpl*)data;
                 FixGameSettingsEndianness(gameSettingsFromOpponent);
                 MergeGameSettingsIntoGame(gameSettingsFromOpponent);
                 matched = true;
@@ -71,7 +71,7 @@ namespace Netplay {
 
     void EndMatch() {
         localPlayerIdx = localPlayerIdxInvalid;
-        gameSettings = GameSettings();
+        gameSettings = GameSettingsImpl();
         GMMelee::ResetMatchChoicesPopulated();
     }
 

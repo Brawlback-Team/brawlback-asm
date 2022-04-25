@@ -13,7 +13,7 @@ namespace Netplay {
     void SetIsInMatch(bool isMatch);
 
     int getLocalPlayerIdx();
-    GameSettings* getGameSettings();
+    GameSettingsImpl* getGameSettings();
 
     extern u8 localPlayerIdx;
     extern const u8 localPlayerIdxInvalid;
