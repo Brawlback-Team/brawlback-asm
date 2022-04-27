@@ -56,10 +56,6 @@ struct PlayerSettingsImpl
     PlayerSettings _playerSettings;
 };
 
-struct GameSettingsImpl
-{
-    GameSettings _gameSettings;
-};
 
 struct PreserveBlockImpl
 {
@@ -110,13 +106,6 @@ struct FrameDataImpl {
             _frameData.playerFrameDatas[i] = PlayerFrameDataImpl()._playerFrameData;
         }
     }
-    FrameDataImpl(u32 frame)
-    {
-        _frameData.randomSeed = 0;
-        for (u8 i = 0; i < MAX_NUM_PLAYERS; i++) {
-            _frameData.playerFrameDatas[i] = PlayerFrameDataImpl(frame, i)._playerFrameData;
-        }
-    }
 };
 
 struct RollbackInfoImpl {
@@ -124,8 +113,8 @@ struct RollbackInfoImpl {
     //vector<PreserveBlock> preserveBlocks;
 };
 
-void fillOutGameSettings(GameSettingsImpl* settings);
-void MergeGameSettingsIntoGame(GameSettingsImpl* settings);
+void fillOutGameSettings(GameSettings& settings);
+void MergeGameSettingsIntoGame(GameSettings& settings);
 
 namespace FrameLogic {
     void SaveState(u32 frame);

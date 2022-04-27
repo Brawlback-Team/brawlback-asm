@@ -11,19 +11,20 @@ namespace Netplay {
     bool IsInMatch() { return isInMatch; }
     void SetIsInMatch(bool isMatch) { isInMatch = isMatch; }
 
-    GameSettingsImpl gameSettings = GameSettingsImpl();
-    GameSettingsImpl* getGameSettings() { return &gameSettings; }
+
+    GameSettings gameSettings;
+    GameSettings& getGameSettings() { return gameSettings; }
     const u8 localPlayerIdxInvalid = 200;
     u8 localPlayerIdx = localPlayerIdxInvalid;
 
-    void FixGameSettingsEndianness(GameSettingsImpl* settings) {
-        swapByteOrder(&settings->_gameSettings.stageID);
+    void FixGameSettingsEndianness(GameSettings& settings) {
+        swapByteOrder(settings.stageID);
     }
 
     void StartMatching() {
         OSReport("Filling in game settings from game\n");
         // populate game settings
-        fillOutGameSettings(&gameSettings);
+        fillOutGameSettings(gameSettings);
 
         OSReport("Starting match gameside\n");
         // send our populated game settings to the emu
@@ -45,7 +46,7 @@ namespace Netplay {
     bool CheckIsMatched() {
         bool matched = false;
         u8 cmd_byte = EXICommand::CMD_UNKNOWN;
-        size_t read_size = sizeof(GameSettingsImpl) + 1;
+        size_t read_size = sizeof(GameSettings) + 1;
         u8* read_data = (u8*)malloc(read_size); // cmd byte + game settings
 
         // stall until we get game settings from opponent, then load those in and continue to boot up the match
@@ -56,9 +57,9 @@ namespace Netplay {
 
             if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
                 OSReport("SETUP PLAYERS GAMESIDE\n");
-                GameSettingsImpl* gameSettingsFromOpponent = (GameSettingsImpl*)data;
-                FixGameSettingsEndianness(gameSettingsFromOpponent);
-                MergeGameSettingsIntoGame(gameSettingsFromOpponent);
+                auto gameSettingsFromOpponent = reinterpret_cast<GameSettings*>(data);
+                FixGameSettingsEndianness(*gameSettingsFromOpponent);
+                MergeGameSettingsIntoGame(*gameSettingsFromOpponent);
                 matched = true;
             }
             else {
@@ -71,7 +72,7 @@ namespace Netplay {
 
     void EndMatch() {
         localPlayerIdx = localPlayerIdxInvalid;
-        gameSettings = GameSettingsImpl();
+        gameSettings = GameSettings();
         GMMelee::ResetMatchChoicesPopulated();
     }
 
