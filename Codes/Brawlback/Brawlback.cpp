@@ -2,8 +2,6 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
 
-
-
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
@@ -12,22 +10,22 @@ u32 getCurrentFrame() {
     return GAME_FRAME->persistentFrameCounter;
 }
 
-void printInputs(const BrawlbackPadImpl& pad) {
+void printInputs(const BrawlbackPad& pad) {
     OSReport(" -- Pad --\n");
 
-    OSReport("StickX: %i\n", (int)pad._brawlbackPad.stickX);
-    OSReport("StickY: %i\n", (int)pad._brawlbackPad.stickY);
-    OSReport("CStickX: %i\n", (int)pad._brawlbackPad.cStickX);
-    OSReport("CStickY: %i\n", (int)pad._brawlbackPad.cStickY);
+    OSReport("StickX: %i\n", (int)pad.stickX);
+    OSReport("StickY: %i\n", (int)pad.stickY);
+    OSReport("CStickX: %i\n", (int)pad.cStickX);
+    OSReport("CStickY: %i\n", (int)pad.cStickY);
     OSReport("Buttons: ");
-    print_half(pad._brawlbackPad.buttons);
-    OSReport("LTrigger: %u    RTrigger %u\n", pad._brawlbackPad.LTrigger, pad._brawlbackPad.RTrigger);
+    print_half(pad.buttons);
+    OSReport("LTrigger: %u    RTrigger %u\n", pad.LTrigger, pad.RTrigger);
 
     OSReport(" ---------\n");
 
 }
 
-void SyncLoc(const BrawlbackPadImpl& pad, u8 playerIdx) {
+void SyncLoc(const BrawlbackPad& pad, u8 playerIdx) {
     OSReport("[Sync] Injecting inputs for player %u on frame %u\n", (unsigned int)playerIdx, getCurrentFrame());
     printInputs(pad);
     OSReport("[/Sync]\n");
@@ -44,15 +42,15 @@ bool isInputsEqual( const BrawlbackPad& p1, const BrawlbackPad& p2) {
 }
 
 BrawlbackPad GamePadToBrawlbackPad(const gfPadGamecube& pad) {
-    BrawlbackPadImpl ret;
-    ret._brawlbackPad.buttons = pad.buttons.bits;
-    ret._brawlbackPad.cStickX = pad.cStickX;
-    ret._brawlbackPad.cStickY = pad.cStickY;
-    ret._brawlbackPad.stickX = pad.stickX;
-    ret._brawlbackPad.stickY = pad.stickY;
-    ret._brawlbackPad.LTrigger = pad.LTrigger;
-    ret._brawlbackPad.RTrigger = pad.RTrigger;
-    return ret._brawlbackPad;
+    BrawlbackPad ret;
+    ret.buttons = pad.buttons.bits;
+    ret.cStickX = pad.cStickX;
+    ret.cStickY = pad.cStickY;
+    ret.stickX = pad.stickX;
+    ret.stickY = pad.stickY;
+    ret.LTrigger = pad.LTrigger;
+    ret.RTrigger = pad.RTrigger;
+    return ret;
 }
 void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad) {
     gamePad.buttons.bits = pad.buttons;
