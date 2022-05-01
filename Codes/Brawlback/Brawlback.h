@@ -51,81 +51,8 @@ inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
 u32 getCurrentFrame();
 
-struct PlayerSettingsImpl
-{
-    PlayerSettings _playerSettings;
-};
-
-struct GameSettingsImpl
-{
-    GameSettings _gameSettings;
-};
-
-struct PreserveBlockImpl
-{
-    PreserveBlock _preserveBlock;
-};
-
-struct BrawlbackPadImpl {
-    BrawlbackPad _brawlbackPad;
-
-    BrawlbackPadImpl()
-    {
-        _brawlbackPad.buttons = 0;
-        _brawlbackPad.stickX = 0;
-        _brawlbackPad.stickY = 0;
-        _brawlbackPad.cStickX = 0;
-        _brawlbackPad.cStickY = 0;
-        _brawlbackPad.LTrigger = 0;
-        _brawlbackPad.RTrigger = 0;
-    }
-};
-
-struct PlayerFrameDataImpl {
-    PlayerFrameData _playerFrameData;
-
-    // do these impact the size of the struct?
-    // wouldn't the vtable ptr screw with it being interpreted on gameside???
-    // (since the gameside structs don't have these ctors)
-    PlayerFrameDataImpl() {
-        _playerFrameData.frame = 0;
-        _playerFrameData.playerIdx = 0;
-        _playerFrameData.pad = BrawlbackPadImpl()._brawlbackPad;
-    }
-    PlayerFrameDataImpl(u32 _frame, u8 _playerIdx)
-    {
-        _playerFrameData.frame = _frame;
-        _playerFrameData.playerIdx = _playerIdx;
-        _playerFrameData.pad = BrawlbackPadImpl()._brawlbackPad;
-    }
-};
-
-struct FrameDataImpl {
-    FrameData _frameData;
-
-    FrameDataImpl()
-    {
-        _frameData.randomSeed = 0;
-        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
-            _frameData.playerFrameDatas[i] = PlayerFrameDataImpl()._playerFrameData;
-        }
-    }
-    FrameDataImpl(u32 frame)
-    {
-        _frameData.randomSeed = 0;
-        for (u8 i = 0; i < MAX_NUM_PLAYERS; i++) {
-            _frameData.playerFrameDatas[i] = PlayerFrameDataImpl(frame, i)._playerFrameData;
-        }
-    }
-};
-
-struct RollbackInfoImpl {
-    RollbackInfo _rollbackInfo;
-    //vector<PreserveBlock> preserveBlocks;
-};
-
-void fillOutGameSettings(GameSettingsImpl* settings);
-void MergeGameSettingsIntoGame(GameSettingsImpl* settings);
+void fillOutGameSettings(GameSettings& settings);
+void MergeGameSettingsIntoGame(GameSettings& settings);
 
 namespace FrameLogic {
     void SaveState(u32 frame);
