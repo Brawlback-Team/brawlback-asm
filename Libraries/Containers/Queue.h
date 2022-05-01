@@ -2,7 +2,7 @@
 #define __DEQUEIMPL
 
 #include "stddef.h"
-#include "CLibs/BrawlInitializerList.h"
+#include "etl/initializer_list.h"
 
 
 template<typename T>

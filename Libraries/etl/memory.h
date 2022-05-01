@@ -2135,7 +2135,7 @@ namespace etl
 #endif
 
   //***************************************************************************
-/// Template wrapper for memcpy.
+/// Template wrapper for TPointer::memcpy.
 /// Type must be trivially copyable.
 /// \param source begin
 /// \param source end
@@ -2146,13 +2146,13 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_copy(const TPointer sb, const TPointer se, TPointer db) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memcpy(reinterpret_cast<void*>(db), 
+    return reinterpret_cast<TPointer>(TPointer::memcpy(reinterpret_cast<void*>(db), 
                                              reinterpret_cast<void*>(sb), 
                                              sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb)));
   }
 
   //***************************************************************************
-  /// Template wrapper for memcpy.
+  /// Template wrapper for TPointer::memcpy.
   /// Type must be trivially copyable.
   /// \param source begin
   /// \param source length
@@ -2162,13 +2162,13 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_copy(const TPointer sb, size_t n, TPointer db) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memcpy(reinterpret_cast<void*>(db), 
+    return reinterpret_cast<TPointer>(TPointer::memcpy(reinterpret_cast<void*>(db), 
                                              reinterpret_cast<void*>(sb), 
                                              sizeof(typename etl::iterator_traits<TPointer>::value_type) * n));
   }
 
   //***************************************************************************
-  /// Template wrapper for memmove.
+  /// Template wrapper for TPointer::memmove.
   /// Type must be trivially copyable.
   /// \param source begin
   /// \param source end
@@ -2178,13 +2178,13 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_move(const TPointer sb, const TPointer se, TPointer db) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memmove(reinterpret_cast<void*>(db), 
+    return reinterpret_cast<TPointer>(TPointer::memmove(reinterpret_cast<void*>(db), 
                                               reinterpret_cast<void*>(sb), 
                                               sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb)));
   }
 
   //***************************************************************************
-  /// Template wrapper for memmove.
+  /// Template wrapper for TPointer::memmove.
   /// Type must be trivially copyable.
   /// \param source begin
   /// \param source length
@@ -2194,13 +2194,13 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_move(const TPointer sb, size_t n, TPointer db) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memmove(reinterpret_cast<void*>(db), 
+    return reinterpret_cast<TPointer>(TPointer::memmove(reinterpret_cast<void*>(db),
                                               reinterpret_cast<void*>(sb), 
                                               sizeof(typename etl::iterator_traits<TPointer>::value_type) * n));
   }
 
   //***************************************************************************
-  /// Template wrapper for memcmp.
+  /// Template wrapper for TPointer::memcmp.
   /// \param source begin
   /// \param source end
   /// \param destination begin
@@ -2213,13 +2213,13 @@ namespace etl
     typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, int>::type
     mem_compare(const TPointer sb, const TPointer se, TPointer db) ETL_NOEXCEPT
   {
-    return memcmp(reinterpret_cast<void*>(db), 
+    return TPointer::memcmp(reinterpret_cast<void*>(db),
                   reinterpret_cast<void*>(sb), 
                   sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(se - sb));
   }
 
   //***************************************************************************
-  /// Template wrapper for memcmp.
+  /// Template wrapper for TPointer::memcmp.
   /// \param sb Source begin
   /// \param n  Source length
   /// \param db Destination begin
@@ -2232,13 +2232,13 @@ namespace etl
     typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, int>::type
     mem_compare(const TPointer sb, size_t n, TPointer db) ETL_NOEXCEPT
   {
-    return memcmp(reinterpret_cast<void*>(db), 
+    return TPointer::memcmp(reinterpret_cast<void*>(db),
                   reinterpret_cast<void*>(sb), 
                   sizeof(typename etl::iterator_traits<TPointer>::value_type) * n);
   }
 
   //***************************************************************************
-  /// Template wrapper for memset.
+  /// Template wrapper for TPointer::memset.
   /// \param db    Destination begin.
   /// \param de    Destination end.
   /// \param value The value to set.
@@ -2248,13 +2248,13 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_set(TPointer db, const TPointer de, T value) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memset(reinterpret_cast<void*>(db), 
+    return reinterpret_cast<TPointer>(TPointer::memset(reinterpret_cast<void*>(db),
                                              static_cast<char>(value),
                                              sizeof(typename etl::iterator_traits<TPointer>::value_type) * static_cast<size_t>(de - db)));
   }
 
   //***************************************************************************
-  /// Template wrapper for memset.
+  /// Template wrapper for TPointer::memset.
   /// \param db    Destination begin.
   /// \param n     Destination length.
   /// \param value The value to set.
@@ -2264,7 +2264,7 @@ namespace etl
   typename etl::enable_if<etl::is_trivially_copyable<typename etl::iterator_traits<TPointer>::value_type>::value, TPointer>::type
     mem_set(const TPointer db, size_t n, T value) ETL_NOEXCEPT
   {
-    return reinterpret_cast<TPointer>(memset(reinterpret_cast<void*>(db),
+    return reinterpret_cast<TPointer>(TPointer::memset(reinterpret_cast<void*>(db),
                                              static_cast<char>(value),
                                              sizeof(typename etl::iterator_traits<TPointer>::value_type) * n));
   }

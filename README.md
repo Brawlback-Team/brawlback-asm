@@ -11,7 +11,13 @@ C++ Source is found in the *Codes* folder
 
 This build does not come with Project+ assets, it only includes the Project+ source code. You will have to extract the pf folder from the Project+ download and place it in *SDCard/Project+*.
 
-Set SD_CARD_PATH in *MakeSD/Config.ini* to the path of the sd.raw used by your configuration of Dolphin
+Duplicate the file located at `MakeSD/SAMPLE-Config.ini` and rename the copy to `Config.ini`
+
+Set SD_CARD_PATH in `MakeSD/Config.ini` to the path of the sd.raw used by your configuration of Dolphin
+
+Set CMAKE_BUILD_DIR in `MakeSD/Config.ini` to the path that cmake builds to (default should be `.\build\Output`)
+
+Get submodule for EXI structures: `git submodule update --init --recursive`
 
 ## Build and Run
 
@@ -34,6 +40,8 @@ Credit to [Bird](https://github.com/jlambert360) and [Syvkal](http://forums.kc-m
 DukeItOut for GCTRM
 
 [Fracture](https://github.com/Fracture17/ProjectMCodes) for the C++ Framework and [fudgepop01](https://github.com/Fracture17/ProjectMCodes/tree/master/Codes/SuperTraining) for tutorials and great code examples
+
+Kapedani for decompiling and restructuring the build system Fracture built.
 
 The PMDT and P+DT as well as all those who have contributed code in the Project+ Source
 

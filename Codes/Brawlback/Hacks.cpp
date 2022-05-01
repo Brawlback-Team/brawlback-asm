@@ -30,3 +30,9 @@ INJECTION("PadRumbleRemoveMaskNop", 0x80048500, "nop");
 
 // frameStartInit/[gfApplication]
 INJECTION("PadRumbleActivateAllNop", 0x800175b4, "nop");
+
+// removeRumbleId/[IpHuman]
+INJECTION("PadRumbleRemoveIDNop", 0x800484cc, "nop");
+
+// setRumble/[IpHuman]
+INJECTION("lbSetRumbleNop", 0x80048430, "nop");
