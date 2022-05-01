@@ -561,16 +561,16 @@ namespace FrameLogic {
                         // We don't care anything about what the inputs contain or anything about them.
                         // the emulator takes care of the logic for when and how to send inputs, all we do here
                         // is inject them into the game.
-                        auto framedata = reinterpret_cast<FrameData*>(data);
-                        ProcessFrameDataFromEmu(*framedata);
+                        auto framedata = bufferToObject<FrameData>(data);
+                        ProcessFrameDataFromEmu(framedata);
                     }
                     break;
                 case CMD_ROLLBACK:
                     {
                         #ifdef ROLLBACK_IMPL
                         //OSReport("Rollback gameside\n");
-                        const auto rollbackInfo = reinterpret_cast<RollbackInfo*>(data);
-                        ProcessRollback(*rollbackInfo, true);
+                        auto rollbackInfo = bufferToObject<RollbackInfo>(data);
+                        ProcessRollback(rollbackInfo, true);
                         #else
                         OSReport("Tried to rollback, but rollback impl was turned off!\n");
                         #endif
