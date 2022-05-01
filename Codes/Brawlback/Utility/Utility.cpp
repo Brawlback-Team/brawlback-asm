@@ -25,7 +25,7 @@ const char* bit_rep[16] = {
 
 void print_byte(u8 byte)
 {
-    OSReport("Byte: %s%s\n", bit_rep[byte >> 4], bit_rep[byte & 0x0F]);
+    OSReport("%s%s", bit_rep[byte >> 4], bit_rep[byte & 0x0F]);
 }
 void print_half(u16 half) {
     u8 byte0 = half >> 8;
@@ -58,29 +58,29 @@ void swapByteOrder(u8* val) {
 
 
 // https://mklimenko.github.io/english/2018/08/22/robust-endian-swap/
-void swapByteOrder(u16* val)
+void swapByteOrder(u16& val)
 {
-    u16 us = *val;
+    u16 us = val;
     us = (us >> 8) |
          (us << 8);
-    *val = us;
+    val = us;
 }
 
-void swapByteOrder(u32* val)
+void swapByteOrder(u32& val)
 {
-    u32 ui = *val;
+    u32 ui = val;
     ui = ((ui << 8) & 0xFF00FF00) | ((ui >> 8) & 0xFF00FF);
     ui = (ui << 16) | (ui >> 16);
-    *val = ui;
+    val = ui;
 }
 
-void swapByteOrder(u64* val)
+void swapByteOrder(u64& val)
 {
-    u64 ull = *val;
+    u64 ull = val;
     ull = ((ull & 0x00000000FFFFFFFFull) << 32) | ((ull & 0xFFFFFFFF00000000ull) >> 32);
     ull = ((ull & 0x0000FFFF0000FFFFull) << 16) | ((ull & 0xFFFF0000FFFF0000ull) >> 16);
     ull = ((ull & 0x00FF00FF00FF00FFull) << 8)  | ((ull & 0xFF00FF00FF00FF00ull) >> 8);
-    *val = ull;
+    val = ull;
 }
 
 

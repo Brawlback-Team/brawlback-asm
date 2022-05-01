@@ -133,6 +133,11 @@ asm(R"(.macro SETREG reg label
     addi \reg, \reg, \label@l
 .endm)");
 
+asm(R"(.macro BRANCH reg label
+    SETREG \reg, \label
+	mtctr \reg
+	bctr
+.endm)");
 
 asm(R"(.macro getCurrentAddress reg
     bl 1f

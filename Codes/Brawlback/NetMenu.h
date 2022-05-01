@@ -23,6 +23,27 @@ enum NetMatchMakingStatus : u32 {
     WaitShutdown = 0xb,
     Error = 0xc,
 };
+
+enum Scene : u32 {
+    None = 0x0,
+    MemoryChange = 0x1,
+    Idle = 0x2,
+    InitialChange = 0x3,
+    SelectCharacter = 0x4,
+    Unk5 = 0x5,
+    SelStage = 0x6,
+    Unk7 = 0x7,
+    Unk8 = 0x8,
+    Melee = 0x9,
+    Unk10 = 0xa,
+    Unk11 = 0xb,
+    VsResult = 0xc,
+    Unk13 = 0xd,
+    PrizeCheck = 0xe,
+    Unk15 =	0xf,
+    MenuMain = 0x10,
+};
+
 #define setMatchingStatus (  ( void (*)(u32 matchingStatus) ) 0x80146fcc )
 
 
