@@ -17,6 +17,8 @@ Set SD_CARD_PATH in `MakeSD/Config.ini` to the path of the sd.raw used by your c
 
 Set CMAKE_BUILD_DIR in `MakeSD/Config.ini` to the path that cmake builds to (default should be `.\build\Output`)
 
+Get submodule for EXI structures: `git submodule update --init --recursive`
+
 ## Build and Run
 
 To compile the C++ codes, refer to https://github.com/Fracture17/ProjectMCodes/tree/master/notes/guides or https://www.youtube.com/watch?v=oGg2dgYN1Do
@@ -38,6 +40,8 @@ Credit to [Bird](https://github.com/jlambert360) and [Syvkal](http://forums.kc-m
 DukeItOut for GCTRM
 
 [Fracture](https://github.com/Fracture17/ProjectMCodes) for the C++ Framework and [fudgepop01](https://github.com/Fracture17/ProjectMCodes/tree/master/Codes/SuperTraining) for tutorials and great code examples
+
+Kapedani for decompiling and restructuring the build system Fracture built.
 
 The PMDT and P+DT as well as all those who have contributed code in the Project+ Source
 
