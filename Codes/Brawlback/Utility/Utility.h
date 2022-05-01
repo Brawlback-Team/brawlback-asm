@@ -26,3 +26,15 @@ void AddValueToByteArray(u8 value, vector<u8> &Array);
 void AddValueToByteArray(int value, vector<u8> &Array);
 void AddValueToByteArray(short value, vector<u8> &Array);
 void AddValueToByteArray(char value, vector<u8> &Array);
+
+//USE WITH CAUTION!!!
+//buffer assumed to contain at least sizeof(T) bytes
+//Should only be used with packed structures from brawlback-exi-structures
+//Fields in object need to have endianess corrected if sent between game <-> emulator
+template<typename T>
+T bufferToObject(const u8* buffer)
+{
+  T obj;
+  memcpy(&obj, buffer, sizeof(T));
+  return obj;
+}

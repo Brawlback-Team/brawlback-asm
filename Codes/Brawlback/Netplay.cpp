@@ -1,9 +1,6 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
-
-
-
-
+#include "etl/array.h"
 
 
 namespace Netplay {
@@ -46,27 +43,27 @@ namespace Netplay {
     bool CheckIsMatched() {
         bool matched = false;
         u8 cmd_byte = EXICommand::CMD_UNKNOWN;
+
+        // cmd byte + game settings
+        etl::array<u8, sizeof(GameSettings) + 1> read_data;
         size_t read_size = sizeof(GameSettings) + 1;
-        u8* read_data = (u8*)malloc(read_size); // cmd byte + game settings
 
         // stall until we get game settings from opponent, then load those in and continue to boot up the match
         //while (cmd_byte != EXICommand::CMD_SETUP_PLAYERS) {
-            readEXI(read_data, read_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+            readEXI(read_data.data(), read_data.size(), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
             cmd_byte = read_data[0];
-            u8* data = &read_data[1];
 
             if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
                 OSReport("SETUP PLAYERS GAMESIDE\n");
-                auto gameSettingsFromOpponent = reinterpret_cast<GameSettings*>(data);
-                FixGameSettingsEndianness(*gameSettingsFromOpponent);
-                MergeGameSettingsIntoGame(*gameSettingsFromOpponent);
+                auto gameSettingsFromOpponent = bufferToObject<GameSettings>(&read_data[1]);
+                FixGameSettingsEndianness(gameSettingsFromOpponent);
+                MergeGameSettingsIntoGame(gameSettingsFromOpponent);
                 matched = true;
             }
             else {
                 //OSReport("Reading for setupplayers, didn't get it...\n");
             }
         //}
-        free(read_data);
         return matched;
     }
 
