@@ -41,6 +41,8 @@ DukeItOut for GCTRM
 
 [Fracture](https://github.com/Fracture17/ProjectMCodes) for the C++ Framework and [fudgepop01](https://github.com/Fracture17/ProjectMCodes/tree/master/Codes/SuperTraining) for tutorials and great code examples
 
+Kapedani for decompiling and restructuring the build system Fracture built.
+
 The PMDT and P+DT as well as all those who have contributed code in the Project+ Source
 
 
