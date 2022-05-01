@@ -2,8 +2,6 @@
 #define __DEQUEIMPL
 
 #include "stddef.h"
-#include "etl/initializer_list.h"
-
 #include "stdtypes.h"
 
 template<typename T>

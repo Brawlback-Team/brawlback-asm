@@ -7,6 +7,7 @@
 
 
 #include "stdtypes.h"
+#include "stddef.h"
 
 struct gfFileIO {
     //0

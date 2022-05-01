@@ -31,11 +31,8 @@ SOFTWARE.
 #ifndef ETL_PLATFORM_INCLUDED
 #define ETL_PLATFORM_INCLUDED
 
-
-
-#include "stddef.h"
 #include <stdint.h>
-// #include <limits.h>
+#include <limits.h>
 
 #include "file_error_numbers.h"
 
@@ -72,7 +69,6 @@ SOFTWARE.
 // Helper macros, so we don't have to use double negatives.
 // The ETL will use the STL, unless ETL_NO_STL is defined.
 // With this macro we can use '#if ETL_USING_STL' instead of '#if !ETL_NO_STL' in the code.
-#define ETL_NO_STL
 #if defined(ETL_NO_STL)
   #define ETL_USING_STL     0
   #define ETL_NOT_USING_STL 1

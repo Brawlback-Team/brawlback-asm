@@ -1,6 +1,8 @@
 #include "GmGlobalModeMelee.h"
 #include "Netplay.h"
 
+#include <cstring>
+
 // size is 0x320
 
 // this is a 4 stock, 8 minute vs match with p1 being falco (default costume), and p2 being wolf (default costume) on FD
