@@ -75,7 +75,7 @@ namespace ReplaysLogic {
                     for (int i = 0; i < sizeOfItems; i++) {
                         auto item = ITEM_MANAGER->baseItemArrayList.at(i);
                         replay->items[i].itemId = (*item)->getItKind();
-                        replay->items[i].itemVariants = (*item)->getItVariation();
+                        replay->items[i].itemVariant = (*item)->getItVariation();
                     }
                 }
                 replay->players = new PlayerReplay[fighter->getEntryCount()];

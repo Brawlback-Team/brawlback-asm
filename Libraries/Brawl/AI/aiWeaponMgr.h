@@ -13,7 +13,7 @@ struct aiWeaponManagerEntry {
     // 0x0
     int itemNo;
     // 0x4
-    itemIdName id;
+    ItemIdName id;
     // 0x6
     // 0x7B = article
     // 0x1B = 
