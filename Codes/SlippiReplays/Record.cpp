@@ -29,158 +29,87 @@ namespace ReplaysLogic {
             {
                 entryFrame = false;
                 
-                int *numPlayers = new int[1];
-                numPlayers[0] = FIGHTER_MANAGER->getEntryCount();
-
-                EXIPacket numPlayersPacket = EXIPacket(EXIStatus::NUM_PLAYERS, numPlayers, 1 * sizeof(int));
-                numPlayersPacket.Send();
+                auto* startReplay = new StartReplay();
 
                 const GameGlobal *game = GAME_GLOBAL;
-                
+
                 mtRand *rand = DEFAULT_MT_RAND;
                 mtRand *otherRand = OTHER_MT_RAND;
+                startReplay->randomSeed = rand->seed;
+                startReplay->otherRandomSeed = otherRand->seed;
 
-                u32 *randomSeeds = new u32[2];
-                randomSeeds[0] = rand->seed;
-                randomSeeds[1] = otherRand->seed;
-
-                EXIPacket randomPacket = EXIPacket(EXIStatus::RANDOM, randomSeeds, 2 * sizeof(u32));
-                randomPacket.Send();
-
-                u8 *stage = new u8[1];
-                stage[0] = game->globalModeMelee->stageID;
-
-                EXIPacket stagePacket = EXIPacket(EXIStatus::STAGE, stage, 1 * sizeof(u8));
-                stagePacket.Send();
-
-                delete[] stage;
-                delete[] randomSeeds;
-                delete[] numPlayers;
-
-                for(int i = 0; i < FIGHTER_MANAGER->getEntryCount(); i++) 
+                startReplay->stage = game->globalModeMelee->stageID;
+                startReplay->numPlayers = FIGHTER_MANAGER->getEntryCount();
+                startReplay->players = new StartReplayPlayer[FIGHTER_MANAGER->getEntryCount()];
+                for(int i = 0; i < FIGHTER_MANAGER->getEntryCount(); i++)
                 {
                     auto fighter = FIGHTER_MANAGER->getFighter(FIGHTER_MANAGER->getEntryIdFromIndex(i));
+                    startReplay->players[i].fighterKind = fighter->getFtKind();
                     auto xPos = fighter->modules->postureModule->xPos;
                     auto yPos = fighter->modules->postureModule->yPos * -1;
                     auto zPos = fighter->modules->postureModule->zPos;
 
-                    auto *positions = new float[3];
-                    positions[0] = xPos;
-                    positions[1] = yPos;
-                    positions[2] = zPos;
-
-                    auto *fighterInfo = new int[1];
-                    fighterInfo[0] = fighter->getFtKind();
-
-                    auto *index = new int[1];
-                    index[0] = i;
-
-                    EXIPacket indexPacket = EXIPacket(EXIStatus::INDEX, index, 1 * sizeof(int));
-                    indexPacket.Send();
-
-                    EXIPacket positionsPacket = EXIPacket(EXIStatus::STARTPOS, positions, 3 * sizeof(float));
-                    positionsPacket.Send();
-
-                    EXIPacket fighterPacket = EXIPacket(EXIStatus::STARTFIGHTER, fighterInfo, 1 * sizeof(int));
-                    fighterPacket.Send();
-                    delete[] positions;
-                    delete[] fighterInfo;
+                    startReplay->players[i].startPlayer.xPos = xPos;
+                    startReplay->players[i].startPlayer.yPos = yPos;
+                    startReplay->players[i].startPlayer.zPos = zPos;
                 }
+
+                EXIPacket startReplayPacket = EXIPacket(EXIStatus::START_REPLAYS_STRUCT, startReplay, sizeof(StartReplay));
+                startReplayPacket.Send();
+                delete[] startReplay->players;
+                delete startReplay;
             }
-            ftManager *fighter = FIGHTER_MANAGER;
-            const GameGlobal *game = GAME_GLOBAL;
-            itemIdName *itemIds;
-            u16 *itemVariants;
-            u32 *gameInfo = new u32[2];
-            int sizeOfItems = ITEM_MANAGER->baseItemArrayList.size();
-
-            gameInfo[0] = game->gameFrame->frameCounter;
-            gameInfo[1] = game->gameFrame->persistentFrameCounter;
-
-            EXIPacket gamePacket = EXIPacket(EXIStatus::GAME, gameInfo, 2 * sizeof(u32));
-            gamePacket.Send();
-            delete[] gameInfo;
-
-            if(sizeOfItems > 0) {
-                itemIds = new itemIdName[sizeOfItems];
-                itemVariants = new u16[sizeOfItems];
-                for (int i = 0; i < sizeOfItems; i++) {
-                    auto item = ITEM_MANAGER->baseItemArrayList.at(i);
-                    itemIds[i] = (*item)->getItKind();
-                    itemVariants[i] = (*item)->getItVariation();
-                }
-                
-                EXIPacket itemIdsPacket = EXIPacket(EXIStatus::ITEM_IDS, itemIds, sizeOfItems * sizeof(itemIdName));
-                itemIdsPacket.Send();
-
-                EXIPacket itemVarientsPacket = EXIPacket(EXIStatus::ITEM_VARIENTS, itemVariants, sizeOfItems * sizeof(u16));
-                itemVarientsPacket.Send();
-                
-                delete[] itemIds;
-                delete[] itemVariants;
-            }
-
-            for(int i = 0; i < fighter->getEntryCount(); i++) 
+            else
             {
-                u8 *actions = new u8[9];
-                auto *stick = new float[2];
-                auto *fighterInfo = new double[1];
-                auto *stockCount = new int[1];
-                auto *positions = new float[3];
-                u32 *actionState = new u32[1];
-                const soStatusModuleImpl *stageObject = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->statusModule;
-                actionState[0] = stageObject->action;
-                actions[0] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.attack;
-                actions[1] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.special;
-                actions[2] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.jump;
-                actions[3] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.shield;
-                actions[4] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.dTaunt;
-                actions[5] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.sTaunt;
-                actions[6] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.uTaunt;
-                actions[7] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.cStick;
-                actions[8] = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.tapJump;
+                ftManager *fighter = FIGHTER_MANAGER;
+                const GameGlobal *game = GAME_GLOBAL;
+                int sizeOfItems = ITEM_MANAGER->baseItemArrayList.size();
 
-                stick[0] = fighter->getInput(fighter->getEntryIdFromIndex(i))->leftStickX;
-                stick[1] = fighter->getInput(fighter->getEntryIdFromIndex(i))->leftStickY;
+                auto* replay = new Replay();
+                replay->numItems = sizeOfItems;
+                replay->frameCounter = game->gameFrame->frameCounter;
+                replay->persistentFrameCounter = game->gameFrame->persistentFrameCounter;
 
-                positions[0] = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->xPos;
-                positions[1] = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->yPos * -1;
-                positions[2] = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->zPos;
+                if(sizeOfItems > 0) {
+                    replay->items = new ItemReplay[sizeOfItems];
+                    for (int i = 0; i < sizeOfItems; i++) {
+                        auto item = ITEM_MANAGER->baseItemArrayList.at(i);
+                        replay->items[i].itemId = (*item)->getItKind();
+                        replay->items[i].itemVariants = (*item)->getItVariation();
+                    }
+                }
+                replay->players = new PlayerReplay[fighter->getEntryCount()];
+                replay->numPlayers = fighter->getEntryCount();
+                for(int i = 0; i < fighter->getEntryCount(); i++)
+                {
+                    const soStatusModuleImpl *stageObject = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->statusModule;
+                    replay->players[i].actionState = stageObject->action;
+                    replay->players[i].inputs.attack = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.attack;
+                    replay->players[i].inputs.special = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.special;
+                    replay->players[i].inputs.jump = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.jump;
+                    replay->players[i].inputs.shield = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.shield;
+                    replay->players[i].inputs.dTaunt = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.dTaunt;
+                    replay->players[i].inputs.sTaunt = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.sTaunt;
+                    replay->players[i].inputs.uTaunt = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.uTaunt;
+                    replay->players[i].inputs.tapJump = fighter->getInput(fighter->getEntryIdFromIndex(i))->buttons.tapJump;
 
-                fighterInfo[0] = fighter->getFighter(fighter->getEntryIdFromIndex(i))->getOwner()->getDamage();
-                stockCount[0] = fighter->getFighter(fighter->getEntryIdFromIndex(i))->getOwner()->getStockCount();
+                    replay->players[i].inputs.leftStickX = fighter->getInput(fighter->getEntryIdFromIndex(i))->leftStickX;
+                    replay->players[i].inputs.leftStickY = fighter->getInput(fighter->getEntryIdFromIndex(i))->leftStickY;
 
-                auto *index = new int[1];
-                index[0] = i;
+                    replay->players[i].pos.xPos = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->xPos;
+                    replay->players[i].pos.yPos = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->yPos * -1;
+                    replay->players[i].pos.zPos = fighter->getFighter(fighter->getEntryIdFromIndex(i))->modules->postureModule->zPos;
 
-                EXIPacket indexPacket = EXIPacket(EXIStatus::INDEX, index, 1 * sizeof(int));
-                indexPacket.Send();
+                    replay->players[i].damage = fighter->getFighter(fighter->getEntryIdFromIndex(i))->getOwner()->getDamage();
+                    replay->players[i].stockCount = fighter->getFighter(fighter->getEntryIdFromIndex(i))->getOwner()->getStockCount();
+                }
 
-                EXIPacket inputPacket = EXIPacket(EXIStatus::INPUTS, actions, 9 * sizeof(u8));
-                inputPacket.Send();
+                EXIPacket replayPacket = EXIPacket(EXIStatus::REPLAYS_STRUCT, replay, sizeof(Replay));
+                replayPacket.Send();
 
-                EXIPacket positionsPacket = EXIPacket(EXIStatus::POS, positions, 3 * sizeof(float));
-                positionsPacket.Send();
-
-                EXIPacket stickPacket = EXIPacket(EXIStatus::STICK, stick, 2 * sizeof(float));
-                stickPacket.Send();
-
-                EXIPacket actionStatePacket = EXIPacket(EXIStatus::ACTIONSTATE, actionState, 1 * sizeof(u32));
-                actionStatePacket.Send();
-
-                EXIPacket stockPacket = EXIPacket(EXIStatus::STOCK_COUNT, stockCount, 1 * sizeof(int));
-                stockPacket.Send();
-
-                EXIPacket fighterPacket = EXIPacket(EXIStatus::FIGHTER, fighterInfo, 1 * sizeof(double));
-                fighterPacket.Send();
-
-                delete[] actions;
-                delete[] fighterInfo;
-                delete[] positions;
-                delete[] stick;
-                delete[] actionState;
-                delete[] stockCount;
-                delete[] index;
+                delete[] replay->items;
+                delete[] replay->players;
+                delete replay;
             }
         }
     }
