@@ -42,7 +42,6 @@ namespace ReplaysLogic {
 
                     startReplay->stage = game->globalModeMelee->stageID;
                     startReplay->numPlayers = FIGHTER_MANAGER->getEntryCount();
-                    startReplay->players = new StartReplayPlayer[FIGHTER_MANAGER->getEntryCount()];
                     for(int i = 0; i < FIGHTER_MANAGER->getEntryCount(); i++)
                     {
                         auto fighter = FIGHTER_MANAGER->getFighter(FIGHTER_MANAGER->getEntryIdFromIndex(i));
@@ -58,7 +57,6 @@ namespace ReplaysLogic {
 
                     EXIPacket startReplayPacket = EXIPacket(EXIStatus::START_REPLAYS_STRUCT, startReplay, sizeof(StartReplay));
                     startReplayPacket.Send();
-                    delete[] startReplay->players;
                     delete startReplay;
                 }
                 else
@@ -73,14 +71,12 @@ namespace ReplaysLogic {
                     replay->persistentFrameCounter = game->gameFrame->persistentFrameCounter;
 
                     if(sizeOfItems > 0) {
-                        replay->items = new ItemReplay[sizeOfItems];
                         for (int i = 0; i < sizeOfItems; i++) {
                             auto item = ITEM_MANAGER->baseItemArrayList.at(i);
                             replay->items[i].itemId = (*item)->getItKind();
                             replay->items[i].itemVariant = (*item)->getItVariation();
                         }
                     }
-                    replay->players = new PlayerReplay[fighter->getEntryCount()];
                     replay->numPlayers = fighter->getEntryCount();
                     for(int i = 0; i < fighter->getEntryCount(); i++)
                     {
@@ -109,8 +105,6 @@ namespace ReplaysLogic {
                     EXIPacket replayPacket = EXIPacket(EXIStatus::REPLAYS_STRUCT, replay, sizeof(Replay));
                     replayPacket.Send();
 
-                    delete[] replay->items;
-                    delete[] replay->players;
                     delete replay;
                 }
             }
