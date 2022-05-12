@@ -56,7 +56,7 @@ add_subdirectory(Codes)
 add_subdirectory(Libraries)
 add_subdirectory(Globals)
 
-
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_custom_target(build ALL
-        COMMAND ${builder} ${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/IncludedCodes ${PPC_BIN_DIRECTORY} ${functionMapDirectory}
+        COMMAND ${Python3_EXECUTABLE} ${builder} ${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/IncludedCodes ${PPC_BIN_DIRECTORY} ${functionMapDirectory}
         DEPENDS codeBarrier)
