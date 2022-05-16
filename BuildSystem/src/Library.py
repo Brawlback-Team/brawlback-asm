@@ -94,7 +94,7 @@ class FinalSectionNameLibrary(Library):
         if sections[1] == '':
             for s in sections:
                 if s[4] != '00000000':
-                    self._sections.add(Section(s[0], int((s[6]), base=16), int((s[5]), base=16), s[2]))
+                    self._sections.add(Section(s[0], int((s[6]), base=16), int((s[5]), base=16), s[4]))
                 initArrayRegex = '^ *[0-9]+ +(\\.init_array) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
                 initArraySection = re.search(initArrayRegex, text, flags=(re.MULTILINE))
                 if initArraySection:
