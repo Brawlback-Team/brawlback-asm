@@ -89,7 +89,7 @@ class FinalSectionNameLibrary(Library):
 
     def _initSections(self):
         text = objdump(self, '-h')
-        sectionRegex = '^ *[0-9]+ +((.*?__(text|rodata|sbss|bss|data|sdata)__.*?)|(.(text|rodata|sbss|bss|data|sdata))) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
+        sectionRegex = '^ *[0-9]+ +((.*?__(text|rodata|sbss|bss|data|sdata)__.*?)|(\.(text|rodata|sbss|bss|data|sdata))) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
         sections = re.findall(sectionRegex, text, flags=(re.MULTILINE))
         if sections[1] == '':
             for s in sections:
