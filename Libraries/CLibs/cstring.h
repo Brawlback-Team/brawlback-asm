@@ -27,5 +27,8 @@ char* strstr(const char* buffer, const char* target);
 int atoi(const char* buffer);
 // parses string as float
 float atof(const char* buffer);
+// parses int as string
+char* itoa(int num, char* buffer, int base);
+
 
 #endif //PROJECTMCODES_CSTRING_H
