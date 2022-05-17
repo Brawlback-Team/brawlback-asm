@@ -38,10 +38,8 @@ namespace ReplaysLogic {
 
                     auto* startReplay = new StartReplay();
 
-                    mtRand *rand = DEFAULT_MT_RAND;
-                    mtRand *otherRand = OTHER_MT_RAND;
-                    startReplay->randomSeed = rand->seed;
-                    startReplay->otherRandomSeed = otherRand->seed;
+                    startReplay->randomSeed = DEFAULT_MT_RAND->seed;
+                    startReplay->otherRandomSeed = OTHER_MT_RAND->seed;
 
                     startReplay->stage = gameGlobal->globalModeMelee->stageID;
                     startReplay->numPlayers = playerCount;
