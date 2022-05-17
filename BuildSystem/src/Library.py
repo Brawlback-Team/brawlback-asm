@@ -91,16 +91,15 @@ class FinalSectionNameLibrary(Library):
         text = objdump(self, '-h')
         sectionRegex = '^ *[0-9]+ +((.*?__(text|rodata|sbss|bss|data|sdata)__.*?)|(\.(text|rodata|sbss|bss|data|sdata))) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
         sections = re.findall(sectionRegex, text, flags=(re.MULTILINE))
-        if sections[1] == '':
-            for s in sections:
+        for s in sections:
+            if s[1] == '':
                 if s[4] != '00000000':
                     self._sections.add(Section(s[0], int((s[6]), base=16), int((s[5]), base=16), s[4]))
                 initArrayRegex = '^ *[0-9]+ +(\\.init_array) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
                 initArraySection = re.search(initArrayRegex, text, flags=(re.MULTILINE))
                 if initArraySection:
                     self._sections.add(Section('.init_array', int((initArraySection[3]), base=16), int((initArraySection[2]), base=16), 'rodata'))
-        else:
-            for s in sections:
+            else:
                 if s[2] != '00000000':
                     self._sections.add(Section(s[0], int((s[6]), base=16), int((s[5]), base=16), s[2]))
                 initArrayRegex = '^ *[0-9]+ +(\\.init_array) +([0-9a-fA-F]{8}) +([0-9a-fA-F]{8})'
