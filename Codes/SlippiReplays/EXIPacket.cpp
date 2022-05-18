@@ -9,12 +9,12 @@
 // Adapted code from Pine
 
 EXIPacket::EXIPacket(u8 EXIStatus, void* source, u32 size) {
-    // enough for the EXIStatus byte + size of the packet
+    // enough for the EXICommand byte + size of the packet
     u32 new_size = sizeof(EXIStatus) + size;
 
     u8* new_packet = (u8*)malloc(new_size, 32);
 
-    // copy EXIStatus byte into packet
+    // copy EXICommand byte into packet
     memcpy(new_packet, &EXIStatus, sizeof(EXIStatus));
 
     if (source) {

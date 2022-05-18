@@ -17,7 +17,7 @@ namespace ReplaysLogic {
     // called when match ends
     void FinishMatch() {
         recordInputs = false;
-        EXIPacket stagePacket = EXIPacket(EXIStatus::ENDGAME, nullptr, 0);
+        EXIPacket stagePacket = EXIPacket(EXICommand::ENDGAME, nullptr, 0);
         stagePacket.Send();
     }
 
@@ -53,7 +53,7 @@ namespace ReplaysLogic {
                         startReplay->players[i].startPlayer.zPos = fighter->modules->postureModule->zPos;
                     }
 
-                    EXIPacket startReplayPacket = EXIPacket(EXIStatus::START_REPLAYS_STRUCT, startReplay, sizeof(StartReplay));
+                    EXIPacket startReplayPacket = EXIPacket(EXICommand::START_REPLAYS_STRUCT, startReplay, sizeof(StartReplay));
                     startReplayPacket.Send();
                     delete startReplay;
                 }
@@ -103,7 +103,7 @@ namespace ReplaysLogic {
                         player.stockCount = fighter->getOwner()->getStockCount();
                     }
 
-                    EXIPacket replayPacket = EXIPacket(EXIStatus::REPLAYS_STRUCT, replay, sizeof(Replay));
+                    EXIPacket replayPacket = EXIPacket(EXICommand::REPLAYS_STRUCT, replay, sizeof(Replay));
                     replayPacket.Send();
 
                     delete replay;
