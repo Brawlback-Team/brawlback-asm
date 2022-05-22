@@ -16,7 +16,7 @@ int BaseItem::getParamI(int paramIdx) {
   return _iGetParam_BaseItem(this, paramIdx);
 }
 
-itemIdName BaseItem::getItKind() {
+ItemIdName BaseItem::getItKind() {
     return _getItKind_BaseItem(this);
 }
 

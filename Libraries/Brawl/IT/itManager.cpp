@@ -8,15 +8,15 @@ BaseItem* itManager::getItemFromIndex(u32 index) {
     return _getItemFromIndex_itManager(this, index);
 }
 
-BaseItem* itManager::createItem(itemIdName itemID, u32 variantID) {
+BaseItem* itManager::createItem(ItemIdName itemID, u32 variantID) {
     return _createItem_itManager(this, itemID, variantID, 0xFFFFFFFF, 0, 0, 0xFFFF, 0, 0xFFFF);
 }
 
-void itManager::preloadAssist(itemIdName itemID) {
+void itManager::preloadAssist(ItemIdName itemID) {
     _preloadAssist_itManager(this, itemID);
 }
 
-void itManager::preloadItemKindArchive(itemIdName id) {
+void itManager::preloadItemKindArchive(ItemIdName id) {
     _preloadItemKindArchive_itManager(this, id, 0x1388, 0x1, 0x1);
 }
 

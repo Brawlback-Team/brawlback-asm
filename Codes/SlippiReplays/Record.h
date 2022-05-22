@@ -12,5 +12,6 @@
 #include <Wii/mtRand.h>
 #include <Brawl/IT/itManager.h>
 #include "EXIPacket.h"
+#include "brawlback-exi-structures/ExiStructures.h"
 
 #endif //PROJECTMCODES_REPLAY_H
