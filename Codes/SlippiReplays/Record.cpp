@@ -36,77 +36,77 @@ namespace ReplaysLogic {
                 {
                     entryFrame = false;
 
-                    auto* startReplay = new StartReplay();
+                    StartReplay startReplay;
 
-                    startReplay->randomSeed = DEFAULT_MT_RAND->seed;
-                    startReplay->otherRandomSeed = OTHER_MT_RAND->seed;
+                    startReplay.firstFrame = gameGlobal->gameFrame->frameCounter;
+                    startReplay.randomSeed = DEFAULT_MT_RAND->seed;
+                    startReplay.otherRandomSeed = OTHER_MT_RAND->seed;
 
-                    startReplay->stage = gameGlobal->globalModeMelee->stageID;
-                    startReplay->numPlayers = playerCount;
+                    startReplay.stage = gameGlobal->globalModeMelee->stageID;
+                    startReplay.numPlayers = playerCount;
                     for(int i = 0; i < playerCount; i++)
                     {
                         auto fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(i));
-                        startReplay->players[i].fighterKind = fighter->getFtKind();
+                        startReplay.players[i].fighterKind = fighter->getFtKind();
 
-                        startReplay->players[i].startPlayer.xPos = fighter->modules->postureModule->xPos;
-                        startReplay->players[i].startPlayer.yPos = fighter->modules->postureModule->yPos * -1;
-                        startReplay->players[i].startPlayer.zPos = fighter->modules->postureModule->zPos;
+                        startReplay.players[i].startPlayer.xPos = fighter->modules->postureModule->xPos;
+                        startReplay.players[i].startPlayer.yPos = fighter->modules->postureModule->yPos * -1;
+                        startReplay.players[i].startPlayer.zPos = fighter->modules->postureModule->zPos;
                     }
 
-                    EXIPacket startReplayPacket = EXIPacket(EXICommand::START_REPLAYS_STRUCT, startReplay, sizeof(StartReplay));
+                    EXIPacket startReplayPacket = EXIPacket(EXICommand::START_REPLAYS_STRUCT, &startReplay, sizeof(StartReplay));
                     startReplayPacket.Send();
-                    delete startReplay;
                 }
                 else
                 {
                     int sizeOfItems = itemManager->baseItemArrayList.size();
 
-                    auto* replay = new Replay();
-                    replay->numItems = sizeOfItems;
-                    replay->frameCounter = gameGlobal->gameFrame->frameCounter;
-                    replay->persistentFrameCounter = gameGlobal->gameFrame->persistentFrameCounter;
+                    Replay replay;
+                    replay.numItems = sizeOfItems;
+                    replay.frameCounter = gameGlobal->gameFrame->frameCounter;
+                    replay.persistentFrameCounter = gameGlobal->gameFrame->persistentFrameCounter;
 
                     if(sizeOfItems > 0) {
                         for (int i = 0; i < sizeOfItems; i++) {
                             auto item = itemManager->baseItemArrayList.at(i);
-                            auto replayItem = replay->items[i];
+                            auto& replayItem = replay.items[i];
                             replayItem.itemId = (*item)->getItKind();
                             replayItem.itemVariant = (*item)->getItVariation();
                         }
                     }
-                    replay->numPlayers = playerCount;
+                    replay.numPlayers = playerCount;
                     for(int i = 0; i < playerCount; i++)
                     {
                         auto fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(i));
-                        auto player = replay->players[i];
+                        auto& player = replay.players[i];
+                        auto& inputs = player.inputs;
+                        auto& pos = player.pos;
                         auto fighterInput = fighterManager->getInput(fighterManager->getEntryIdFromIndex(i));
                         const soStatusModuleImpl *stageObject = fighter->modules->statusModule;
 
                         player.actionState = stageObject->action;
-                        player.inputs.attack = fighterInput->buttons.attack;
-                        player.inputs.special = fighterInput->buttons.special;
-                        player.inputs.jump = fighterInput->buttons.jump;
-                        player.inputs.shield = fighterInput->buttons.shield;
-                        player.inputs.dTaunt = fighterInput->buttons.dTaunt;
-                        player.inputs.sTaunt = fighterInput->buttons.sTaunt;
-                        player.inputs.uTaunt = fighterInput->buttons.uTaunt;
-                        player.inputs.tapJump = fighterInput->buttons.tapJump;
+                        inputs.attack = fighterInput->buttons.attack;
+                        inputs.special = fighterInput->buttons.special;
+                        inputs.jump = fighterInput->buttons.jump;
+                        inputs.shield = fighterInput->buttons.shield;
+                        inputs.dTaunt = fighterInput->buttons.dTaunt;
+                        inputs.sTaunt = fighterInput->buttons.sTaunt;
+                        inputs.uTaunt = fighterInput->buttons.uTaunt;
+                        inputs.tapJump = fighterInput->buttons.tapJump;
 
-                        player.inputs.leftStickX = fighterInput->leftStickX;
-                        player.inputs.leftStickY = fighterInput->leftStickY;
+                        inputs.leftStickX = fighterInput->leftStickX;
+                        inputs.leftStickY = fighterInput->leftStickY;
 
-                        player.pos.xPos = fighter->modules->postureModule->xPos;
-                        player.pos.yPos = fighter->modules->postureModule->yPos * -1;
-                        player.pos.zPos = fighter->modules->postureModule->zPos;
+                        pos.xPos = fighter->modules->postureModule->xPos;
+                        pos.yPos = fighter->modules->postureModule->yPos * -1;
+                        pos.zPos = fighter->modules->postureModule->zPos;
 
                         player.damage = fighter->getOwner()->getDamage();
                         player.stockCount = fighter->getOwner()->getStockCount();
                     }
 
-                    EXIPacket replayPacket = EXIPacket(EXICommand::REPLAYS_STRUCT, replay, sizeof(Replay));
+                    EXIPacket replayPacket = EXIPacket(EXICommand::REPLAYS_STRUCT, &replay, sizeof(Replay));
                     replayPacket.Send();
-
-                    delete replay;
                 }
             }
         }

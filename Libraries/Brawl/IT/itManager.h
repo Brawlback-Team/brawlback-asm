@@ -1,6 +1,7 @@
 #ifndef PROJECTMCODES_ITMANAGER_H
 #define PROJECTMCODES_ITMANAGER_H
 
+#include "stdtypes.h"
 #include "Brawl/IT/BaseItem.h"
 #include "Containers/ArrayList.h"
 
