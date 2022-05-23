@@ -45,6 +45,8 @@ SOFTWARE.
 
 #if defined(ETL_IN_UNIT_TEST) || ETL_USING_STL
   #include <memory>
+#include <cstring>
+
 #endif
 
 ///\defgroup memory memory
