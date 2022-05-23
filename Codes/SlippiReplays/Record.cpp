@@ -38,6 +38,17 @@ namespace ReplaysLogic {
 
                     StartReplay startReplay;
 
+                    const auto p1 = std::chrono::system_clock::now();
+                    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
+                    char buffer[256];
+                    auto timestampStr = itoa(timestamp, buffer, 10);
+                    etl::string<256> name = "Game_";
+                    name.append(timestampStr);
+
+                    std::memcpy(startReplay.nameBuffer, name.data(), name.size() + 1);
+                    startReplay.nameBuffer[name.size()] = '\0';
+                    startReplay.nameSize = name.size() + 1;
+
                     startReplay.firstFrame = gameGlobal->gameFrame->frameCounter;
                     startReplay.randomSeed = DEFAULT_MT_RAND->seed;
                     startReplay.otherRandomSeed = OTHER_MT_RAND->seed;

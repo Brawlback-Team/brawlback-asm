@@ -13,5 +13,9 @@
 #include <Brawl/IT/itManager.h>
 #include "EXIPacket.h"
 #include "brawlback-exi-structures/ExiStructures.h"
+#include <etl/string.h>
+#include <chrono>
+#include <cstdio>
+#include <cstring>
 
 #endif //PROJECTMCODES_REPLAY_H
