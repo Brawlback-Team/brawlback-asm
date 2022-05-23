@@ -2,11 +2,6 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
 
-// #define NETPLAY_IMPL 1
-// #define ROLLBACK_IMPL 1
-
-#include <cstdlib>
-#include <cstring>
 
 
 STARTUP(startupNotif) {

@@ -5,8 +5,6 @@
 #include <Graphics/TextPrinter.h>
 #include <cstdio>
 
-#define strcat ((int (*)(char* destination, const char* source)) 0x803fa384)
-
 #define RENDER_X_SPACING 80
 #define RENDER_SCALE_X 0.5;
 #define RENDER_SCALE_Y 0.5;

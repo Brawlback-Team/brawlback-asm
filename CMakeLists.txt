@@ -13,11 +13,13 @@ set(CMAKE_CROSSCOMPILING 1)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     include(CMake/DebugSettings.cmake)
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 include(CMake/Paths.cmake)
 include(CMake/Functions.cmake)
 
 
 create_folder(${PROJECT_BINARY_DIR}/TempCodes)
+
 add_custom_target(resetIncludedCodes ALL
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/IncludedCodes && ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/IncludedCodes
         BYPRODUCTS ${PROJECT_BINARY_DIR}/IncludedCodes/*
@@ -39,6 +41,7 @@ function(add_code codeName)
             ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/TempCodes)
     SET_TARGET_PROPERTIES(${codeName} PROPERTIES SUFFIX "")
     SET_TARGET_PROPERTIES(${codeName} PROPERTIES PREFIX "")
+
     add_dependencies(codeBarrier MOVE_${codeName})
 endfunction()
 
