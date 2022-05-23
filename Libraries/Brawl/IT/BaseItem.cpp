@@ -1,4 +1,5 @@
 #include "BaseItem.h"
+#include "brawlback-exi-structures/ItemIdName.h"
 
 void BaseItem::warp(Vec3f* location) {
   _warp_BaseItem(this, location);

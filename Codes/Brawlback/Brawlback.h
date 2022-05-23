@@ -13,6 +13,7 @@
 #include "Brawl/GF/gfPadSystem.h"
 #include "Brawl/FT/ftManager.h"
 #include "Brawl/gmGlobalModeMelee.h"
+#include "Brawl/GF/gfApplication.h"
 #include "Wii/mtRand.h"
 #include "Wii/OS/OSTime.h"
 #include "EXIPacket.h"
@@ -27,8 +28,15 @@
 // ------------------------------------
 
 // make sure this is the same as the one in BrawlbackUtility.cpp on dolphin side
+#define MAX_ROLLBACK_FRAMES 5
 
 #define MAX_REMOTE_PLAYERS 3
+#define MAX_NUM_PLAYERS 4
+
+
+#define NAMETAG_SIZE 8
+#define DISPLAY_NAME_SIZE 31
+#define CONNECT_CODE_SIZE 10
 
 #define getGfSceneManager ((void* (*)()) 0x8002d018)
 #define setNextSeq ((void (*)(void* gfSceneManager, const char* name, int unk)) 0x8002d640)
@@ -46,6 +54,15 @@
 #define setNextSqNetAnyOkiraku ((void (*)(void* unk1)) 0x806f2320)
 
 #define updateGame (( void (*)(gfPadSystem* pad_system) ) 0x8002a4f8)
+
+#define modeChange ( ( void (*) (void* ipswitch, int mode) ) 0x8004a914)
+
+#define getGamePadStatus (( int (*) (gfPadSystem* pad_system, int port, gfPadGamecube* dst) ) 0x8002ac54)
+#define getPadInput ( ( void (*) (void* pad_config, u32 playerIdx, gfPadGamecube* current_inputs, u32* pad_status) ) 0x8004a468)
+#define getPadCofigInstance ( (void* (*) ()) 0x80048548)
+#define getIpSwitchInstance ( (void* (*) ()) 0x8004a750)
+
+#define setPause ( ( void (*) (gfApplication* application, bool isPaused, int unk) ) 0x80016900)
 
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
