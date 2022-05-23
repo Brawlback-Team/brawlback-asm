@@ -14,7 +14,6 @@
 #include "Graphics/Draw.h"
 #include "Brawl/Message.h"
 
-#define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
 #define strcat ((int (*)(char* destination, const char* source)) 0x803fa384)
 #define strcmp ((int (*)(const char* str1, const char* str2)) 0x803fa3fc)
 #define OSReport ((void (*)(const char* text, ...)) 0x801d8600)

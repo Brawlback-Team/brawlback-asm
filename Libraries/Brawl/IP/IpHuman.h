@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_IPHUMAN_H
 #define PROJECTMCODES_IPHUMAN_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 
 struct IpHuman {

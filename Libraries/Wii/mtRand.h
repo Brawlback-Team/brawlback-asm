@@ -6,7 +6,7 @@
 #define PROJECTMCODES_MTRAND_H
 
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 //pretty sure mt stands for math
 struct mtRand {

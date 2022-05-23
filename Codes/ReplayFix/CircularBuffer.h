@@ -6,7 +6,7 @@
 #define PROJECTMCODES_CIRCULARBUFFER_H
 
 
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Memory.h"
 
 struct CircularBuffer {

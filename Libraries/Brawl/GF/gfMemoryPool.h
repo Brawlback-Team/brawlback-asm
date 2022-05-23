@@ -5,6 +5,7 @@
 #ifndef PROJECTMCODES_GFMEMORYPOOL_H
 #define PROJECTMCODES_GFMEMORYPOOL_H
 
+#include "stdtypes.h"
 #include "stddef.h"
 
 struct gfMemoryPool {

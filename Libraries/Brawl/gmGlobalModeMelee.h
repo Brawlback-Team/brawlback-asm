@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_GMGLOBALMODEMELEE_H
 #define PROJECTMCODES_GMGLOBALMODEMELEE_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 struct gmGlobalModeMelee {
     char _spacer[0x1B];

@@ -29,7 +29,6 @@ add_custom_target(resetIncludedCodes ALL
 #Used to wait until everything is built
 add_custom_target(codeBarrier DEPENDS resetIncludedCodes)
 
-
 #Build individual codes
 #Every individual library runs this function
 function(add_code codeName)

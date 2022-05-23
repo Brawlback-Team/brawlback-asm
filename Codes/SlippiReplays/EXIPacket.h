@@ -1,7 +1,7 @@
 #ifndef PROJECTMCODES_EXIPACKET_H
 #define PROJECTMCODES_EXIPACKET_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 // Adapted code from Pine
 

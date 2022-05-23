@@ -2,6 +2,8 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
 
+
+
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }

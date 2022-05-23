@@ -4,6 +4,8 @@
 
 #include "Setup.h"
 
+#include <cstring>
+
 INJECTION("setup", 0x80017504, R"(
     SAVE_REGS
     li r3, 0

@@ -6,8 +6,11 @@
 #define CSSCUSTOMCONTROLS_VECTOR_H
 
 #include "Memory.h"
+#include "stdtypes.h"
+
+#include <cstdlib>
+#include <initializer_list>
 #include "stddef.h"
-#include "etl/initializer_list.h"
 
 template<class T>
 class vector {

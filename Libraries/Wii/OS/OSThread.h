@@ -1,8 +1,10 @@
 #pragma once
 
-#include "stddef.h"
+#include "stdtypes.h"
 #include "OSTime.h"
 #include "OSContext.h"
+
+#include <cstddef>
 
 #define OS_THREAD_SPECIFIC_MAX  2
 

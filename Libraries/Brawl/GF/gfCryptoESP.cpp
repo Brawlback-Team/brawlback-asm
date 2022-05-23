@@ -3,7 +3,7 @@
 //
 
 #include "gfCryptoESP.h"
-
+#include <cstring>
 
 void* encrypt(void* source, u32 size) {
     auto crypto = gfCryptoESP();

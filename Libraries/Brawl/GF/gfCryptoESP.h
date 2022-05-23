@@ -6,7 +6,8 @@
 #define PROJECTMCODES_GFCRYPTOESP_H
 
 
-#include <stddef.h>
+#include <stdtypes.h>
+#include <cstddef>
 #include "Memory.h"
 
 //Returns dynamically allocated encryption, blocking

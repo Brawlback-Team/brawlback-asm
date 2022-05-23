@@ -1,6 +1,7 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
 #include "etl/array.h"
+#include <cstdlib>
 
 
 namespace Netplay {

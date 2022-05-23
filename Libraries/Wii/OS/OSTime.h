@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 typedef s64         OSTime;
 typedef u32         OSTick;

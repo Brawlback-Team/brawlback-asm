@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stddef.h"
+#include "stdtypes.h"
 
 asm(R"(
 .set sp, 1;  .set rtoc, 2;

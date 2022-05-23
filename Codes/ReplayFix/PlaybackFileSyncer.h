@@ -6,7 +6,7 @@
 #define PROJECTMCODES_PLAYBACKFILESYNCER_H
 
 
-#include <stddef.h>
+#include <stdtypes.h>
 #include <Brawl/GF/gfFileIORequest.h>
 #include "Containers/vector.h"
 #include "Debug.h"

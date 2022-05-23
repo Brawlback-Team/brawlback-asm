@@ -1,2 +1,2 @@
 
-add_compile_definitions(-DETL_NO_STL)
+add_compile_definitions(-DETL_USING_STL)

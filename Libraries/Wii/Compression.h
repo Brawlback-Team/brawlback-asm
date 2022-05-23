@@ -6,7 +6,7 @@
 #define PROJECTMCODES_COMPRESSION_H
 
 
-#include <stddef.h>
+#include <stdtypes.h>
 
 
 #define CX_LZ_COMPRESS_WORK_SIZE (0x2400)

@@ -6,7 +6,7 @@
 #define PROJECTMCODES_SCMELEE_H
 
 
-#include <stddef.h>
+#include <stdtypes.h>
 
 struct scMelee {
     char _spacer[0xD8];

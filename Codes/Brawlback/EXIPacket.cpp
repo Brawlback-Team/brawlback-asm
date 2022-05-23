@@ -3,7 +3,6 @@
 #include "Assembly.h"
 #include "Debug.h"
 #include "Wii/EXI/EXI.h"
-#include "CLibs/cstring.h"
 #include "Wii/OS/OSInterrupt.h"
 
 EXICommand EXIPacket::getCmd() { return this->cmd; }
@@ -17,7 +16,7 @@ EXIPacket::EXIPacket(u8 EXICmd, void* source, u32 size) {
     // enough for the EXICmd byte + size of the packet
     u32 new_size = sizeof(EXICmd) + size;
 
-    u8* new_packet = (u8*)malloc(new_size, 32);
+    u8* new_packet = (u8*)allocFromExpHeap(mainHeap, new_size, 32);
 
     // copy EXICmd byte into packet
     memcpy(new_packet, &EXICmd, sizeof(EXICmd));

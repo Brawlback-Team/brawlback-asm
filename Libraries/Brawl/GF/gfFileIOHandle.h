@@ -5,8 +5,6 @@
 #ifndef PROJECTMCODES_GFFILEIOHANDLE_H
 #define PROJECTMCODES_GFFILEIOHANDLE_H
 
-
-#include "stddef.h"
 #include "gfFileIORequest.h"
 
 struct gfFileIOHandle {

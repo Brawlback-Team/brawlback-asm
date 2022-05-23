@@ -6,6 +6,7 @@
 #define PROJECTMCODES_GFFILEIO_H
 
 
+#include "stdtypes.h"
 #include "stddef.h"
 
 struct gfFileIO {

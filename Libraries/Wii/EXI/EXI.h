@@ -5,7 +5,7 @@
 #ifndef PROJECTMCODES_EXI_H
 #define PROJECTMCODES_EXI_H
 
-#include "stddef.h"
+#include "stdtypes.h"
 #include "Memory.h"
 #include "Wii/OS/OSCache.h"
 
