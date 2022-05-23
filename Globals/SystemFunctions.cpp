@@ -2,6 +2,7 @@
 //listed memory addresses (instead of linking in libc.a implementations)
 
 #include "Memory.h"
+#include <stdarg.h>
 
 #define system_memmove ((void* const (*)(void* dest, const void* source, size_t size)) 0x803f602c)
 #define system_memset ((void* (*)(void* data, int value, size_t size)) 0x8000443c)
@@ -10,10 +11,8 @@
 #define system_strcat ((char* (*)(char* destination, const char* source)) 0x803fa384)
 #define system_strcpy ((char* (*)(char* destination, const char* source)) 0x803fa280)
 
-//used anywhere?
 #define system_strcpylen ((char* (*)(char* destination, const char* source, int size)) 0x803fa340)
-//used anywhere?
-#define system_sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
+#define system_vsprintf ((int (*)(char* buffer, const char* format, va_list arglist)) 0x803f88a4)
 #define system_strstr ((char* (*)(const char* buffer, const char* target)) 0x803fa798)
 #define system_strcmp ((int (*)(const char* str1, const char* str2)) 0x803fa3fc)
 
@@ -66,7 +65,16 @@ extern "C" float atof( const char* buffer){
 	return system_atof( buffer );
 }
 
-//not sure how to pass var number of arguments through to system_sprintf
-// extern "C" int sprintf( char* buffer, const char* format, ... ){
-// 	return system_sprintf( buffer, format, ... );
-// }
+//sprintf reimplemented through vsprintf, because can't figure out a way to 
+//pass ... args through to another function
+extern "C" int sprintf( char* buffer, const char* format, ... ){
+	va_list arglist;
+	va_start( arglist, format );
+	int ret = system_vsprintf(buffer, format, arglist );
+	va_end( arglist );
+	return ret;
+}
+
+extern "C" int vsprintf( char* buffer, const char* format, va_list arglist ){
+	return system_vsprintf(buffer, format, arglist );
+}

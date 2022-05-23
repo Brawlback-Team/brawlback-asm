@@ -6,7 +6,6 @@
 #include <cstdio>
 
 #define strcat ((int (*)(char* destination, const char* source)) 0x803fa384)
-// #define sprintf ((int (*)(char* buffer, const char* format, ...)) 0x803f89fc)
 
 #define RENDER_X_SPACING 80
 #define RENDER_SCALE_X 0.5;
