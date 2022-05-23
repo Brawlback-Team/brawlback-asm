@@ -19,19 +19,19 @@ struct gfPadGamecube {
 	PADButtons buttons;
 	char _spacer2[0x30 - 6 - sizeof(PADButtons)];
 	//0x30
-	char stickX;
-	char stickY;
-	char cStickX;
-	char cStickY;
-	char LTrigger;
-	char RTrigger;
+	s8 stickX;
+	s8 stickY;
+	s8 cStickX;
+	s8 cStickY;
+	s8 LTrigger;
+	s8 RTrigger;
 
 	char _spacer3[0x38 - 0x30 - 6];
 	//0x38
 	//0xFF if not connected, else 0
 	bool isNotConnected;
 
-    char _spacer4[0x3C - 0x38 - 1];
+    s8 _spacer4[0x3C - 0x38 - 1];
 
 	//0x3C
 	controllerType type = GAMECUBE;
