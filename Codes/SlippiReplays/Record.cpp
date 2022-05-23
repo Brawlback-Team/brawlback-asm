@@ -20,7 +20,17 @@ namespace ReplaysLogic {
         EXIPacket stagePacket = EXIPacket(EXICommand::ENDGAME, nullptr, 0);
         stagePacket.Send();
     }
-
+    template <class T>
+    int numDigits(T number)
+    {
+        int digits = 0;
+        if (number < 0) digits = 1; // remove this line if '-' counts as a digit
+        while (number) {
+            number /= 10;
+            digits++;
+        }
+        return digits;
+    }
     // called at the beginning of the logic in a frame
     void StartFrame() {
         if(recordInputs)
@@ -38,16 +48,17 @@ namespace ReplaysLogic {
 
                     StartReplay startReplay;
 
-                    const auto p1 = std::chrono::system_clock::now();
-                    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
-                    char buffer[256];
-                    auto timestampStr = itoa(timestamp, buffer, 10);
+                    auto timestamp = OSTimeToCalendarTime(getTime());
                     etl::string<256> name = "Game_";
-                    name.append(timestampStr);
+                    auto timestampStr = std::to_string(timestamp.year) + std::to_string(timestamp.mon + 1) + std::to_string(timestamp.mday) +
+                                        "T" + std::to_string(timestamp.hour) + std::to_string(timestamp.min) + std::to_string(timestamp.sec);
+                    for(char character : timestampStr)
+                    {
+                        name.push_back(character);
+                    }
 
                     std::memcpy(startReplay.nameBuffer, name.data(), name.size() + 1);
-                    startReplay.nameBuffer[name.size()] = '\0';
-                    startReplay.nameSize = name.size() + 1;
+                    startReplay.nameSize = name.size();
 
                     startReplay.firstFrame = gameGlobal->gameFrame->frameCounter;
                     startReplay.randomSeed = DEFAULT_MT_RAND->seed;
