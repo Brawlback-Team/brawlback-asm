@@ -26,21 +26,21 @@ namespace ReplaysLogic {
     //write replay name directly into buffer
     u8 writeReplayFileName( u8* buffer, size_t bufferSize)
     {
-        const auto timestamp = OSTimeToCalendarTime(getTime());
+        const auto calendarTime = OSTimeToCalendarTime(getTime());
 
         //cast buffer to char* so to_chars works correctly
         auto nameBufferChar = reinterpret_cast<char*>(buffer);
         std::memcpy(nameBufferChar, REPLAY_FILENAME_START.data(), REPLAY_FILENAME_START.size());
         
         const auto nameBufferEnd = nameBufferChar + bufferSize;
-        auto res = std::to_chars( nameBufferChar + REPLAY_FILENAME_START.size(), nameBufferEnd, timestamp.year);
-        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.mon + 1);
-        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.mday);
+        auto res = std::to_chars( nameBufferChar + REPLAY_FILENAME_START.size(), nameBufferEnd, calendarTime.year);
+        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.mon + 1);
+        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.mday);
         *res.ptr = 'T';
         res.ptr++;
-        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.hour);
-        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.min);
-        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.sec);
+        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.hour);
+        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.min);
+        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.sec);
         const size_t stringSize = std::distance(nameBufferChar, res.ptr);
 
         //size of string is definitely small enough to fit in u8
