@@ -49,15 +49,12 @@ namespace ReplaysLogic {
                     StartReplay startReplay;
 
                     auto timestamp = OSTimeToCalendarTime(getTime());
-                    etl::string<256> name = "Game_";
+                    std::string name = "Game_";
                     auto timestampStr = std::to_string(timestamp.year) + std::to_string(timestamp.mon + 1) + std::to_string(timestamp.mday) +
                                         "T" + std::to_string(timestamp.hour) + std::to_string(timestamp.min) + std::to_string(timestamp.sec);
-                    for(char character : timestampStr)
-                    {
-                        name.push_back(character);
-                    }
+                    name += timestampStr;
 
-                    std::memcpy(startReplay.nameBuffer, name.data(), name.size() + 1);
+                    std::memcpy(startReplay.nameBuffer, name.data(), name.size());
                     startReplay.nameSize = name.size();
 
                     startReplay.firstFrame = gameGlobal->gameFrame->frameCounter;
