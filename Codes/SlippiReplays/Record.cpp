@@ -1,5 +1,3 @@
-#include <charconv>
-
 #include "Record.h"
 
 namespace ReplaysLogic {
@@ -21,17 +19,6 @@ namespace ReplaysLogic {
         recordInputs = false;
         EXIPacket stagePacket = EXIPacket(EXICommand::ENDGAME, nullptr, 0);
         stagePacket.Send();
-    }
-    template <class T>
-    int numDigits(T number)
-    {
-        int digits = 0;
-        if (number < 0) digits = 1; // remove this line if '-' counts as a digit
-        while (number) {
-            number /= 10;
-            digits++;
-        }
-        return digits;
     }
 
     constexpr std::string_view REPLAY_FILENAME_START = "Game_";
