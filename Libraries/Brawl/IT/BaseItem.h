@@ -2,6 +2,7 @@
 #ifndef PROJECTMCODES_BASEITEM_H
 #define PROJECTMCODES_BASEITEM_H
 
+#include "stdtypes.h"
 #include "brawlback-exi-structures/ItemIdName.h"
 #include "Brawl/SO/StageObject.h"
 #include "Brawl/SO/soModuleAccessor.h"
