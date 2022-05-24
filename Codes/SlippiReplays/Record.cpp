@@ -1,3 +1,5 @@
+#include <charconv>
+
 #include "Record.h"
 
 namespace ReplaysLogic {
@@ -31,6 +33,33 @@ namespace ReplaysLogic {
         }
         return digits;
     }
+
+    constexpr std::string_view REPLAY_FILENAME_START = "Game_";
+
+    //write replay name directly into buffer
+    u8 writeReplayFileName( u8* buffer, size_t bufferSize)
+    {
+        const auto timestamp = OSTimeToCalendarTime(getTime());
+
+        //cast buffer to char* so to_chars works correctly
+        auto nameBufferChar = reinterpret_cast<char*>(buffer);
+        std::memcpy(nameBufferChar, REPLAY_FILENAME_START.data(), REPLAY_FILENAME_START.size());
+        
+        const auto nameBufferEnd = nameBufferChar + bufferSize;
+        auto res = std::to_chars( nameBufferChar + REPLAY_FILENAME_START.size(), nameBufferEnd, timestamp.year);
+        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.mon + 1);
+        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.mday);
+        *res.ptr = 'T';
+        res.ptr++;
+        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.hour);
+        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.min);
+        res = std::to_chars( res.ptr, nameBufferEnd, timestamp.sec);
+        const size_t stringSize = std::distance(nameBufferChar, res.ptr);
+
+        //size of string is definitely small enough to fit in u8
+        return static_cast<u8>(stringSize);
+    }
+
     // called at the beginning of the logic in a frame
     void StartFrame() {
         if(recordInputs)
@@ -47,15 +76,9 @@ namespace ReplaysLogic {
                     entryFrame = false;
 
                     StartReplay startReplay;
-
-                    auto timestamp = OSTimeToCalendarTime(getTime());
-                    std::string name = "Game_";
-                    auto timestampStr = std::to_string(timestamp.year) + std::to_string(timestamp.mon + 1) + std::to_string(timestamp.mday) +
-                                        "T" + std::to_string(timestamp.hour) + std::to_string(timestamp.min) + std::to_string(timestamp.sec);
-                    name += timestampStr;
-
-                    std::memcpy(startReplay.nameBuffer, name.data(), name.size());
-                    startReplay.nameSize = name.size();
+                    
+                    const u8 fileNameSize = writeReplayFileName( startReplay.nameBuffer, std::size(startReplay.nameBuffer));
+                    startReplay.nameSize = fileNameSize;
 
                     startReplay.firstFrame = gameGlobal->gameFrame->frameCounter;
                     startReplay.randomSeed = DEFAULT_MT_RAND->seed;
