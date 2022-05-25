@@ -133,7 +133,8 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     OSReport("P1 char: %u  P2 char: %u\n", (unsigned int)p1_char, (unsigned int)p2_char);
     OSReport("Stage id: %u\n", (unsigned int)settings.stageID);
 
-    GMMelee::PopulateMatchSettings( {p1_char, p2_char, -1, -1}, settings.stageID );
+    int chars[4] = {p1_char, p2_char, -1, -1};
+    GMMelee::PopulateMatchSettings(chars, settings.stageID );
 }
 
 

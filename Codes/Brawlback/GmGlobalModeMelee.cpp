@@ -14,7 +14,7 @@ namespace GMMelee {
     vector<int> charChoices = {-1, -1, -1, -1};
     int stageChoice = -1;
 
-    void PopulateMatchSettings(vector<int> chars, int stageID) {
+    void PopulateMatchSettings(int chars[4], int stageID) {
         for (int i = 0; i < 4; i++) {
             charChoices[i] = chars[i];
         }

@@ -6,7 +6,7 @@
 
 namespace GMMelee {
 
-    void PopulateMatchSettings(vector<int> chars, int stageID);
+    void PopulateMatchSettings(int chars[4], int stageID);
     void ResetMatchChoicesPopulated();
 
 }
