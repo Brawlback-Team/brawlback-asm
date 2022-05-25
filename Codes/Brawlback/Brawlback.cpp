@@ -1,7 +1,7 @@
 #include "Brawlback.h"
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
-
+#include <vector>
 
 
 STARTUP(startupNotif) {
@@ -230,7 +230,7 @@ namespace FrameAdvance {
     }
 
     // for keeping track of the past few framedatas
-    vector<FrameData*> pastFrameDatas = {};
+    std::vector<FrameData*> pastFrameDatas = {};
 
     void FindInputsForResimFrame(u32 frameToFind, FrameData* inputs) {
         bool foundInputs = false;
@@ -441,7 +441,7 @@ namespace FrameLogic {
                 // so this kinda has to be a heap alloc here. Fix vector impl and get rid of the malloc here in the future
                 FrameData* pastFD = (FrameData*)malloc(sizeof(FrameData));
                 memcpy(pastFD, &rollbackInfo.pastFrameDatas[i], sizeof(FrameData));
-                FrameAdvance::pastFrameDatas.push(pastFD);
+                FrameAdvance::pastFrameDatas.push_back(pastFD);
             }
             OSReport("Populated gameside pastFrameDatas. Num frames to resim: %i\n", numFramesToResimulate);
         }
@@ -450,7 +450,7 @@ namespace FrameLogic {
         }
 
         // do the actual rollback (load state)
-        EXIPacket stateReloadPckt = EXIPacket(EXICommand::CMD_LOAD_SAVESTATE, &rollbackInfo, sizeof(RollbackInfo)).Send();
+        EXIPacket(EXICommand::CMD_LOAD_SAVESTATE, &rollbackInfo, sizeof(RollbackInfo)).Send();
         // trigger fast forward (resimulation)
         FrameAdvance::TriggerFastForwardState(numFramesToResimulate);
         // mark current state as rolling back/resim-ing
@@ -617,7 +617,7 @@ namespace FrameLogic {
                 FrameData* tmp_fd = (FrameData*)malloc(sizeof(FrameData));
                 memcpy(tmp_fd, &framedata, sizeof(FrameData));
                 // if rollbacks are enabled, but not netplay, track past inputs for resim
-                FrameAdvance::pastFrameDatas.push(tmp_fd);
+                FrameAdvance::pastFrameDatas.push_back(tmp_fd);
 
                 bool shouldRollback = currentFrame % 7 == 0; 
                 const int numFramesToRollback = MAX_ROLLBACK_FRAMES;
