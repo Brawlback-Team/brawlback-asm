@@ -12,11 +12,16 @@
 #include <Wii/mtRand.h>
 #include <Brawl/IT/itManager.h>
 #include "EXIPacket.h"
-#include "Containers/vector.h"
 #include "Wii/OS/OSInterrupt.h"
-#include "menu.h"
 #include "Brawl/sndSystem.h"
 #include "Graphics/Drawable.h"
-#include "etl/string.h"
+#include "Utilities/Utility.h"
+#include "brawlback-exi-structures/StartReplay.h"
+#include <vector>
+#include <string>
+#include "Brawl/MU/muCollectionViewer.h"
+#include "Brawl/GF/gfPadSystem.h"
+#include "Brawl/GF/gfFileIOHandle.h"
+#include "Brawl/GF/gfCollectionIO.h"
 
 #endif //PROJECTMCODES_PLAYBACKMENU_H
