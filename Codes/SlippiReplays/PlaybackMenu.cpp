@@ -161,29 +161,35 @@ namespace ReplayMenus {
     }
 
     INJECTION("setupPanels", 0x800c4830, R"(
-        SAVE_REGS
-        lwz r4, 0x00E8 (r3)
+        stwu sp, -0x00B0 (sp)
+        li r5, 0
+        addi r5, sp, 20
         bl setupPanels
         cmpwi r3, 0
         beq runRequestSummaryVFNormally
-        RESTORE_REGS
+        li r3, 1
+        lwz	r0, 0x00B4 (sp)
+        lwz	r31, 0x00AC (sp)
+        lwz	r30, 0x00A8 (sp)
+        lwz	r29, 0x00A4 (sp)
+        lwz	r28, 0x00A0 (sp)
+        mtlr r0
+        addi sp, sp, 176
         lis r12, 0x800c
         ori r12, r12, 0x4834
         mtctr r12
         bctrl
     runRequestSummaryVFNormally:
-        RESTORE_REGS
         lis r12, 0x8003
         ori r12, r12, 0x9d40
         mtctr r12
         bctrl
     )");
 
-    extern "C" bool setupPanels(gfCollectionIO* collection, size_t* numReplays, char* name) {
+    extern "C" bool setupPanels(gfCollectionIO* collection, u32 param2, char* name) {
         if(collection->dataType == 7)
         {
-            auto size = startReplays.size();
-            memcpy(numReplays, &size, sizeof(size_t));
+            memcpy(name, startReplays[0].nameBuffer, startReplays[0].nameSize);
             return true;
         }
         return false;
