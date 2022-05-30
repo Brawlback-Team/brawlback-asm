@@ -1,6 +1,6 @@
 #include "Brawlback.h"
 
-
+/*
 INJECTION("cameraRollbackBypass3", 0x8009fee4, R"(
     rlwinm. r0, r0, 0x1c, 0x1f, 0x1f
     bl cameraFFBypass
@@ -15,7 +15,7 @@ extern "C" void cameraFFBypass() {
         )");
     }
 }
-
+*/
 
 
 
