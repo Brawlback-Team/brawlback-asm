@@ -11,11 +11,11 @@ const u8 defaultGmGlobalModeMelee[] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 namespace GMMelee {
 
     bool isMatchChoicesPopulated = false;
-    vector<int> charChoices = {-1, -1, -1, -1};
+    int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     int stageChoice = -1;
 
-    void PopulateMatchSettings(int chars[4], int stageID) {
-        for (int i = 0; i < 4; i++) {
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int stageID) {
+        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
         }
         stageChoice = stageID;

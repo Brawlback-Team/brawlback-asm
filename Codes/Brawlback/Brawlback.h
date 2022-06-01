@@ -22,11 +22,13 @@
 
 
 //  toggles for netplay logic and rollback logic
-#define NETPLAY_IMPL
-#define ROLLBACK_IMPL
+//#define NETPLAY_IMPL
+//#define ROLLBACK_IMPL
 // ^ if you disable rollbacks, make sure to also disable the ROLLBACK_IMPL flag in BrawlbackUtility.cpp on the dolphin side
 // ------------------------------------
 
+//#define ROLLBACK_TESTING
+ 
 // make sure this is the same as the one in BrawlbackUtility.cpp on dolphin side
 #define MAX_ROLLBACK_FRAMES 5
 
