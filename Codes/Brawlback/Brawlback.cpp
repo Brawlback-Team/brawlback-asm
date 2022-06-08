@@ -152,6 +152,38 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 
 namespace Match {
 
+    void PopulateGameReport(GameReport& report) {
+        ftManager* fighterManager = FIGHTER_MANAGER;
+
+        for (int i = 0; i < Netplay::getGameSettings().numPlayers; i++) {
+            const auto fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(i));
+            s32 stocks = fighter->getOwner()->getStockCount();
+            OSReport("Stock count player idx %i = %i\n", i, stocks);
+            report.stocks[i] = stocks;
+            f64 damage = fighter->getOwner()->getDamage();
+            OSReport("Damage for player idx %i = %f\n", i, damage);
+            report.damage[i] = damage;
+        }
+        report.frame_duration = getCurrentFrame();
+    }
+
+    void SendGameReport(const GameReport& report) {
+        OSReport("Sending end match report to emu. Num players = %u\n", (u32)Netplay::getGameSettings().numPlayers);
+        EXIPacket::CreateAndSend(EXICommand::CMD_MATCH_END, &report, sizeof(report));
+    }
+
+    // called at end of a match *before* player data and such is wiped. Use this to grab post-match stats before they're gone
+    // strangely though, this is called twice at the end of a match... keep that in mind
+    // this hook is placed so it is only called once. It also is placed so that it doesn't interfere with another hook that seems to be in the very next instruction
+    // TODO(?): this is, however, after some other stuff gets called like stopGame/[ftManager], and removeItemAll/[itManager]. Might want to move this hook up a bit to before those are called
+    SIMPLE_INJECTION(stopGameScMeleeHook, 0x806d4c10, "mr	r17, r15") {
+        OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
+        if (Netplay::getGameSettings().numPlayers > 1) {
+            GameReport report;
+            PopulateGameReport(report);
+            SendGameReport(report);
+        }
+    }
     // on scene start (AFTER the start/[scMelee] function has run)
 
     SIMPLE_INJECTION(startSceneMelee, 0x806d176c, "addi	sp, sp, 112") {
@@ -160,6 +192,11 @@ namespace Match {
         #ifdef NETPLAY_IMPL
         //Netplay::StartMatching(); // now moved to GmGlobalModeMelee.cpp
         Netplay::SetIsInMatch(true);
+        #else
+        // 'debug' values
+        Netplay::getGameSettings().localPlayerIdx = 0;
+        Netplay::localPlayerIdx = 0;
+        Netplay::getGameSettings().numPlayers = 2;
         #endif
         //modeChange(getIpSwitchInstance(), 0);
         _OSEnableInterrupts();

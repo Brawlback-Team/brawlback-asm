@@ -56,7 +56,7 @@ bool EXIPacket::Send() {
     return success;
 }
 
-void EXIPacket::CreateAndSend(u8 EXICmd, void* source, u32 size) {
+void EXIPacket::CreateAndSend(u8 EXICmd, const void* source, u32 size) {
 
     // enough for the EXICmd byte + size of the packet
     u32 new_size = sizeof(EXICmd) + size;

@@ -9,18 +9,19 @@ enum EXICommand : u8
 
     // Online
 
-    CMD_ONLINE_INPUTS = 1,
+    CMD_ONLINE_INPUTS = 1, // sending inputs from game to emulator
     CMD_CAPTURE_SAVESTATE = 2,
     CMD_LOAD_SAVESTATE = 3,
 
     CMD_FIND_OPPONENT = 5,
     CMD_START_MATCH = 13,
     CMD_SETUP_PLAYERS = 14,
-    CMD_FRAMEDATA = 15,
+    CMD_FRAMEDATA = 15, // game is requesting inputs for some frame
     CMD_TIMESYNC = 16,
     CMD_ROLLBACK = 17,
+    CMD_FRAMEADVANCE = 18,
 
-    CMD_GET_MATCH_STATE = 4,
+    CMD_MATCH_END = 4,
     CMD_SET_MATCH_SELECTIONS = 6,
 
     CMD_TIMER_START = 7,
@@ -44,7 +45,7 @@ public:
 
     bool Send();
     
-    static void CreateAndSend(u8 EXICmd, void* source = nullptr, u32 size = 0);
+    static void CreateAndSend(u8 EXICmd, const void* source = nullptr, u32 size = 0);
 
     EXICommand getCmd();
 

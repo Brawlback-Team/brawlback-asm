@@ -12,6 +12,7 @@
 #include "Brawl/GF/GameFrame.h"
 #include "Brawl/GF/gfPadSystem.h"
 #include "Brawl/FT/ftManager.h"
+#include <Brawl/GF/GameGlobal.h>
 #include "Brawl/gmGlobalModeMelee.h"
 #include "Brawl/GF/gfApplication.h"
 #include "Wii/mtRand.h"
@@ -66,6 +67,9 @@
 
 #define setPause ( ( void (*) (gfApplication* application, bool isPaused, int unk) ) 0x80016900)
 
+#define getRankftManager ( ( int (*) (void* ftmanager, u32 idx) ) 0x80815b2c)
+#define getRankftEntry ( ( u8 (*) (ftEntry* ftentry) ) 0x8081fd70)
+
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
 u32 getCurrentFrame();
@@ -75,9 +79,17 @@ void MergeGameSettingsIntoGame(GameSettings& settings);
 
 namespace FrameLogic {
     void SaveState(u32 frame);
+    void GetInputsForFrame(u32 frame, FrameData* inputs);
 }
 namespace FrameAdvance {
     int getFramesToAdvance();
 }
+
+// TODO: put this in the submodule and pack it
+struct GameReport {
+    f64 damage[MAX_NUM_PLAYERS];
+    s32 stocks[MAX_NUM_PLAYERS];
+    s32 frame_duration;
+};
 
 #endif
