@@ -23,8 +23,8 @@
 
 
 //  toggles for netplay logic and rollback logic
-//#define NETPLAY_IMPL
-//#define ROLLBACK_IMPL
+#define NETPLAY_IMPL
+#define ROLLBACK_IMPL
 // ^ if you disable rollbacks, make sure to also disable the ROLLBACK_IMPL flag in BrawlbackUtility.cpp on the dolphin side
 // ------------------------------------
 
@@ -80,9 +80,10 @@ void MergeGameSettingsIntoGame(GameSettings& settings);
 namespace FrameLogic {
     void SaveState(u32 frame);
     void GetInputsForFrame(u32 frame, FrameData* inputs);
+    void FixFrameDataEndianness(FrameData* fd);
 }
 namespace FrameAdvance {
-    int getFramesToAdvance();
+    u32 getFramesToAdvance();
 }
 
 // TODO: put this in the submodule and pack it

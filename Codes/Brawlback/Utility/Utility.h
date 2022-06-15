@@ -12,7 +12,6 @@ void print_byte(u8 byte);
 void print_half(u16 half);
 void print_word(u32 word);
 
-//void swapByteOrder(u8* val);
 void swapByteOrder(u16& val);
 void swapByteOrder(u32& val);
 void swapByteOrder(u64& val);

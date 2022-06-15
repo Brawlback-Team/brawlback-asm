@@ -19,11 +19,15 @@ struct GameGlobal {
     //0x8
     gmGlobalModeMelee* globalModeMelee;
 
+    char _spacer2[0x18 - 0x8 - 4];
+    void* gmResultInfo;
+
     //0x24
     //button setting thing
 
+    // u8 spacer[offsetOfThisField - offsetOfPrevField - sizeOfPrevField]
 
-    char _spacer2[0x28 - 0x8 - 4];
+    char _spacer3[0x28 - 0x18 - 4];
     //0x28
     PlayerTagSystem* playerTagSystem;
 };
