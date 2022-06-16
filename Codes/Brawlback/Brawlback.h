@@ -72,6 +72,12 @@
 
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
+enum FileIOSyncMode : u32 {
+    NoSync = 0,
+    FileRead = 1,
+};
+inline void ChangeFileIOSyncMode(FileIOSyncMode mode) { modeChange(getIpSwitchInstance(), mode); }
+
 u32 getCurrentFrame();
 
 void fillOutGameSettings(GameSettings& settings);

@@ -187,9 +187,11 @@ namespace Match {
     SIMPLE_INJECTION(stopGameScMeleeHook, 0x806d4c10, "mr	r17, r15") {
         OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
         if (Netplay::getGameSettings().numPlayers > 1) {
+            #if 0  // toggle for sending end match game stats
             GameReport report;
             PopulateGameReport(report);
             SendGameReport(report);
+            #endif
         }
     }
 
@@ -206,7 +208,8 @@ namespace Match {
         Netplay::localPlayerIdx = 0;
         Netplay::getGameSettings().numPlayers = 2;
         #endif
-        //modeChange(getIpSwitchInstance(), 0);
+        // honestly not sure if this is necessary, but i think brawl does this before online matches so i feel like i should... lol
+        ChangeFileIOSyncMode(FileRead);
         _OSEnableInterrupts();
     }
 
@@ -218,6 +221,7 @@ namespace Match {
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
         #endif
+        ChangeFileIOSyncMode(NoSync);
         _OSEnableInterrupts();
     }
 
@@ -267,10 +271,9 @@ namespace FrameAdvance {
 
         GetInputsForFrame(gameLogicFrame, inputs);
 
-        if (inputs->playerFrameDatas[0].frame != gameLogicFrame || inputs->playerFrameDatas[1].frame != gameLogicFrame) {
-            OSReport("Game frame != injected inputs frame! %u %u  frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
-            //Util::printFrameData(*inputs);
-        }
+        OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
+        //Util::printFrameData(*inputs);
+
         _OSEnableInterrupts();
     }
 
