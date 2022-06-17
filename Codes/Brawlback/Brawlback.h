@@ -30,16 +30,6 @@
 
 //#define ROLLBACK_TESTING
  
-// make sure this is the same as the one in BrawlbackUtility.cpp on dolphin side
-#define MAX_ROLLBACK_FRAMES 5
-
-#define MAX_REMOTE_PLAYERS 3
-#define MAX_NUM_PLAYERS 4
-
-
-#define NAMETAG_SIZE 8
-#define DISPLAY_NAME_SIZE 31
-#define CONNECT_CODE_SIZE 10
 
 #define getGfSceneManager ((void* (*)()) 0x8002d018)
 #define setNextSeq ((void (*)(void* gfSceneManager, const char* name, int unk)) 0x8002d640)

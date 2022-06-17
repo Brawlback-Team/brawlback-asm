@@ -46,30 +46,6 @@ namespace Util {
         }
     }
 
-    void FixRollbackInfoEndianess(RollbackInfo& rollbackInfo) {
-        swapByteOrder(rollbackInfo.beginFrame);
-        swapByteOrder(rollbackInfo.endFrame);
-        for (int i = 0; i < MAX_ROLLBACK_FRAMES; i++) {
-            FixFrameDataEndianness(&rollbackInfo.pastFrameDatas[i]);
-        }
-        for (int pIdx = 0; pIdx < MAX_NUM_PLAYERS; pIdx++) {
-            PlayerFrameData& predictedInput = rollbackInfo.predictedInputs.playerFrameDatas[pIdx];
-            swapByteOrder(predictedInput.frame);
-        }
-    }
-
-    void PrintRollbackInfo(RollbackInfo& rb) {
-        OSReport("RbInfo beginFrame: %u  endFrame: %u\n", rb.beginFrame, rb.endFrame);
-        for (int i = 0; i < MAX_ROLLBACK_FRAMES; i++) {
-            const FrameData& fd = rb.pastFrameDatas[i];
-            OSReport("~~~~~~~ pastFramedatas[%i] ~~~~~~~\n", i);
-            for (int pIdx = 0; pIdx < 2; pIdx++) {
-                if (fd.playerFrameDatas[pIdx].frame != 0)
-                    OSReport("pIdx %u:::   Frame %u\n", (unsigned int)fd.playerFrameDatas[pIdx].playerIdx, fd.playerFrameDatas[pIdx].frame);
-            }
-        }
-    }
-
     BrawlbackPad GamePadToBrawlbackPad(const gfPadGamecube& pad) {
         BrawlbackPad ret;
         ret.buttons = pad.buttons.bits;
