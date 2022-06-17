@@ -2,7 +2,6 @@
 
 namespace ReplayMenus {
     std::vector<StartReplay> startReplays;
-    int curIndex;
     void PopulateStartReplays()
     {
         EXIPacket getNumReplays = EXIPacket(GET_NUM_REPLAYS, nullptr, 0);
@@ -83,19 +82,6 @@ namespace ReplayMenus {
         memcpy(numReplays, &sizeOfStartReplay, sizeof(u32));
     }
 
-    // When going to a new panel, set the index on our end so we can control various things,
-    // such as what the current replay is
-    INJECTION("setCurPos", 0x8119f238, R"(
-        SAVE_REGS
-        bl setCurPos
-        RESTORE_REGS
-        bctrl
-    )");
-
-    extern "C" void setCurPos(int param_1, int panelNum, int param_3) {
-        curIndex = panelNum;
-    }
-
     // IFF the headers object is not empty clear it out when destructing the collection.
     INJECTION("eraseStartReplays", 0x80038ac8, R"(
         SAVE_REGS
@@ -134,7 +120,6 @@ namespace ReplayMenus {
         if(startReplays.empty())
         {
             PopulateStartReplays();
-            curIndex = 0;
             collection->dataType = 7;
             collection->dataSize = startReplays.size();
             collection->summaryErrorCode = 0;
@@ -160,38 +145,56 @@ namespace ReplayMenus {
         return false;
     }
 
-    INJECTION("setupPanels", 0x800c4830, R"(
-        stwu sp, -0x00B0 (sp)
-        li r5, 0
-        addi r5, sp, 20
-        bl setupPanels
-        cmpwi r3, 0
-        beq runRequestSummaryVFNormally
-        li r3, 1
-        lwz	r0, 0x00B4 (sp)
-        lwz	r31, 0x00AC (sp)
-        lwz	r30, 0x00A8 (sp)
-        lwz	r29, 0x00A4 (sp)
-        lwz	r28, 0x00A0 (sp)
-        mtlr r0
-        addi sp, sp, 176
+    INJECTION("requestSummary", 0x800c4830, R"(
+        SAVE_REGS
+        cmpwi r4, 2
+        bne runRequestSummaryNormally
+        RESTORE_REGS
         lis r12, 0x800c
         ori r12, r12, 0x4834
         mtctr r12
         bctrl
-    runRequestSummaryVFNormally:
+    runRequestSummaryNormally:
+        RESTORE_REGS
         lis r12, 0x8003
         ori r12, r12, 0x9d40
         mtctr r12
         bctrl
     )");
 
-    extern "C" bool setupPanels(gfCollectionIO* collection, u32 param2, char* name) {
-        if(collection->dataType == 7)
-        {
-            memcpy(name, startReplays[0].nameBuffer, startReplays[0].nameSize);
-            return true;
-        }
-        return false;
+    INJECTION("forceDispPreviewCoreReplays", 0x8119e080, "li r27, 1");
+    INJECTION("updateDispPreviewCoreReplaysLoopCount", 0x81198a50, R"(
+        mr r3, r14
+        bl getNumCharacters
+        cmplw r29, r3
+    )");
+    extern "C" u8 getNumCharacters(u8 index) {
+        return startReplays[index].numPlayers;
     }
+
+    INJECTION("updateCorrectIcons", 0x811989f8, R"(
+        mr r3, r29
+        mr r4, r14
+        bl getCurPlayerSlotID
+    )");
+
+    extern "C" u8 getCurPlayerSlotID(int playerNumber, u8 index) {
+        return startReplays[index].players[playerNumber].slotID;
+    }
+
+    INJECTION("updateCorrectStageThumbnail1", 0x81198be0, R"(
+        mr r3, r14
+        bl getCurStageKind
+    )");
+
+    INJECTION("updateCorrectStageThumbnail2", 0x81198784, R"(
+        mr r3, r14
+        bl getCurStageKind
+    )");
+
+    extern "C" u8 getCurStageKind(u8 index) {
+        return startReplays[index].stage;
+    }
+
+    INJECTION("forceDispThumbnail", 0x8119dd20, "li r0, 1");
 }

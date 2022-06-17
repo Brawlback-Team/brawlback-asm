@@ -1,4 +1,7 @@
+#include <Brawl/SC/scMelee.h>
 #include "Record.h"
+
+#define getGfSceneManager ((void* (*)()) 0x8002d018)
 
 namespace ReplaysLogic {
     bool recordInputs = false;
@@ -54,9 +57,11 @@ namespace ReplaysLogic {
             auto fighterManager = FIGHTER_MANAGER;
             auto gameGlobal = GAME_GLOBAL;
             auto itemManager = ITEM_MANAGER;
-            
+
             u8 playerCount = fighterManager->getEntryCount();
-            if(playerCount >= 2 && gameGlobal->gameFrame->frameCounter > 250 && !isGamePaused())
+            OSReport("STATE 1: %u\n", SC_MELEE->stOperatorReadyGo1->_stOperatorReadyGo_._stOperator_.state);
+            OSReport("STATE 2: %u\n", SC_MELEE->stOperatorReadyGo2->_stOperatorReadyGo_._stOperator_.state);
+            if(playerCount >= 2 && SC_MELEE->stOperatorReadyGo1->isEnd() != 0 && !isGamePaused())
             {
                 if(entryFrame)
                 {
@@ -76,7 +81,9 @@ namespace ReplaysLogic {
                     for(int i = 0; i < playerCount; i++)
                     {
                         auto fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(i));
+
                         startReplay.players[i].fighterKind = fighter->getFtKind();
+                        startReplay.players[i].slotID = fighterManager->getFighterGmKind(fighterManager->getEntryIdFromIndex(i));
 
                         startReplay.players[i].startPlayer.xPos = fighter->modules->postureModule->xPos;
                         startReplay.players[i].startPlayer.yPos = fighter->modules->postureModule->yPos * -1;
