@@ -58,8 +58,6 @@
 
 #define updateGame (( void (*)(gfPadSystem* pad_system) ) 0x8002a4f8)
 
-#define modeChange ( ( void (*) (void* ipswitch, int mode) ) 0x8004a914)
-
 #define getGamePadStatus (( int (*) (gfPadSystem* pad_system, int port, gfPadGamecube* dst) ) 0x8002ac54)
 #define getPadInput ( ( void (*) (void* pad_config, u32 playerIdx, gfPadGamecube* current_inputs, u32* pad_status) ) 0x8004a468)
 #define getPadCofigInstance ( (void* (*) ()) 0x80048548)
@@ -71,12 +69,6 @@
 #define getRankftEntry ( ( u8 (*) (ftEntry* ftentry) ) 0x8081fd70)
 
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
-
-enum FileIOSyncMode : u32 {
-    NoSync = 0,
-    FileRead = 1,
-};
-inline void ChangeFileIOSyncMode(FileIOSyncMode mode) { modeChange(getIpSwitchInstance(), mode); }
 
 u32 getCurrentFrame();
 

@@ -208,8 +208,6 @@ namespace Match {
         Netplay::localPlayerIdx = 0;
         Netplay::getGameSettings().numPlayers = 2;
         #endif
-        // honestly not sure if this is necessary, but i think brawl does this before online matches so i feel like i should... lol
-        ChangeFileIOSyncMode(FileRead);
         _OSEnableInterrupts();
     }
 
@@ -221,7 +219,6 @@ namespace Match {
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
         #endif
-        ChangeFileIOSyncMode(NoSync);
         _OSEnableInterrupts();
     }
 
