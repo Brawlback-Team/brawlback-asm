@@ -12,7 +12,7 @@
 #include <Wii/mtRand.h>
 #include <Brawl/IT/itManager.h>
 #include "EXIPacket.h"
-#include "brawlback-exi-structures/ExiStructures.h"
+#include "brawlback-common/ExiStructures.h"
 #include <cstdio>
 #include <cstring>
 #include <charconv>
