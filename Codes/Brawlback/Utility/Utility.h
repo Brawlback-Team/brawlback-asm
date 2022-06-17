@@ -29,7 +29,7 @@ void AddValueToByteArray(char value, vector<u8> &Array);
 
 //USE WITH CAUTION!!!
 //buffer assumed to contain at least sizeof(T) bytes
-//Should only be used with packed structures from brawlback-exi-structures
+//Should only be used with packed structures from brawlback-common
 //Fields in object need to have endianess corrected if sent between game <-> emulator
 template<typename T>
 T bufferToObject(const u8* buffer)
