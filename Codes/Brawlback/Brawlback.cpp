@@ -33,7 +33,7 @@ namespace Util {
         }
     }
 
-    void SyncLoc(const BrawlbackPad& pad, u8 playerIdx) {
+    void SyncLog(const BrawlbackPad& pad, u8 playerIdx) {
         OSReport("[Sync] Injecting inputs for player %u on frame %u\n", (unsigned int)playerIdx, getCurrentFrame());
         printInputs(pad);
         OSReport("[/Sync]\n");
