@@ -64,6 +64,13 @@ void swapByteOrder(u32& val)
     ui = (ui << 16) | (ui >> 16);
     val = ui;
 }
+void swapByteOrder(float& val)
+{
+    u32 ui = *((u32*)&val); // pretend it's a u32
+    ui = ((ui << 8) & 0xFF00FF00) | ((ui >> 8) & 0xFF00FF);
+    ui = (ui << 16) | (ui >> 16);
+    val = *((float*)&ui); // back to float
+}
 
 void swapByteOrder(u64& val)
 {

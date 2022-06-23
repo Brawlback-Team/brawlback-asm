@@ -39,10 +39,15 @@ namespace Util {
         OSReport("[/Sync]\n");
     }
 
-      void FixFrameDataEndianness(FrameData* fd) {
-        swapByteOrder(fd->randomSeed);
+      void SwapFrameDataEndianness(FrameData* fd) {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
-            swapByteOrder(fd->playerFrameDatas[i].frame);
+            PlayerFrameData* pfd = &fd->playerFrameDatas[i];
+            swapByteOrder(pfd->frame);
+            swapByteOrder(pfd->randomSeed);
+            swapByteOrder(pfd->syncData.anim);
+            swapByteOrder(pfd->syncData.locX);
+            swapByteOrder(pfd->syncData.locY);
+            swapByteOrder(pfd->syncData.percent);
         }
     }
 
@@ -69,6 +74,47 @@ namespace Util {
 
     void SaveState(u32 currentFrame) {        
         EXIPacket::CreateAndSend(EXICommand::CMD_CAPTURE_SAVESTATE, &currentFrame, sizeof(currentFrame));
+    }
+
+    void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 pIdx) {
+        ftManager* fighterManager = FIGHTER_MANAGER;
+        Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
+        ftOwner* ftowner = fighter->getOwner();
+
+        pfd.frame = getCurrentFrame();
+        pfd.playerIdx = pIdx;
+        pfd.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[pIdx]);
+        pfd.syncData.percent = (float)ftowner->getDamage();
+        pfd.syncData.stocks = (u8)ftowner->getStockCount();
+        pfd.syncData.facingDir = fighter->modules->postureModule->direction < 0.0 ? -1 : 1;
+        pfd.syncData.locX = fighter->modules->postureModule->xPos;
+        pfd.syncData.locY = fighter->modules->postureModule->yPos;
+        pfd.syncData.anim = fighter->modules->statusModule->action;
+    }
+
+    void InjectToGame(const FrameData& fd, gfPadGamecube* pad_dst, int port) {
+        ftManager* fighterManager = FIGHTER_MANAGER;
+        Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(port));
+        ftOwner* ftowner = fighter->getOwner();
+        const PlayerFrameData& pfd = fd.playerFrameDatas[port];
+
+        if (port == 0) {
+            // sync rng seed based on the client who is local p1
+            DEFAULT_MT_RAND->seed = fd.playerFrameDatas[0].randomSeed;
+        }
+        // other rand seed(s)??
+        
+        Util::InjectBrawlbackPadToPadStatus(*pad_dst, fd.playerFrameDatas[port].pad);
+
+        /*
+        // resync
+        ftowner->setDamage((double)pfd.syncData.percent, 0);
+        ftowner->setStockCount((int)pfd.syncData.stocks);
+        fighter->modules->postureModule->direction = pfd.syncData.facingDir < 0 ? -1.0 : 1.0;
+        fighter->modules->postureModule->xPos = pfd.syncData.locX;
+        fighter->modules->postureModule->yPos = pfd.syncData.locY;
+        fighter->modules->statusModule->action = pfd.syncData.anim;
+        */
     }
 
 }
@@ -230,7 +276,7 @@ namespace FrameAdvance {
     void GetInputsForFrame(u32 frame, FrameData* inputs) {
         EXIPacket::CreateAndSend(EXICommand::CMD_FRAMEDATA, &frame, sizeof(frame));
         readEXI(inputs, sizeof(FrameData), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-        Util::FixFrameDataEndianness(inputs);
+        Util::SwapFrameDataEndianness(inputs);
     }
 
     // should be called on every simulation frame
@@ -246,6 +292,29 @@ namespace FrameAdvance {
 
         OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         //Util::printFrameData(*inputs);
+
+        #if 0
+        OSReport("Input info\n");
+        for (int i = 0; i < 2; i++) {
+            const SyncData& inputInfo = inputs->playerFrameDatas[i].syncData;
+            OSReport("P%i Info\n", i);
+            OSReport("x = %f  y = %f\n", inputInfo.locX, inputInfo.locY);
+            OSReport("anim = %u  facingdir = %i\n", inputInfo.anim, (int)inputInfo.facingDir);
+        }
+
+        ftManager* fighterManager = FIGHTER_MANAGER;
+
+        OSReport("Real info\n");
+        for (int i = 0; i < 2; i++) {
+            Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(i));
+            ftOwner* ftowner = fighter->getOwner();
+            soModuleAccessor* moacc = fighter->modules;
+            
+            OSReport("P%i Info\n", i);
+            OSReport("x = %f  y = %f\n", moacc->postureModule->xPos, moacc->postureModule->yPos);
+            OSReport("anim = %u  facingdir = %f\n", moacc->statusModule->action, moacc->postureModule->direction);
+        }
+        #endif
 
         _OSEnableInterrupts();
     }
@@ -276,7 +345,7 @@ namespace FrameAdvance {
         if (Netplay::IsInMatch()) {
             //OSReport("Injecting pad for frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
             //Util::printInputs(currentFrameData.playerFrameDatas[port].pad);
-            Util::InjectBrawlbackPadToPadStatus(*dst, currentFrameData.playerFrameDatas[port].pad);
+            Util::InjectToGame(currentFrameData, dst, port);
         }
         _OSEnableInterrupts();
     }
@@ -313,13 +382,13 @@ namespace FrameLogic {
     void WriteInputsForFrame(u32 currentFrame) {
         u8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
-            PlayerFrameData fData;
-            fData.frame = currentFrame;
-            fData.playerIdx = localPlayerIdx;
-            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[localPlayerIdx]);
-
+            FrameData fData;
+            // populate all players here so we have their SyncData
+            for (int i = 0; i < Netplay::getGameSettings().numPlayers; i++) {
+                Util::PopulatePlayerFrameData(fData.playerFrameDatas[i], i);
+            }
             // sending inputs + current game frame
-            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(PlayerFrameData));
+            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(FrameData));
         }
         else {
             OSReport("Invalid player index! Can't send inputs to emulator!\n");
