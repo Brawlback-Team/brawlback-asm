@@ -16,7 +16,7 @@
 #include "Brawl/sndSystem.h"
 #include "Graphics/Drawable.h"
 #include "Utilities/Utility.h"
-#include "brawlback-exi-structures/StartReplay.h"
+#include "brawlback-common/StartReplay.h"
 #include <vector>
 #include <string>
 #include "Brawl/MU/muCollectionViewer.h"

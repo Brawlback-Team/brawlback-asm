@@ -17,5 +17,6 @@
 #include <cstring>
 #include <charconv>
 #include <string_view>
+#include <Brawl/SC/scMelee.h>
 
 #endif //PROJECTMCODES_REPLAY_H

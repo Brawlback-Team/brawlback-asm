@@ -5,6 +5,7 @@
 #include "Containers/Queue.h"
 #include <cstring>
 #include <algorithm>
+#include <string>
 
 //USE WITH CAUTION!!!
 //buffer assumed to contain at least sizeof(T) bytes
@@ -25,3 +26,5 @@ T swap_endian(T in)
         std::swap(p[i], p[sizeof(T) - i - 1]);
     return in;
 }
+
+bool replace(std::string& str, const std::string& from, const std::string& to);

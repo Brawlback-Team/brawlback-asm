@@ -15,17 +15,17 @@ struct _stOperator {
 
 struct _stOperatorReadyGo {
     _stOperator _stOperator_;
-    char _spacer[0xC0 - sizeof(_stOperator_)];
+    char _spacer[0xB8];
 };
 
 struct stOperatorReadyGo {
     char _spacer[0x40];
     _stOperatorReadyGo _stOperatorReadyGo_;
-    u8 isEnd();
+    unsigned int isEnd();
 };
 
 struct scMelee {
-    char _spacer[0x72];
+    char _spacer[0x48];
     stOperatorReadyGo* stOperatorReadyGo1;
     stOperatorReadyGo* stOperatorReadyGo2;
     char _spacer1[0x88];
@@ -36,7 +36,7 @@ struct scMelee {
 };
 
 
-#define _isEnd_ST_OPERATOR_READY_GO ((u8 (*)(stOperatorReadyGo * This)) 0x809514c0)
+#define _isEnd_ST_OPERATOR_READY_GO ((unsigned int (*)(stOperatorReadyGo* readyGo)) 0x809514c0)
 
 #define SC_MELEE_GAME_END_FLAG (0x20)
 

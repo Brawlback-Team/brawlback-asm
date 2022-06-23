@@ -57,17 +57,6 @@ namespace ReplayMenus {
         }
     }
 
-    // Populate the size of the vector into the size of the collection.
-    INJECTION("getStartReplaySize", 0x8119d014, R"(
-        SAVE_REGS
-        bl getStartReplaySize
-        RESTORE_REGS
-    )");
-
-    extern "C" int getStartReplaySize(int param_1, int param_2) {
-        return startReplays.size();
-    }
-
     // Set the number of replays to the size of the headers object vector.
     INJECTION("setNumReplays", 0x800c4150, R"(
         SAVE_REGS
@@ -77,7 +66,8 @@ namespace ReplayMenus {
         lwz	r0, 0x00E8 (r3)
     )");
 
-    extern "C" void setNumReplays(size_t* numReplays, int* dataType) {
+    extern "C" void setNumReplays(size_t* numReplays, int* dataType)
+    {
         auto sizeOfStartReplay = reinterpret_cast<u32>(startReplays.size());
         memcpy(numReplays, &sizeOfStartReplay, sizeof(u32));
     }
@@ -90,7 +80,8 @@ namespace ReplayMenus {
         stwu sp, -0x0020 (sp)
     )");
 
-    extern "C" void eraseStartReplays() {
+    extern "C" void eraseStartReplays()
+    {
         if(!startReplays.empty())
         {
             startReplays.clear();
@@ -116,7 +107,8 @@ namespace ReplayMenus {
         mtctr r12
         bctrl
     )");
-    extern "C" bool processStartReplays(gfCollectionIO* collection) {
+    extern "C" bool processStartReplays(gfCollectionIO* collection)
+    {
         if(startReplays.empty())
         {
             PopulateStartReplays();
@@ -168,7 +160,8 @@ namespace ReplayMenus {
         bl getNumCharacters
         cmplw r29, r3
     )");
-    extern "C" u8 getNumCharacters(u8 index) {
+    extern "C" u8 getNumCharacters(u8 index)
+    {
         return startReplays[index].numPlayers;
     }
 
@@ -178,7 +171,8 @@ namespace ReplayMenus {
         bl getCurPlayerSlotID
     )");
 
-    extern "C" u8 getCurPlayerSlotID(int playerNumber, u8 index) {
+    extern "C" u8 getCurPlayerSlotID(int playerNumber, u8 index)
+    {
         return startReplays[index].players[playerNumber].slotID;
     }
 
@@ -188,13 +182,43 @@ namespace ReplayMenus {
     )");
 
     INJECTION("updateCorrectStageThumbnail2", 0x81198784, R"(
-        mr r3, r14
+        mr r3, r17
         bl getCurStageKind
     )");
 
-    extern "C" u8 getCurStageKind(u8 index) {
+    extern "C" unsigned int getCurStageKind(u8 index)
+    {
         return startReplays[index].stage;
     }
 
     INJECTION("forceDispThumbnail", 0x8119dd20, "li r0, 1");
+
+    INJECTION("printName", 0x8119e3a8, R"(
+        SAVE_REGS
+        mr r4, r14
+        bl printName
+        RESTORE_REGS
+        lwz	r12, 0x003C (r25)
+    )");
+
+    extern "C" void printName(char* title, u32 index)
+    {
+        std::string name = std::string(reinterpret_cast<char*>(startReplays[index].nameBuffer), startReplays[index].nameSize);
+        replace(name, "Game_", "");
+        std::string year = name.substr(0, 4);
+        std::string month = name.substr(4, 2);
+        std::string day = name.substr(6, 2);
+        std::string hour = name.substr(9, 2);
+        std::string minute = name.substr(11, 2);
+
+        month.erase(0, std::min(month.find_first_not_of('0'), month.size()-1));
+        day.erase(0, std::min(day.find_first_not_of('0'), day.size()-1));
+        hour.erase(0, std::min(hour.find_first_not_of('0'), hour.size()-1));
+
+        name = month + "/" + day + "/" + year + " " + hour + ":" + minute;
+        strcpy(title, name.c_str());
+    }
+
+    INJECTION("forceOnDecided", 0x81198118, "li r0, 1");
+    INJECTION("forceLoadReplay", 0x811a1568, "li r0, 0");
 }
