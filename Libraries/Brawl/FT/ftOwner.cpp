@@ -19,3 +19,7 @@ bool ftOwner::isCpu() {
 int ftOwner::getStockCount() {
     return _getStockCount_ftOwner(this);
 }
+
+void ftOwner::setStockCount(int newValue) {
+    return _setStockCount_ftOwner(this, newValue);
+}
