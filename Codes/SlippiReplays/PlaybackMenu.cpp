@@ -1,4 +1,13 @@
-#include "PlaybackMenu.h"
+#include "Assembly.h"
+#include "Wii/EXI/EXI.h"
+#include "EXIPacket.h"
+#include "Graphics/Drawable.h"
+#include "Utilities/Utility.h"
+#include "brawlback-common/StartReplay.h"
+#include <vector>
+#include <string>
+#include "Brawl/GF/gfFileIOHandle.h"
+#include "Brawl/GF/gfCollectionIO.h"
 
 namespace ReplayMenus {
     std::vector<StartReplay> startReplays;
@@ -11,18 +20,11 @@ namespace ReplayMenus {
         do
         {
             // read in one byte from emulator to see how to deal with the rest of the exi buffer
-            u8* cmd_byte_read = (u8*)malloc(1);
-            readEXI(cmd_byte_read, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-            cmd_byte = cmd_byte_read[0];
-            free(cmd_byte_read);
+            readEXI(&cmd_byte, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         } while(cmd_byte != GET_NUM_REPLAYS);
 
-        u32 read_data_size = sizeof(u8);
-        u8* data = (u8*)malloc(read_data_size);
-        readEXI(data, read_data_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-
-        auto numReplays = data[0];
-        free(data);
+        u8 numReplays;
+        readEXI(&numReplays, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
         OSReport("NUMBER OF REPLAYS: %u\n", numReplays);
         for(int i = 0; i < numReplays; i++)
         {
@@ -35,19 +37,14 @@ namespace ReplayMenus {
             do
             {
                 // read in one byte from emulator to see how to deal with the rest of the exi buffer
-                u8* cmd_byte_read = (u8*)malloc(1);
-                readEXI(cmd_byte_read, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-                cmd_byte = cmd_byte_read[0];
-                free(cmd_byte_read);
+                readEXI(&cmd_byte, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
             } while(cmd_byte != GET_START_REPLAY && cmd_byte != BAD_INDEX);
 
             if(cmd_byte == GET_START_REPLAY)
             {
-                read_data_size = sizeof(StartReplay);
-                u8* startReplayData = (u8*)malloc(read_data_size);
-                readEXI(startReplayData, read_data_size, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+                u8* startReplayData = (u8*)malloc(sizeof(StartReplay));
+                readEXI(startReplayData, sizeof(StartReplay), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
                 startReplays.push_back(bufferToObject<StartReplay>(startReplayData));
-                free(startReplayData);
                 OSReport("REPLAY FOUND AT INDEX %u -- STARTING FRAME IS %u\n", i, startReplays[i].firstFrame);
             }
             else
@@ -66,10 +63,9 @@ namespace ReplayMenus {
         lwz	r0, 0x00E8 (r3)
     )");
 
-    extern "C" void setNumReplays(size_t* numReplays, int* dataType)
+    extern "C" void setNumReplays(size_t* numReplays)
     {
-        auto sizeOfStartReplay = reinterpret_cast<u32>(startReplays.size());
-        memcpy(numReplays, &sizeOfStartReplay, sizeof(u32));
+        *numReplays = startReplays.size();
     }
 
     // IFF the headers object is not empty clear it out when destructing the collection.
@@ -82,10 +78,7 @@ namespace ReplayMenus {
 
     extern "C" void eraseStartReplays()
     {
-        if(!startReplays.empty())
-        {
-            startReplays.clear();
-        }
+        startReplays.clear();
     }
 
     // IFF the collection is processing the list of replays, populate the collection accordingly.
@@ -116,21 +109,22 @@ namespace ReplayMenus {
             collection->dataSize = startReplays.size();
             collection->summaryErrorCode = 0;
             collection->fileSystemType = 0;
-            auto sizeOfNames = 20 * startReplays.size() + startReplays.size();
-            char names[sizeOfNames];
-            int index = 0;
-            for(int i = 0; i < startReplays.size(); i++)
+            auto sizeOfNames = (MAX_REPLAY_NAME_SIZE + 1) * startReplays.size();
+            collection->data = new char[sizeOfNames];
+            auto names = reinterpret_cast<char*>(collection->data);
+
+            //copy each replay name into names buffer - null terminate each name
+            size_t index = 0;
+            for(const auto& startReplay : startReplays )
             {
-                for(int f = 0; f < startReplays[i].nameSize; f++)
-                {
-                    names[index] = startReplays[i].nameBuffer[f];
-                    index++;
-                }
+                std::copy(startReplay.nameBuffer,
+                          startReplay.nameBuffer + startReplay.nameSize,
+                          &names[index]);
+
+                index += startReplay.nameSize;
                 names[index] = '\0';
                 index++;
             }
-            collection->data = new char[sizeOfNames];
-            memcpy(collection->data, names, sizeOfNames);
             OSReport("%s\n", collection->data);
             return true;
         }
@@ -203,19 +197,7 @@ namespace ReplayMenus {
 
     extern "C" void printName(char* title, u32 index)
     {
-        std::string name = std::string(reinterpret_cast<char*>(startReplays[index].nameBuffer), startReplays[index].nameSize);
-        replace(name, "Game_", "");
-        std::string year = name.substr(0, 4);
-        std::string month = name.substr(4, 2);
-        std::string day = name.substr(6, 2);
-        std::string hour = name.substr(9, 2);
-        std::string minute = name.substr(11, 2);
-
-        month.erase(0, std::min(month.find_first_not_of('0'), month.size()-1));
-        day.erase(0, std::min(day.find_first_not_of('0'), day.size()-1));
-        hour.erase(0, std::min(hour.find_first_not_of('0'), hour.size()-1));
-
-        name = month + "/" + day + "/" + year + " " + hour + ":" + minute;
+        std::string name = std::string(reinterpret_cast<const char*>(startReplays[index].nameBuffer), startReplays[index].nameSize);
         strcpy(title, name.c_str());
     }
 

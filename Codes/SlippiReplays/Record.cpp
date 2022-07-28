@@ -1,5 +1,20 @@
 #include <Brawl/GF/gfSceneManager.h>
-#include "Record.h"
+#include "Assembly.h"
+#include "Debug.h"
+#include "Memory.h"
+#include "Brawl/GF/GameFrame.h"
+#include "Brawl/GF/gfApplication.h"
+#include <Brawl/FT/ftManager.h>
+#include <Brawl/GF/GameGlobal.h>
+#include <Wii/mtRand.h>
+#include <Brawl/IT/itManager.h>
+#include "EXIPacket.h"
+#include "brawlback-common/ExiStructures.h"
+#include <cstdio>
+#include <cstring>
+#include <charconv>
+#include <string_view>
+#include <Brawl/SC/scMelee.h>
 
 namespace ReplaysLogic {
     bool recordInputs = false;
@@ -84,8 +99,10 @@ namespace ReplaysLogic {
             auto itemManager = ITEM_MANAGER;
 
             u8 playerCount = fighterManager->getEntryCount();
-
-            if(playerCount >= 2 && _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0 && !isGamePaused())
+            auto countDownEnded = _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd();
+            if(playerCount >= 2 &&
+               countDownEnded != 0 &&
+               !isGamePaused())
             {
                 if(entryFrame)
                 {
@@ -125,16 +142,12 @@ namespace ReplaysLogic {
                     replay.numItems = sizeOfItems;
                     replay.frameCounter = gameGlobal->gameFrame->frameCounter;
                     replay.persistentFrameCounter = gameGlobal->gameFrame->persistentFrameCounter;
-
-                    if(sizeOfItems > 0)
+                    for (int i = 0; i < sizeOfItems; i++)
                     {
-                        for (int i = 0; i < sizeOfItems; i++)
-                        {
-                            auto item = itemManager->baseItemArrayList.at(i);
-                            auto& replayItem = replay.items[i];
-                            replayItem.itemId = (*item)->getItKind();
-                            replayItem.itemVariant = (*item)->getItVariation();
-                        }
+                        auto item = itemManager->baseItemArrayList.at(i);
+                        auto& replayItem = replay.items[i];
+                        replayItem.itemId = (*item)->getItKind();
+                        replayItem.itemVariant = (*item)->getItVariation();
                     }
                     replay.numPlayers = playerCount;
                     for(int i = 0; i < playerCount; i++)

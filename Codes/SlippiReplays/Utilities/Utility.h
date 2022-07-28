@@ -21,10 +21,8 @@ T bufferToObject(const u8* buffer)
 template <class T>
 T swap_endian(T in)
 {
-    char* const p = reinterpret_cast<char*>(&in);
+    char *const p = reinterpret_cast<char *>(&in);
     for (size_t i = 0; i < sizeof(T) / 2; ++i)
         std::swap(p[i], p[sizeof(T) - i - 1]);
     return in;
 }
-
-bool replace(std::string& str, const std::string& from, const std::string& to);
