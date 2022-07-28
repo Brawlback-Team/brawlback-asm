@@ -1,4 +1,5 @@
-#include "Playback.h"
+#include "Assembly.h"
+#include "Brawl/GF/gfApplication.h"
 
 namespace ReplaysLogic {
     bool isGamePaused() {

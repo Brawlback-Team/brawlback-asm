@@ -7,10 +7,15 @@
 
 
 struct ftParamCustomizeModuleImpl {
+    // 0x0
     char _spacer[0xC];
+    // 0xC
     float walkInitVel;
+    // 0x10
     float walkAcc;
+    // 0x14
     float walkMaxVel;
+    // 0x18
     float groundFriction;
     float dashInitVel;
     float dashRunAccA;
