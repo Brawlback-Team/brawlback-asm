@@ -50,37 +50,25 @@ namespace ReplaysLogic {
         
         const auto nameBufferEnd = nameBufferChar + bufferSize;
         auto res = std::to_chars( nameBufferChar + REPLAY_FILENAME_START.size(), nameBufferEnd, calendarTime.year);
-        if(calendarTime.mon + 1 < 10)
-        {
-            *res.ptr = '0';
-            res.ptr++;
-        }
-        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.mon + 1);
-        if(calendarTime.mday < 10)
-        {
-            *res.ptr = '0';
-            res.ptr++;
-        }
-        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.mday);
+
+        auto writeNumber = [&](int value){
+            if(value < 10){
+                *res.ptr = '0';
+                res.ptr++;
+            }
+            res = std::to_chars( res.ptr, nameBufferEnd, value);
+        };
+
+        const auto month = calendarTime.mon + 1;
+        writeNumber(month);
+        writeNumber(calendarTime.mday);
+
         *res.ptr = 'T';
         res.ptr++;
-        if(calendarTime.hour < 10)
-        {
-            *res.ptr = '0';
-            res.ptr++;
-        }
-        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.hour);
-        if(calendarTime.min < 10)
-        {
-            *res.ptr = '0';
-            res.ptr++;
-        }
-        res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.min);
-        if(calendarTime.sec < 10)
-        {
-            *res.ptr = '0';
-            res.ptr++;
-        }
+
+        writeNumber(calendarTime.hour);
+        writeNumber(calendarTime.min);
+        writeNumber(calendarTime.sec);
         res = std::to_chars( res.ptr, nameBufferEnd, calendarTime.sec);
         const size_t stringSize = std::distance(nameBufferChar, res.ptr);
 
