@@ -23,8 +23,10 @@
 
 
 //  toggles for netplay logic and rollback logic
+#if 0
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
+#endif
 // ^ if you disable rollbacks, make sure to also disable the ROLLBACK_IMPL flag in BrawlbackUtility.cpp on the dolphin side
 // ------------------------------------
 
@@ -57,6 +59,9 @@
 
 #define getRankftManager ( ( int (*) (void* ftmanager, u32 idx) ) 0x80815b2c)
 #define getRankftEntry ( ( u8 (*) (ftEntry* ftentry) ) 0x8081fd70)
+
+// dump Heap Infos
+#define dumpAll ( (void (*) ()) 0x80024a50)
 
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 

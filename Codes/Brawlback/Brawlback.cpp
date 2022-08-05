@@ -75,6 +75,9 @@ namespace Util {
     void SaveState(u32 currentFrame) {        
         EXIPacket::CreateAndSend(EXICommand::CMD_CAPTURE_SAVESTATE, &currentFrame, sizeof(currentFrame));
     }
+    void LoadState(u32 frameToLoad) {        
+        EXIPacket::CreateAndSend(EXICommand::CMD_LOAD_SAVESTATE, &frameToLoad, sizeof(frameToLoad));
+    }
 
     void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 pIdx) {
         ftManager* fighterManager = FIGHTER_MANAGER;
@@ -115,6 +118,20 @@ namespace Util {
         fighter->modules->postureModule->yPos = pfd.syncData.locY;
         fighter->modules->statusModule->action = pfd.syncData.anim;
         */
+    }
+
+    std::vector<SavestateMemRegionInfo> savestateMemRegions = {};
+
+    void AppendMemRegionForSavestate(std::vector<SavestateMemRegionInfo>& regions, u32 address_start, u32 size) {
+        // the address of the region is stored in the low order bits, the size of the region is stored in the high bits
+        SavestateMemRegionInfo info;
+        info.address = address_start;
+        info.size = size;
+        regions.push_back(info);
+    }
+    void UpdateSavestateMemRegionsOnEmu(const std::vector<SavestateMemRegionInfo>& regions) {
+        const SavestateMemRegionInfo* regions_ptr = regions.data();
+        EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, regions_ptr, regions.size() * sizeof(*regions_ptr));
     }
 
 }
@@ -283,12 +300,12 @@ namespace FrameAdvance {
     void ProcessGameSimulationFrame(FrameData* inputs) {
         _OSDisableInterrupts();
         u32 gameLogicFrame = getCurrentFrame();
-        //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
 
         // save state on each simulated frame (this includes resim frames)
         Util::SaveState(gameLogicFrame);
 
         GetInputsForFrame(gameLogicFrame, inputs);
+        gameLogicFrame = getCurrentFrame(); // a rollback may have changed this
 
         OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         //Util::printFrameData(*inputs);
@@ -320,6 +337,95 @@ namespace FrameAdvance {
     }
 
 
+    // names of heaps that we want to include in our savestates
+    const char* heapsToSave = R"(
+        System Fighter1Instance Fighter2Instance InfoInstance InfoExtraResource 
+        InfoResource Physics WiiPad Fighter1Resource Fighter2Resource 
+        FighterEffect FighterTechqniq GameGlobal
+    )"; // Effect OverlayCommon CopyFB
+
+    // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
+    // so we move it into r3 to get easy access to it in our hook
+    INJECTION("dump_gfMemoryPool_hook", 0x8002625c, R"(
+        SAVE_REGS
+        mr r3, r30
+        bl dumpGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+    extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
+        _OSDisableInterrupts();
+        char* heap_name = *r30_reg_val;
+        // if the current heap is one we care about
+        if (strstr(heapsToSave, heap_name)) {
+            OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s | ", addr_start, addr_end, mem_size, heap_name);
+            Util::AppendMemRegionForSavestate(Util::savestateMemRegions, addr_start, mem_size);
+        }
+        _OSEnableInterrupts();
+    }
+
+    // gets rid of some printouts when calling dumpAll
+    INJECTION("dumpGfMemoryPoolPrintNop", 0x80026288, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop2", 0x8002619c, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop3", 0x800261b4, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop4", 0x800262e0, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop5", 0x800260fc, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop6", 0x80026114, "nop");
+
+
+    // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
+    // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
+    void ProcessGameAllocation(u8* allocated_addr, u32 size) {
+        OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
+        SavestateMemRegionInfo memRegion = {};
+        memRegion.address = allocated_addr;
+        memRegion.size = size;
+        memRegion.TAddFRemove = true;
+        //EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
+
+    }
+    // called when the game calls free/[gfMemoryPool] which is it's main free function
+    // address is the address being freed
+    void ProcessGameFree(u8* address) {
+        OSReport("FREE: addr = 0x%08x\n", address);
+        SavestateMemRegionInfo memRegion = {};
+        memRegion.address = address;
+        memRegion.TAddFRemove = false;
+        //EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
+    }
+
+
+    // at the very beginning of alloc/[gfMemoryPool]
+    INJECTION("alloc_gfMemoryPool_hook", 0x80025c6c, R"(
+        SAVE_REGS
+        bl allocGfMemoryPoolBeginHook
+        RESTORE_REGS
+        lbz	r7, 0x0024 (r3)
+    )");
+    static u32 allocSizeTracker = 0;
+    extern "C" void allocGfMemoryPoolBeginHook(u8* internal_heap_data, u32 size, u32 alignment) {
+        allocSizeTracker = size;
+    }
+    // at the very end of alloc/[gfMemoryPool]
+    INJECTION("alloc_gfMemoryPool_END_hook", 0x80025ec4, R"(
+        mr r3, r30
+        SAVE_REGS
+        bl allocGfMemoryPoolEndHook
+        RESTORE_REGS
+    )");
+    extern "C" void allocGfMemoryPoolEndHook(u8* alloc_addr) {
+        ProcessGameAllocation(alloc_addr, allocSizeTracker);
+    }
+    // at the very beginning of free/[gfMemoryPool]
+    INJECTION("free_gfMemoryPool_hook", 0x80025f40, R"(
+        addi r31, r3, 40
+        SAVE_REGS
+        bl freeGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+    extern "C" void freeGfMemoryPoolHook(u32 unk, u8* address) {
+        ProcessGameFree(address);
+    }
+
     // before inputs are updated, we copy our inputs from the emulator into currentFrameData so that
     // we can inject them into the game when it uses them (see getGamePadStatus hook below)
     FrameData currentFrameData;
@@ -343,8 +449,6 @@ namespace FrameAdvance {
     extern "C" void getGamePadStatusInjection(gfPadSystem* pad_system, int port, gfPadGamecube* dst) {
         _OSDisableInterrupts();
         if (Netplay::IsInMatch()) {
-            //OSReport("Injecting pad for frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
-            //Util::printInputs(currentFrameData.playerFrameDatas[port].pad);
             Util::InjectToGame(currentFrameData, dst, port);
         }
         _OSEnableInterrupts();
@@ -411,6 +515,54 @@ namespace FrameLogic {
         // this function -> write data to emulator through exi -> emulator processes data and possibly queues up data
         // to send back to the game -> send data to the game if there is any -> game processes that data -> repeat
 
+        if (currentFrame == 0) {
+            Util::savestateMemRegions.clear();
+            // call dumpAll so we get the allocated important mem regions
+            dumpAll();
+
+            // TODO: this may not be working great because we only probe the mem regions at the beginning of the match, and if anything ends
+            // up getting freed, that mem would still be rollbacked which i guess could cause the crashes/hangs...
+
+            // some specific hardcoded regions that we know are important
+            static const std::vector<std::vector<u32>> static_addrs = {
+                // {start addr, end addr}
+
+                {0x805b8a00, 0x805b8a00+0x17c}, // gfTaskScheduler
+                {0x9134cc00, 0x9134cc10}, // CopyFB edited
+
+                //{0x80611f60, 0x80673460}, // System
+                //{0x80b8db60, 0x80c23a60}, // Effect
+                //{0x8123ab60, 0x8128cb60}, // Fighter1Instance
+                //{0x8128cb60, 0x812deb60}, // Fighter2Instance
+                //{0x81601960, 0x81734d60}, // InfoInstance
+                //{0x815edf60, 0x817bad60}, // InfoExtraResource
+                //{0x80c23a60, 0x80da3a60}, // InfoResource
+                //{0x8154e560, 0x81601960}, // Physics
+                //{0x80A471A0, 0x80b8db60}, // OverlayCommon 4/4
+                //{0x90e61400, 0x90e77500}, // WiiPad
+                //{0x9151fa00, 0x917C9400}, // first half of Fighter1Resource
+                //{0x91b04c80, 0x91DAE680}, // Fighter2Resource first half
+                //{0x91478e00, 0x914d2900}, // FighterEffect
+                //{0x92cb4400, 0x92dcdf00}, // FighterTechqniq
+                //{0x90167400, 0x90199800}, // GameGlobal
+
+                //{0x800064E0, 0x80009760},  //DataSection0 ?
+                //{0x80009760, 0x8000C860},  //DataSection1 ?
+                //{0x804064E0, 0x804067E0},  //DataSection2 ?
+                //{0x804067E0, 0x80406800},  //DataSection3 ?
+                {0x80406800, 0x80420680},  //DataSection4   vsync
+                {0x80420680, 0x80494840},  //DataSection5  OS/System stuff
+                {0x8059C420, 0x8059FF80},  //DataSection6 graphics and other system stuff
+                {0x805A1320, 0x805A5120},  //DataSection7 more vsync?
+                {0x80494880, 0x805A5154},  //BSS  like literally everything
+            };
+            for (int i = 0; i < static_addrs.size(); i++) {
+                Util::AppendMemRegionForSavestate(Util::savestateMemRegions, static_addrs.at(i).at(0), static_addrs.at(i).at(1) - static_addrs.at(i).at(0));
+            }
+
+            Util::UpdateSavestateMemRegionsOnEmu(Util::savestateMemRegions);
+        }
+
         if (Netplay::IsInMatch()) {
             _OSDisableInterrupts();
             // reset flag to be used later
@@ -423,11 +575,9 @@ namespace FrameLogic {
             // lol
             DEFAULT_MT_RAND->seed = 0x496ffd00;
 
-
             #ifdef NETPLAY_IMPL
             FrameDataLogic(currentFrame);
             #endif
-
 
             _OSEnableInterrupts();
         }
@@ -475,12 +625,11 @@ namespace FrameLogic {
     // resim optimization
     // gfTask names listed in the array below
     // will not be run during resimulation frames
-    #define NUM_NON_RESIM_TASKS 2
-    const char* nonResimTasks[NUM_NON_RESIM_TASKS] = {
-        //"Camera",
-        "stShadow",
-        "grFinalMainBg",
-    };
+    #if 0
+    const char* nonResimTasks = R"(
+        ecMgr EffectManager
+    )";
+
     INJECTION("gfTaskProcessHook", 0x8002dc74, R"(
         SAVE_REGS
         bl ShouldSkipGfTaskProcess
@@ -496,15 +645,11 @@ namespace FrameLogic {
         if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
-            for (int i = 0; i < NUM_NON_RESIM_TASKS; i++) {
-                if (!strcmp(taskName, nonResimTasks[i])) { // if they are equal
-                    //OSReport("Skipping task processing for %s\n", taskName);
-                    return true;
-                }
-            }
+            return strstr(taskName, nonResimTasks) ? true : false; 
         }
         return false;
     }
+    #endif
     
 
 
