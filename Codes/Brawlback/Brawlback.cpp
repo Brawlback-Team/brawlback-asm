@@ -3,6 +3,7 @@
 #include "GmGlobalModeMelee.h"
 #include <vector>
 
+static bool shouldTrackAllocs = false;
 
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -124,9 +125,10 @@ namespace Util {
 
     void AppendMemRegionForSavestate(std::vector<SavestateMemRegionInfo>& regions, u32 address_start, u32 size) {
         // the address of the region is stored in the low order bits, the size of the region is stored in the high bits
-        SavestateMemRegionInfo info;
+        SavestateMemRegionInfo info = {};
         info.address = address_start;
         info.size = size;
+        info.TAddFRemove = true;
         regions.push_back(info);
     }
     void UpdateSavestateMemRegionsOnEmu(const std::vector<SavestateMemRegionInfo>& regions) {
@@ -258,11 +260,13 @@ namespace Match {
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
         #endif
+        shouldTrackAllocs = false;
         _OSEnableInterrupts();
     }
 
 
 }
+
 
 namespace FrameAdvance {
 
@@ -375,25 +379,30 @@ namespace FrameAdvance {
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size) {
-        OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
-        SavestateMemRegionInfo memRegion = {};
-        memRegion.address = allocated_addr;
-        memRegion.size = size;
-        memRegion.TAddFRemove = true;
-        //EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
-
+        if (shouldTrackAllocs) {
+            //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
+            SavestateMemRegionInfo memRegion = {};
+            memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
+            memRegion.size = size;
+            memRegion.TAddFRemove = true;
+            EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
+        }
     }
     // called when the game calls free/[gfMemoryPool] which is it's main free function
     // address is the address being freed
     void ProcessGameFree(u8* address) {
-        OSReport("FREE: addr = 0x%08x\n", address);
-        SavestateMemRegionInfo memRegion = {};
-        memRegion.address = address;
-        memRegion.TAddFRemove = false;
-        //EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
+        if (shouldTrackAllocs) {
+            //OSReport("FREE: addr = 0x%08x\n", address);
+            SavestateMemRegionInfo memRegion = {};
+            memRegion.address = (u32)address; // is this cast ok?
+            memRegion.TAddFRemove = false;
+            EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));
+        }
     }
 
 
+    static bool shouldSaveThisAlloc = false;
+    static u32 allocSizeTracker = 0;
     // at the very beginning of alloc/[gfMemoryPool]
     INJECTION("alloc_gfMemoryPool_hook", 0x80025c6c, R"(
         SAVE_REGS
@@ -401,8 +410,10 @@ namespace FrameAdvance {
         RESTORE_REGS
         lbz	r7, 0x0024 (r3)
     )");
-    static u32 allocSizeTracker = 0;
-    extern "C" void allocGfMemoryPoolBeginHook(u8* internal_heap_data, u32 size, u32 alignment) {
+    extern "C" void allocGfMemoryPoolBeginHook(char** internal_heap_data, u32 size, u32 alignment) {
+        char* heap_name = *internal_heap_data;
+        // if the current heap is one we care about
+        shouldSaveThisAlloc = strstr(heapsToSave, heap_name) ? true : false;
         allocSizeTracker = size;
     }
     // at the very end of alloc/[gfMemoryPool]
@@ -413,7 +424,9 @@ namespace FrameAdvance {
         RESTORE_REGS
     )");
     extern "C" void allocGfMemoryPoolEndHook(u8* alloc_addr) {
-        ProcessGameAllocation(alloc_addr, allocSizeTracker);
+        if (shouldSaveThisAlloc) {
+            ProcessGameAllocation(alloc_addr, allocSizeTracker);
+        }
     }
     // at the very beginning of free/[gfMemoryPool]
     INJECTION("free_gfMemoryPool_hook", 0x80025f40, R"(
@@ -422,8 +435,12 @@ namespace FrameAdvance {
         bl freeGfMemoryPoolHook
         RESTORE_REGS
     )");
-    extern "C" void freeGfMemoryPoolHook(u32 unk, u8* address) {
-        ProcessGameFree(address);
+    extern "C" void freeGfMemoryPoolHook(char** internal_heap_data, u8* address) {
+        char* heap_name = *internal_heap_data;
+        // if the current heap is one we care about
+        if (strstr(heapsToSave, heap_name)) {
+            ProcessGameFree(address);
+        }
     }
 
     // before inputs are updated, we copy our inputs from the emulator into currentFrameData so that
@@ -550,17 +567,20 @@ namespace FrameLogic {
                 //{0x80009760, 0x8000C860},  //DataSection1 ?
                 //{0x804064E0, 0x804067E0},  //DataSection2 ?
                 //{0x804067E0, 0x80406800},  //DataSection3 ?
+                /*
                 {0x80406800, 0x80420680},  //DataSection4   vsync
                 {0x80420680, 0x80494840},  //DataSection5  OS/System stuff
                 {0x8059C420, 0x8059FF80},  //DataSection6 graphics and other system stuff
                 {0x805A1320, 0x805A5120},  //DataSection7 more vsync?
                 {0x80494880, 0x805A5154},  //BSS  like literally everything
+                */
             };
             for (int i = 0; i < static_addrs.size(); i++) {
                 Util::AppendMemRegionForSavestate(Util::savestateMemRegions, static_addrs.at(i).at(0), static_addrs.at(i).at(1) - static_addrs.at(i).at(0));
             }
 
             Util::UpdateSavestateMemRegionsOnEmu(Util::savestateMemRegions);
+            shouldTrackAllocs = true;
         }
 
         if (Netplay::IsInMatch()) {
