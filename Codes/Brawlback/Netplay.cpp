@@ -59,6 +59,8 @@ namespace Netplay {
                 auto gameSettingsFromOpponent = bufferToObject<GameSettings>(&read_data[1]);
                 FixGameSettingsEndianness(gameSettingsFromOpponent);
                 MergeGameSettingsIntoGame(gameSettingsFromOpponent);
+                // TODO: we shoud assign the gameSettings var to the gameSettings from opponent since its merged with ours now.
+                gameSettings.localPlayerPort = gameSettingsFromOpponent.localPlayerPort;
                 matched = true;
             }
             else {

@@ -4,6 +4,12 @@
 #include <vector>
 
 
+// TODO: rename to gmGlobalModeMelee prefix or smth
+#define P1_CHAR_ID_IDX 152
+#define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 92
+#define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 92
+#define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 92
+
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
@@ -27,7 +33,7 @@ namespace Util {
     }
 
     void printFrameData(const FrameData& fd) {
-        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
+        for (int i = 1; i < MAX_NUM_PLAYERS; i++) {
             OSReport("Frame %u pIdx %u\n", fd.playerFrameDatas[i].frame, (unsigned int)fd.playerFrameDatas[i].playerIdx);
             printInputs(fd.playerFrameDatas[i].pad);
         }
@@ -39,7 +45,7 @@ namespace Util {
         OSReport("[/Sync]\n");
     }
 
-      void FixFrameDataEndianness(FrameData* fd) {
+    void FixFrameDataEndianness(FrameData* fd) {
         swapByteOrder(fd->randomSeed);
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             swapByteOrder(fd->playerFrameDatas[i].frame);
@@ -57,7 +63,14 @@ namespace Util {
         ret.RTrigger = pad.RTrigger;
         return ret;
     }
-    void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad) {
+    void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad, int port) {
+        
+        // TODO: do this once on match start or whatever, so we don't need to access this so often and lose cpu cycles
+        //bool isNotConnected = Netplay::getGameSettings().playerSettings[port].playerType == PlayerType::PLAYERTYPE_NONE;
+        // get current char selection and if none, the set as not connected
+        u8 charId = *(((u8*)GM_GLOBAL_MODE_MELEE)+P1_CHAR_ID_IDX + (port*92));
+        bool isNotConnected = charId == -1;
+        gamePad.isNotConnected = isNotConnected;
         gamePad.buttons.bits = pad.buttons;
         gamePad.cStickX = pad.cStickX;
         gamePad.cStickY = pad.cStickY;
@@ -79,10 +92,6 @@ namespace Util {
 void fillOutGameSettings(GameSettings& settings) {
     settings.randomSeed = DEFAULT_MT_RAND->seed;
     settings.stageID = GM_GLOBAL_MODE_MELEE->stageID;
-
-
-    #define P1_CHAR_ID_IDX 152
-    #define P2_CHAR_ID_IDX 244
 
     u8 p1_id = *(((u8*)GM_GLOBAL_MODE_MELEE)+P1_CHAR_ID_IDX);
     OSReport("P1 pre-override char id: %u\n", (unsigned int)p1_id);
@@ -245,6 +254,7 @@ namespace FrameAdvance {
         GetInputsForFrame(gameLogicFrame, inputs);
 
         OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
+        
         //Util::printFrameData(*inputs);
 
         _OSEnableInterrupts();
@@ -271,12 +281,13 @@ namespace FrameAdvance {
 
         li r3, 0x1
     )");
+
     extern "C" void getGamePadStatusInjection(gfPadSystem* pad_system, int port, gfPadGamecube* dst) {
         _OSDisableInterrupts();
         if (Netplay::IsInMatch()) {
             //OSReport("Injecting pad for frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
             //Util::printInputs(currentFrameData.playerFrameDatas[port].pad);
-            Util::InjectBrawlbackPadToPadStatus(*dst, currentFrameData.playerFrameDatas[port].pad);
+            Util::InjectBrawlbackPadToPadStatus(*dst, currentFrameData.playerFrameDatas[port].pad, port);
         }
         _OSEnableInterrupts();
     }
@@ -316,7 +327,7 @@ namespace FrameLogic {
             PlayerFrameData fData;
             fData.frame = currentFrame;
             fData.playerIdx = localPlayerIdx;
-            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[localPlayerIdx]);
+            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[Netplay::getGameSettings().localPlayerPort]);
 
             // sending inputs + current game frame
             EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(PlayerFrameData));
