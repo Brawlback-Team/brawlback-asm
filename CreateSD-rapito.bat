@@ -10,6 +10,7 @@ set cmakebuild=cmake --build %CD%/build --config Debug --target %buildTarget% -j
 set makesd=%CD%/MakeSD/main.bat
 set makesd2=%CD%/MakeSD2/main.bat
 
+
 xcopy /s /y  ".\BuildSystem\BrawlFuncMap.map" "C:\Users\rober\Documents\Dolphin Emulator\Maps\RSBE01.map"
 xcopy /s /y  ".\build\Disassembly\Symbols.map" "C:\Users\rober\Documents\Dolphin Emulator\Maps\RSBE01.map"
 
@@ -17,4 +18,6 @@ echo ====================================
 echo Building mod files...
 echo ====================================
 
+@REM %cmakebuild% && %makesd% 
 %cmakebuild% && %makesd% && %makesd2%
+@REM xcopy /y "C:\Users\rober\Documents\brawl.raw" "C:\Users\rober\Documents\brawl2.raw"*

@@ -13,12 +13,18 @@ enum controllerType {
 //technically is gfPadStatus, and is used for all controller types
 //Just using gamecube for now
 #pragma pack(push, 2)
+
 struct gfPadGamecube {
-	char _spacer[6];
-	//0x6
+	PADButtons _buttons;
 	PADButtons buttons;
-	char _spacer2[0x30 - 6 - sizeof(PADButtons)];
+	PADButtons holdButtons;
+	PADButtons rapidFireButtons;
+	PADButtons releasedButtons;
+	PADButtons newPressedButtons;
+	// char _spacer2[0x30 - 6 - (sizeof(PADButtons))];
+	char _bspacer6[0x18];
 	//0x30
+	// TODO: calculate new offset
 	s8 stickX;
 	s8 stickY;
 	s8 cStickX;
@@ -49,3 +55,4 @@ struct gfPadGamecube {
   }
 }; //__attribute__((packed, aligned(4)));
 #pragma pack(pop)
+static_assert(sizeof(gfPadGamecube) == 0x40, "gfPadGamecube is wrong size");

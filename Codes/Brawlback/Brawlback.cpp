@@ -27,7 +27,22 @@ namespace Util {
         OSReport("CStickX: %hhu ", pad.cStickX);
         OSReport("CStickY: %hhu\n", pad.cStickY);
         OSReport("Buttons: ");
-        print_half(pad.buttons);
+        OSReport("Buttons: 0x%x", pad.buttons);
+        OSReport("holdButtons: 0x%x", pad.holdButtons);
+        OSReport(" LTrigger: %u    RTrigger %u\n", pad.LTrigger, pad.RTrigger);
+        //OSReport(" ---------\n"); 
+    }
+
+    void printGameInputs(const gfPadGamecube& pad) {
+        OSReport(" -- Pad --\n");
+        OSReport("StickX: %hhu ", pad.stickX);
+        OSReport("StickY: %hhu ", pad.stickY);
+        OSReport("CStickX: %hhu ", pad.cStickX);
+        OSReport("CStickY: %hhu\n", pad.cStickY);
+        OSReport("Buttons: ");
+        OSReport("B1: 0x%x ", pad.buttons.bits);
+        OSReport("B2: 0x%x ", pad._buttons.bits);
+        OSReport("B3: 0x%x \n", pad.newPressedButtons.bits);
         OSReport(" LTrigger: %u    RTrigger %u\n", pad.LTrigger, pad.RTrigger);
         //OSReport(" ---------\n"); 
     }
@@ -52,15 +67,32 @@ namespace Util {
         }
     }
 
+    // TODO: fix pause by making sure that the sys data thingy is also checking for one of the other button bits
+
     BrawlbackPad GamePadToBrawlbackPad(const gfPadGamecube& pad) {
         BrawlbackPad ret;
         ret.buttons = pad.buttons.bits;
+        // *(ret.newPressedButtons-0x2) = (int)*(pad+0x14);
+        ret.holdButtons = pad.holdButtons.bits;
+        ret.rapidFireButtons = pad.rapidFireButtons.bits;
+        ret.releasedButtons = pad.releasedButtons.bits;
+        ret.newPressedButtons = pad.newPressedButtons.bits;
         ret.cStickX = pad.cStickX;
         ret.cStickY = pad.cStickY;
         ret.stickX = pad.stickX;
         ret.stickY = pad.stickY;
         ret.LTrigger = pad.LTrigger;
         ret.RTrigger = pad.RTrigger;
+
+
+        // OSReport("BUTTONS======\n");
+        // OSReport("Buttons: 0x%x\n", pad._buttons.bits);
+        // OSReport("Buttons: 0x%x\n", pad.buttons.bits);
+        // OSReport("Buttons holdButtons: 0x%x\n", pad.holdButtons.bits);
+        // OSReport("Buttons rapidFireButtons: 0x%x\n", pad.rapidFireButtons.bits);
+        // OSReport("Buttons releasedButtons: 0x%x\n", pad.releasedButtons.bits);
+        // OSReport("Buttons newPressedButtons: 0x%x\n", pad.newPressedButtons.bits);
+
         return ret;
     }
     void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad, int port) {
@@ -69,15 +101,29 @@ namespace Util {
         //bool isNotConnected = Netplay::getGameSettings().playerSettings[port].playerType == PlayerType::PLAYERTYPE_NONE;
         // get current char selection and if none, the set as not connected
         u8 charId = *(((u8*)GM_GLOBAL_MODE_MELEE)+P1_CHAR_ID_IDX + (port*92));
+        // u8 charId = GM_GLOBAL_MODE_MELEE->playerData[port].charId;
         bool isNotConnected = charId == -1;
+        // GM_GLOBAL_MODE_MELEE->playerData[port].playerType = isNotConnected ? 03 : 0 ; // Set to Human
+        
+
         gamePad.isNotConnected = isNotConnected;
         gamePad.buttons.bits = pad.buttons;
+        // int* addr  = (int*) &gamePad;
+        // *(addr+0x14+0x2) = pad.buttons;
+        // gamePad.holdButtons.bits = pad.holdButtons;
+        // gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
+        // gamePad.releasedButtons.bits = pad.releasedButtons;
+        // gamePad.newPressedButtons.bits = pad.newPressedButtons;
         gamePad.cStickX = pad.cStickX;
         gamePad.cStickY = pad.cStickY;
         gamePad.stickX = pad.stickX;
         gamePad.stickY = pad.stickY;
         gamePad.LTrigger = pad.LTrigger;
         gamePad.RTrigger = pad.RTrigger;
+        // OSReport("Port 0x%x Inputs\n", port);
+        // OSReport("Buttons: 0x%x\n", pad.buttons);
+        // OSReport("Buttons: 0x%x\n", pad.newPressedButtons);
+
     }
 
     void SaveState(u32 currentFrame) {        
@@ -98,7 +144,6 @@ void fillOutGameSettings(GameSettings& settings) {
     
     u8 p2_id = *(((u8*)GM_GLOBAL_MODE_MELEE)+P2_CHAR_ID_IDX);
     OSReport("P2 pre-override char id: %u\n", (unsigned int)p2_id);
-
 
     // brawl loads all players into the earliest slots.
     // I.E. if players choose P1 and P3, they will get loaded into P1 and P2
@@ -253,7 +298,7 @@ namespace FrameAdvance {
 
         GetInputsForFrame(gameLogicFrame, inputs);
 
-        OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
+        //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         
         //Util::printFrameData(*inputs);
 
@@ -272,25 +317,83 @@ namespace FrameAdvance {
         }
         _OSEnableInterrupts();
     }
-    // beginning of getGamePadStatus/[gfPadSystem]
+    // ending of getGamePadStatus/[gfPadSystem]
     // which is called 4 times (for each player) to convert their raw inputs into "processed" inputs
     INJECTION("getGamePadStatusHook", 0x8002ae40, R"(
         SAVE_REGS
+        li r6, 1
         bl getGamePadStatusInjection
         RESTORE_REGS
 
         li r3, 0x1
     )");
 
-    extern "C" void getGamePadStatusInjection(gfPadSystem* pad_system, int port, gfPadGamecube* dst) {
+    
+    // Do the same thing for getSysPadStatus because this is the one used for knowing if we are paused or not, and who knows what else
+    // TODO: consider using just a quick hack that only checks for game pad status if it's being pressed 
+    // ending of getSysPadStatus/[gfPadSystem]
+    // which is called 8 times (for each player/port) during a match while checking the pause logic and who knows what else
+    INJECTION("getSysPadStatusHook", 0x8002b038, R"(
+        SAVE_REGS
+        li r6, 0
+        bl getGamePadStatusInjection
+        RESTORE_REGS
+
+        li r3, 0x1
+    )");
+
+    void bp() {
+        OSReport("BP!\n");
+    }
+
+    // On vBrawl this is only iterated over Human players
+    extern "C" void getGamePadStatusInjection(gfPadSystem* pad_system, int port, gfPadGamecube* ddst, bool isGamePad) {
         _OSDisableInterrupts();
+        // OSReport("PAD %i 0x%x\n", 0, &PAD_SYSTEM->sysPads[0]);
+        // OSReport("PAD %i 0x%x\n", 1, &PAD_SYSTEM->sysPads[1]);
+        // OSReport("PAD %i 0x%x\n", 2, &PAD_SYSTEM->sysPads[2]);
+        // OSReport("PAD %i 0x%x\n", 3, &PAD_SYSTEM->sysPads[3]);
+        //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
+        //  if((ddst->releasedButtons.bits + ddst->newPressedButtons.bits) != 0){
+        //         OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
+        //         OSReport("releasedButtons 0x%x\n", ddst->releasedButtons.bits);
+        //         OSReport("newPressedButtons 0x%x\n", ddst->newPressedButtons.bits);
+        // }
+
+        // if((ddst->buttons.bits) != 0){
+        //     OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
+        //     OSReport("buttons 0x%x\n", ddst->buttons.bits);
+        // }
+
         if (Netplay::IsInMatch()) {
-            //OSReport("Injecting pad for frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
-            //Util::printInputs(currentFrameData.playerFrameDatas[port].pad);
-            Util::InjectBrawlbackPadToPadStatus(*dst, currentFrameData.playerFrameDatas[port].pad, port);
+            //OSReport("Injecting pad for- frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
+            auto frameData = currentFrameData.playerFrameDatas[port];
+            auto pad = isGamePad ? frameData.pad : frameData.sysPad;
+            Util::InjectBrawlbackPadToPadStatus(*ddst, pad, port);
+            // if(ddst->newPressedButtons.bits == 0x1000){
+            //     bp();
+            // }
+            
+            if((ddst->releasedButtons.bits + ddst->newPressedButtons.bits) != 0){
+                OSReport("BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
+                OSReport("releasedButtons 0x%x\n", ddst->releasedButtons.bits);
+                OSReport("newPressedButtons 0x%x\n", ddst->newPressedButtons.bits);
+            }
+
+            // if((ddst->buttons.bits) != 0){
+                // OSReport("BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
+                // OSReport("buttons 0x%x\n", ddst->buttons.bits);
+            // }
+
         }
         _OSEnableInterrupts();
     }
+
+    // So basically after fnding out how the pause function works. Which is it checks for the player structs inside the global melee struct, for their player Kind? and two other more variables that I'm not sure what they mean.
+    // After checking those, then it actually allows the player to pause the game. 
+    // I got stuck at getting the remote system pad inputs sent over to the other client. It was working at some point, then I did something and broke it.
+    // Next session I'm going to try and figure that out and it hopefully just works.
+    // I also mapped out some player struct vars and made them assigned when filling game settings
 
     INJECTION("handleFrameAdvanceHook", 0x800173a4, R"(
         SAVE_REGS
@@ -327,8 +430,9 @@ namespace FrameLogic {
             PlayerFrameData fData;
             fData.frame = currentFrame;
             fData.playerIdx = localPlayerIdx;
-            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[Netplay::getGameSettings().localPlayerPort]);
-
+            auto port = Netplay::getGameSettings().localPlayerPort;
+            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[port]);
+            fData.sysPad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->sysPads[port]);
             // sending inputs + current game frame
             EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(PlayerFrameData));
         }
@@ -348,6 +452,12 @@ namespace FrameLogic {
     void BeginFrame() {
 
         u32 currentFrame = getCurrentFrame();
+
+
+        //Util::printGameInputs(PAD_SYSTEM->pads[0]);
+
+        //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
+
         // this is the start of all our logic for each frame. Because EXI writes/reads are synchronous,
         // you can think of the control flow going like this
         // this function -> write data to emulator through exi -> emulator processes data and possibly queues up data
@@ -360,7 +470,7 @@ namespace FrameLogic {
             // just resimulated/stalled/skipped/whatever, reset to normal
             FrameAdvance::ResetFrameAdvance();
 
-            OSReport("------ Frame %u ------\n", currentFrame);
+            //OSReport("------ Frame %u ------\n", currentFrame);
 
             // lol
             DEFAULT_MT_RAND->seed = 0x496ffd00;
@@ -375,6 +485,10 @@ namespace FrameLogic {
         }
 
     }
+
+
+// TODO: this is the address to enable pause, should come in handy when disconnects happen and we need to turn pause back on
+    // 8094a810
 
     // called at the end of the game logic in a frame (rendering logic happens after this func in the frame)
     // at this point, I think its (maybe?) guarenteed that inputs are cleared out already

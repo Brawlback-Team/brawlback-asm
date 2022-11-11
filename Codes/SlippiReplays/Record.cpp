@@ -82,6 +82,7 @@ namespace ReplaysLogic {
                         auto fighterInput = fighterManager->getInput(fighterManager->getEntryIdFromIndex(i));
                         const soStatusModuleImpl *stageObject = fighter->modules->statusModule;
 
+                        // TODO: verify if also all other inputs need to be sent
                         player.actionState = stageObject->action;
                         player.inputs.attack = fighterInput->buttons.attack;
                         player.inputs.special = fighterInput->buttons.special;
