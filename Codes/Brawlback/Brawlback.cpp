@@ -361,8 +361,14 @@ namespace FrameAdvance {
         // }
 
         // if((ddst->buttons.bits) != 0){
-        //     OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
-        //     OSReport("buttons 0x%x\n", ddst->buttons.bits);
+        //     // OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
+        //     // OSReport("buttons 0x%x\n", ddst->buttons.bits);
+        //     OSReport("Melee Info=====\n");
+        //     OSReport("p1 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[0].charId, GM_GLOBAL_MODE_MELEE->playerData[0].playerType, GM_GLOBAL_MODE_MELEE->playerData[0].unk1, GM_GLOBAL_MODE_MELEE->playerData[0].unk2);
+        //     OSReport("p2 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[1].charId, GM_GLOBAL_MODE_MELEE->playerData[1].playerType, GM_GLOBAL_MODE_MELEE->playerData[1].unk1, GM_GLOBAL_MODE_MELEE->playerData[1].unk2);
+        //     OSReport("p3 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[2].charId, GM_GLOBAL_MODE_MELEE->playerData[2].playerType, GM_GLOBAL_MODE_MELEE->playerData[2].unk1, GM_GLOBAL_MODE_MELEE->playerData[2].unk2);
+        //     OSReport("p4 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[3].charId, GM_GLOBAL_MODE_MELEE->playerData[3].playerType, GM_GLOBAL_MODE_MELEE->playerData[3].unk1, GM_GLOBAL_MODE_MELEE->playerData[3].unk2);
+
         // }
 
         if (Netplay::IsInMatch()) {
@@ -373,7 +379,8 @@ namespace FrameAdvance {
             // if(ddst->newPressedButtons.bits == 0x1000){
             //     bp();
             // }
-            
+
+            // TODO: make whole game struct be filled in from dolphin based off a known good match between two characters on a stage like battlefield
             if((ddst->releasedButtons.bits + ddst->newPressedButtons.bits) != 0){
                 OSReport("BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
                 OSReport("releasedButtons 0x%x\n", ddst->releasedButtons.bits);

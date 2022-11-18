@@ -8,11 +8,11 @@
 #include "stdtypes.h"
 
 struct gmPlayerData {
-    u8 charId;          // [0x98] Supposedly?       
+    u8 charId;          // [0x98] Supposedly? (slotIndex)       
     u8 playerType;      // [0x99] 00 = human, 02 = CPU, Disconnected = 03
     char _sp1[0x3C]; 
-    u8 unk1;            // [0xD5] 0x3C player order?
-    u8 unk2;            // [0xD6] has paused enabled?
+    u8 unk1;            // [0xD5] 0x3C has paused enabled?
+    u8 unk2;            // [0xD6] player order/standing?
 
     char _sp2[0x5C - sizeof(charId) - sizeof(playerType) - 0x3C - sizeof(unk1) - sizeof(unk2)];
 }__attribute__((packed, aligned(2)));
@@ -23,10 +23,10 @@ struct gmGlobalModeMelee {
     char _spacer[0x1B];
 
     u8 stageID;             // 0x1B
-    char _sp2[0x7D];
+    char _sp2[0x7C];
     gmPlayerData playerData[4];
 
-    char _spacer2[0x320 - 0x1B - sizeof(stageID) - 0x7D - (sizeof(gmPlayerData)*4)];
+    char _spacer2[0x320 - 0x1B - sizeof(stageID) - 0x7C - (sizeof(gmPlayerData)*4)];
 }__attribute__((packed, aligned(2)));
 static_assert(sizeof(gmGlobalModeMelee) == 0x320, "gmGlobalModeMelee has incorrect size");
 

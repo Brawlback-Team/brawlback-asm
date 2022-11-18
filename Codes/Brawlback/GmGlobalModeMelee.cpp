@@ -48,8 +48,20 @@ namespace GMMelee {
 
             melee[P1_CHAR_ID_IDX] = charChoices[0];
             melee[P2_CHAR_ID_IDX] = charChoices[1];
-            melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
-            melee[P2_CHAR_ID_IDX+1] = 0;
+            GM_GLOBAL_MODE_MELEE->playerData[0].charId = charChoices[0];
+            GM_GLOBAL_MODE_MELEE->playerData[1].charId = charChoices[1];
+            
+            GM_GLOBAL_MODE_MELEE->playerData[0].playerType = 0;
+            GM_GLOBAL_MODE_MELEE->playerData[1].playerType = 0;
+
+            GM_GLOBAL_MODE_MELEE->playerData[0].unk1 = 0x80;
+            GM_GLOBAL_MODE_MELEE->playerData[1].unk1 = 0x80;
+
+            GM_GLOBAL_MODE_MELEE->playerData[0].unk2 = 0x0;
+            GM_GLOBAL_MODE_MELEE->playerData[1].unk2 = 0x1;
+
+            // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
+            // melee[P2_CHAR_ID_IDX+1] = 0;
             // melee[STAGE_ID_IDX] = stageChoice;
             melee[STAGE_ID_IDX] = 0x01; // TODO uncomment and use above line, just testing with battlefield
         }
