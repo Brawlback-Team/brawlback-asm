@@ -313,7 +313,7 @@ namespace FrameAdvance {
 
         OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         //Util::printFrameData(*inputs);
-
+`
         #if 0
         OSReport("Input info\n");
         for (int i = 0; i < 2; i++) {
@@ -594,6 +594,7 @@ namespace FrameLogic {
 
             // lol
             DEFAULT_MT_RAND->seed = 0x496ffd00;
+            
 
             #ifdef NETPLAY_IMPL
             FrameDataLogic(currentFrame);

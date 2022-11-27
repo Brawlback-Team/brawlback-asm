@@ -19,11 +19,11 @@
 #include "Wii/OS/OSTime.h"
 #include "EXIPacket.h"
 #include "Utility/Utility.h"
-#include "brawlback-exi-structures/ExiStructures.h"
+#include "brawlback-common/ExiStructures.h"
 
 
 //  toggles for netplay logic and rollback logic
-#if 0
+#if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
 #endif
