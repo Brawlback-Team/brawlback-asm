@@ -9,7 +9,12 @@ enum EXICommand
 {
     START_REPLAYS_STRUCT = 19,
     REPLAYS_STRUCT = 20,
-    ENDGAME = 21
+    ENDGAME = 21,
+    GET_NEXT_FRAME = 22,
+    BAD_INDEX = 23,
+    GET_NUM_REPLAYS = 24,
+    SET_CUR_INDEX = 25,
+    GET_START_REPLAY = 26
 };
 
 
