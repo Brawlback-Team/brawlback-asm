@@ -313,7 +313,7 @@ namespace FrameAdvance {
 
         OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         //Util::printFrameData(*inputs);
-`
+
         #if 0
         OSReport("Input info\n");
         for (int i = 0; i < 2; i++) {
@@ -382,7 +382,7 @@ namespace FrameAdvance {
         if (shouldTrackAllocs) {
             //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion = {};
-            memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
+            memRegion.address = (u64)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
             memRegion.size = size;
             memRegion.TAddFRemove = true;
             EXIPacket::CreateAndSend(EXICommand::CMD_SAVESTATE_REGION, &memRegion, sizeof(memRegion));

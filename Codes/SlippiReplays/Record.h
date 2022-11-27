@@ -13,12 +13,9 @@
 #include <Brawl/IT/itManager.h>
 #include "EXIPacket.h"
 #include "brawlback-common/ExiStructures.h"
-<<<<<<< HEAD
-=======
 #include <cstdio>
 #include <cstring>
 #include <charconv>
 #include <string_view>
->>>>>>> 28fd4b630a3581a733be8f86973a4b37ed28c152
 
 #endif //PROJECTMCODES_REPLAY_H
