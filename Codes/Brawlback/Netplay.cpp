@@ -57,8 +57,11 @@ namespace Netplay {
             if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
                 OSReport("SETUP PLAYERS GAMESIDE\n");
                 auto gameSettingsFromOpponent = bufferToObject<GameSettings>(&read_data[1]);
+                OSReport("--SETUP CHARS--\nP1 char: %u  P2 char: %u\n--END SETUP CHARS--\n", (unsigned int)gameSettingsFromOpponent.playerSettings[0].charID, (unsigned int)gameSettingsFromOpponent.playerSettings[1].charID);
                 FixGameSettingsEndianness(gameSettingsFromOpponent);
                 MergeGameSettingsIntoGame(gameSettingsFromOpponent);
+                // TODO: we shoud assign the gameSettings var to the gameSettings from opponent since its merged with ours now.
+                gameSettings.localPlayerPort = gameSettingsFromOpponent.localPlayerPort;
                 matched = true;
             }
             else {
@@ -75,4 +78,3 @@ namespace Netplay {
     }
 
 }
-
