@@ -48,8 +48,8 @@ namespace GMMelee {
 
             melee[P1_CHAR_ID_IDX] = charChoices[0];
             melee[P2_CHAR_ID_IDX] = charChoices[1];
-            GM_GLOBAL_MODE_MELEE->playerData[0].charId = charChoices[0];
-            GM_GLOBAL_MODE_MELEE->playerData[1].charId = charChoices[1];
+            GM_GLOBAL_MODE_MELEE->playerData[0].slotID = charChoices[0];
+            GM_GLOBAL_MODE_MELEE->playerData[1].slotID = charChoices[1];
             
             GM_GLOBAL_MODE_MELEE->playerData[0].playerType = 0;
             GM_GLOBAL_MODE_MELEE->playerData[1].playerType = 0;

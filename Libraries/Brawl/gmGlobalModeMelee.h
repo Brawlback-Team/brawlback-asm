@@ -12,11 +12,11 @@ struct gmPlayerData {
     u8 playerType;      // [0x99] 00 = human, 02 = CPU, Disconnected = 03
     char _sp1[0x8];
     u8 startPoint;
-    char _sp2[0x34];
+    char _sp2[0x33];
     u8 unk1;            // [0xD5] 0x3C has paused enabled?
     u8 unk2;            // [0xD6] player order/standing?
 
-    char _sp2[0x5C - sizeof(slotIndex) - sizeof(playerType) - 0x3C - sizeof(unk1) - sizeof(unk2)];
+    char _sp3[0x5C - sizeof(slotID) - sizeof(playerType) - 0x8 - sizeof(startPoint) - 0x33 - sizeof(unk1) - sizeof(unk2)];
 }__attribute__((packed, aligned(2)));
 static_assert(sizeof(gmPlayerData) == 0x5C, "gmPlayerData has incorrect size");
 

@@ -3,7 +3,6 @@
 #include "GmGlobalModeMelee.h"
 #include <vector>
 
-
 // TODO: rename to gmGlobalModeMelee prefix or smth
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
@@ -16,6 +15,10 @@ STARTUP(startupNotif) {
 
 u32 getCurrentFrame() {
     return GAME_FRAME->persistentFrameCounter;
+}
+
+bool gameHasStarted() {
+    return !SC_MELEE->stOperatorReadyGo1->isEnd();
 }
 
 namespace Util {
@@ -35,6 +38,7 @@ namespace Util {
 
     void printGameInputs(const gfPadGamecube& pad) {
         OSReport(" -- Pad --\n");
+        OSReport(" LAnalogue: %u    RAnalogue %u\n", pad.LAnalogue, pad.RAnalogue);
         OSReport("StickX: %hhu ", pad.stickX);
         OSReport("StickY: %hhu ", pad.stickY);
         OSReport("CStickX: %hhu ", pad.cStickX);
@@ -77,6 +81,8 @@ namespace Util {
         ret.rapidFireButtons = pad.rapidFireButtons.bits;
         ret.releasedButtons = pad.releasedButtons.bits;
         ret.newPressedButtons = pad.newPressedButtons.bits;
+        ret.LAnalogue = pad.LAnalogue;
+        ret.RAnalogue = pad.RAnalogue;
         ret.cStickX = pad.cStickX;
         ret.cStickY = pad.cStickY;
         ret.stickX = pad.stickX;
@@ -114,6 +120,8 @@ namespace Util {
         // gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
         // gamePad.releasedButtons.bits = pad.releasedButtons;
         // gamePad.newPressedButtons.bits = pad.newPressedButtons;
+        gamePad.LAnalogue = pad.LAnalogue;
+        gamePad.RAnalogue = pad.RAnalogue;
         gamePad.cStickX = pad.cStickX;
         gamePad.cStickY = pad.cStickY;
         gamePad.stickX = pad.stickX;
@@ -452,14 +460,13 @@ namespace FrameLogic {
         // write current inputs to EXI, send to emulator code
         WriteInputsForFrame(currentFrame);
     }
-
+    
     // called at the beginning of the game logic in a frame
     // a this point, inputs are populated for this frame
     // but the game logic that operates on those inputs has not yet happened
     void BeginFrame() {
 
         u32 currentFrame = getCurrentFrame();
-
 
         //Util::printGameInputs(PAD_SYSTEM->pads[0]);
 
@@ -477,14 +484,14 @@ namespace FrameLogic {
             // just resimulated/stalled/skipped/whatever, reset to normal
             FrameAdvance::ResetFrameAdvance();
 
-            //OSReport("------ Frame %u ------\n", currentFrame);
+            OSReport("------ Frame %u ------\n", currentFrame);
 
             // lol
             DEFAULT_MT_RAND->seed = 0x496ffd00;
 
 
             #ifdef NETPLAY_IMPL
-            FrameDataLogic(currentFrame);
+                FrameDataLogic(currentFrame);
             #endif
 
 

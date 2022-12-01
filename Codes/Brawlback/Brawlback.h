@@ -15,6 +15,7 @@
 #include <Brawl/GF/GameGlobal.h>
 #include "Brawl/gmGlobalModeMelee.h"
 #include "Brawl/GF/gfApplication.h"
+#include "Brawl/SC/scMelee.h"
 #include "Wii/mtRand.h"
 #include "Wii/OS/OSTime.h"
 #include "EXIPacket.h"

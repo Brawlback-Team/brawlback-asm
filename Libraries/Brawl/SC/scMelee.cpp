@@ -3,3 +3,6 @@
 //
 
 #include "scMelee.h"
+unsigned int stOperatorReadyGo::isEnd() {
+    return _isEnd_ST_OPERATOR_READY_GO(this);
+}

@@ -22,17 +22,19 @@ struct gfPadGamecube {
 	PADButtons releasedButtons;
 	PADButtons newPressedButtons;
 	// char _spacer2[0x30 - 6 - (sizeof(PADButtons))];
-	char _bspacer6[0x18];
+	char _bspacer6[0x17];
 	//0x30
 	// TODO: calculate new offset
 	s8 stickX;
 	s8 stickY;
 	s8 cStickX;
 	s8 cStickY;
+	s8 LAnalogue;
+	s8 RAnalogue;
 	s8 LTrigger;
 	s8 RTrigger;
-
-	char _spacer3[0x38 - 0x30 - 6];
+	
+	char _spacer3[0x1];
 	//0x38
 	//0xFF if not connected, else 0
 	bool isNotConnected;
@@ -48,6 +50,8 @@ struct gfPadGamecube {
       stickY = 0;
       cStickX = 0;
       cStickY = 0;
+	  LAnalogue = 0;
+	  RAnalogue = 0;
       LTrigger = 0;
       RTrigger = 0;
       isNotConnected = 0;
