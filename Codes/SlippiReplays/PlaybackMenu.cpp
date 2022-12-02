@@ -11,6 +11,18 @@
 
 namespace ReplayMenus {
     std::vector<StartReplay> startReplays;
+    void FixStartReplayEndianness(StartReplay& startReplay)
+    {
+        startReplay.firstFrame = swap_endian(startReplay.firstFrame);
+        startReplay.otherRandomSeed = swap_endian(startReplay.otherRandomSeed);
+        startReplay.randomSeed = swap_endian(startReplay.randomSeed);
+        for (auto& player : startReplay.players)
+        {
+            player.startPlayer.xPos = swap_endian(player.startPlayer.xPos);
+            player.startPlayer.yPos = swap_endian(player.startPlayer.yPos);
+            player.startPlayer.zPos = swap_endian(player.startPlayer.zPos);
+        }
+    }
     void PopulateStartReplays()
     {
         EXIPacket getNumReplays = EXIPacket(GET_NUM_REPLAYS, nullptr, 0);
@@ -42,6 +54,7 @@ namespace ReplayMenus {
             {
                 StartReplay startReplayData;
                 readEXI(&startReplayData, sizeof(StartReplay), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+                FixStartReplayEndianness(startReplayData);
                 startReplays.push_back(startReplayData);
                 OSReport("REPLAY FOUND AT INDEX %u -- STARTING FRAME IS %u\n", (u32)i, startReplays[i].firstFrame);
             }
