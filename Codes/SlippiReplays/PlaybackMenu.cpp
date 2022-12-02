@@ -28,10 +28,8 @@ namespace ReplayMenus {
         OSReport("NUMBER OF REPLAYS: %u\n", numReplays);
         for(int i = 0; i < numReplays; i++)
         {
-            EXIPacket setCurIndex = EXIPacket(SET_CUR_INDEX, &i, sizeof(int));
-            setCurIndex.Send();
-
-            EXIPacket getStartReplay = EXIPacket(GET_START_REPLAY, nullptr, 0);
+            u8 index = i;
+            EXIPacket getStartReplay = EXIPacket(GET_START_REPLAY, index, 0);
             getStartReplay.Send();
 
             do
