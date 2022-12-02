@@ -42,10 +42,10 @@ namespace ReplayMenus {
 
             if(cmd_byte == GET_START_REPLAY)
             {
-                u8* startReplayData = (u8*)malloc(sizeof(StartReplay));
-                readEXI(startReplayData, sizeof(StartReplay), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-                startReplays.push_back(bufferToObject<StartReplay>(startReplayData));
-                OSReport("REPLAY FOUND AT INDEX %u -- STARTING FRAME IS %u\n", i, startReplays[i].firstFrame);
+                StartReplay startReplayData;
+                readEXI(&startReplayData, sizeof(StartReplay), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+                startReplays.push_back(startReplayData);
+                OSReport("REPLAY FOUND AT INDEX %u -- STARTING FRAME IS %u\n", (u32)i, startReplays[i].firstFrame);
             }
             else
             {

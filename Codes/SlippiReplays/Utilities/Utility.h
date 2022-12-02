@@ -1,15 +1,12 @@
 #pragma once
 
 #include "stdtypes.h"
-#include "Containers/vector.h"
-#include "Containers/Queue.h"
-#include <cstring>
 #include <algorithm>
-#include <string>
+#include <cstring>
 
 //USE WITH CAUTION!!!
 //buffer assumed to contain at least sizeof(T) bytes
-//Should only be used with packed structures from brawlback-exi-structures
+//Should only be used with packed structures from brawlback-commons
 //Fields in object need to have endianess corrected if sent between game <-> emulator
 template<typename T>
 T bufferToObject(const u8* buffer)
