@@ -28,6 +28,10 @@ unsigned int ftManager::getFighterCount(entryID entry) {
     return _getFighterCount_ftManager(this, entry);
 }
 
+unsigned int ftManager::getFighterGmKind(entryID entry) {
+    return _getFighterGmKind_ftManager(this, entry);
+}
+
 aiInput* ftManager::getInput(entryID entry) {
     return _getInput_ftManager(this, entry);
 }

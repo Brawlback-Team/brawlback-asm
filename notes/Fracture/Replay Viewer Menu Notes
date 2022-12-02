@@ -2,7 +2,7 @@ _proccessSummary[gfCollectionIO]:
     if _proccessLoad[gfCollectionIO]:
         Creates a new nteSection and calls setSection @ 8003c050
         Calls extractData[nteSection] @ 8003c064
-        ....
+        extractData returns a pointer to a "replay data struct"
 
 
 _processLoad[gfCollectionIO]:
@@ -16,7 +16,7 @@ _processLoad[gfCollectionIO]:
 
     data should have data type at 0x15 (should be 2 for replays)
 
-
+"replay data struct"
 0: 2
 4: heap
 8: 80461690

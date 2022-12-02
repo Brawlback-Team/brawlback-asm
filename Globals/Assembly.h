@@ -57,7 +57,12 @@ asm(R"(
 	);                         \
     extern "C" void name()
 
-
+#define NO_REGS_INJECTION(name, address, replacement, returnType) \
+    INJECTION(#name, address, \
+		"bl " #name "\n" \
+		replacement \
+	);                         \
+    extern "C" returnType name()
 
 #define STARTUP(name) \
 	asm( \

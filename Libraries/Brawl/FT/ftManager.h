@@ -22,6 +22,7 @@ struct ftManager {
     entryID getEntryIdFromIndex(int index);
     Fighter* getFighter(entryID entry, bool getFollower=false);
     unsigned int getFighterCount(entryID entry);
+    unsigned int getFighterGmKind(entryID entry);
     aiInput* getInput(entryID entry);
     void setSlow(int excludeTeam, int unknown, int slowStrength, int durationInFrames);
     int getEntryCount();
@@ -46,6 +47,8 @@ struct ftManager {
 
 //gets the number of fighters attached to the given fighter entryid (ex. ice climbers = 1)
 #define _getFighterCount_ftManager ((unsigned int (*)(ftManager * self, entryID entry)) 0x80814ec4)
+
+#define _getFighterGmKind_ftManager ((unsigned int (*)(ftManager * self, entryID entry)) 0x808154d8)
 
 #define _getInput_ftManager ((aiInput* (*)(ftManager * self, entryID entry)) 0x80815a38)
 
