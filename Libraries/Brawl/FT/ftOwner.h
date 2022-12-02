@@ -43,6 +43,7 @@ struct ftOwner {
     void setDamage(double newValue, int shouldLog);
     bool isCpu();
     int getStockCount();
+    void setStockCount(int newValue);
 
     // 0x0
     ftOwnerData* ownerDataPtr;
@@ -54,4 +55,5 @@ struct ftOwner {
 #define _setDamage_ftOwner ((void (*)(double newValue, ftOwner * owner, int shouldLog)) 0x8081bdcc)
 #define _isOperationCpu_ftOwner ((bool (*)(ftOwner * self)) 0x8081bdb0)
 #define _getStockCount_ftOwner ((int (*)(ftOwner * self)) 0x8081c540)
+#define _setStockCount_ftOwner ((void (*)(ftOwner * self, int newValue)) 0x8081c528)
 #endif //PROJECTMCODES_FTOWNER_H

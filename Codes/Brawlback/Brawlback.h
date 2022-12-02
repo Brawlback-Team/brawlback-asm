@@ -12,7 +12,10 @@
 #include "Brawl/GF/GameFrame.h"
 #include "Brawl/GF/gfPadSystem.h"
 #include "Brawl/FT/ftManager.h"
+#include <Brawl/GF/GameGlobal.h>
 #include "Brawl/gmGlobalModeMelee.h"
+#include "Brawl/GF/gfApplication.h"
+#include "Brawl/SC/scMelee.h"
 #include "Wii/mtRand.h"
 #include "Wii/OS/OSTime.h"
 #include "EXIPacket.h"
@@ -21,14 +24,15 @@
 
 
 //  toggles for netplay logic and rollback logic
+#if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
+#endif
 // ^ if you disable rollbacks, make sure to also disable the ROLLBACK_IMPL flag in BrawlbackUtility.cpp on the dolphin side
 // ------------------------------------
 
-// make sure this is the same as the one in BrawlbackUtility.cpp on dolphin side
-
-#define MAX_REMOTE_PLAYERS 3
+//#define ROLLBACK_TESTING
+ 
 
 #define getGfSceneManager ((void* (*)()) 0x8002d018)
 #define setNextSeq ((void (*)(void* gfSceneManager, const char* name, int unk)) 0x8002d640)
@@ -47,6 +51,19 @@
 
 #define updateGame (( void (*)(gfPadSystem* pad_system) ) 0x8002a4f8)
 
+#define getGamePadStatus (( int (*) (gfPadSystem* pad_system, int port, gfPadGamecube* dst) ) 0x8002ac54)
+#define getPadInput ( ( void (*) (void* pad_config, u32 playerIdx, gfPadGamecube* current_inputs, u32* pad_status) ) 0x8004a468)
+#define getPadCofigInstance ( (void* (*) ()) 0x80048548)
+#define getIpSwitchInstance ( (void* (*) ()) 0x8004a750)
+
+#define setPause ( ( void (*) (gfApplication* application, bool isPaused, int unk) ) 0x80016900)
+
+#define getRankftManager ( ( int (*) (void* ftmanager, u32 idx) ) 0x80815b2c)
+#define getRankftEntry ( ( u8 (*) (ftEntry* ftentry) ) 0x8081fd70)
+
+// dump Heap Infos
+#define dumpAll ( (void (*) ()) 0x80024a50)
+
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
 u32 getCurrentFrame();
@@ -56,9 +73,18 @@ void MergeGameSettingsIntoGame(GameSettings& settings);
 
 namespace FrameLogic {
     void SaveState(u32 frame);
+    void GetInputsForFrame(u32 frame, FrameData* inputs);
+    void FixFrameDataEndianness(FrameData* fd);
 }
 namespace FrameAdvance {
-    int getFramesToAdvance();
+    u32 getFramesToAdvance();
 }
+
+// TODO: put this in the submodule and pack it
+struct GameReport {
+    f64 damage[MAX_NUM_PLAYERS];
+    s32 stocks[MAX_NUM_PLAYERS];
+    s32 frame_duration;
+};
 
 #endif

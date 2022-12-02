@@ -42,6 +42,7 @@ extern "C" void _INITIALIZE_(INITIALIZATION_INFO* initializationInfo) {
 
     auto dataWrites = initializationInfo->dataWrites;
     while(dataWrites->targetAddress != nullptr) {
+        OSReport("Writing data of size %u to address %x\n", (unsigned int)dataWrites->dataSize, (void*)dataWrites->targetAddress);
         for(int i = 0; i < dataWrites->repeats; i++) {
             memcpy(dataWrites->targetAddress + (dataWrites->dataSize * i), dataWrites->data, dataWrites->dataSize);
         }

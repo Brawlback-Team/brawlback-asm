@@ -46,15 +46,6 @@ void print_word(u32 word) {
     print_byte(byte3);
 }
 
-/*
-void swapByteOrder(u8* val) {
-    u8 b = *val;
-    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-    *val = b;
-}
-*/
 
 
 // https://mklimenko.github.io/english/2018/08/22/robust-endian-swap/
@@ -72,6 +63,13 @@ void swapByteOrder(u32& val)
     ui = ((ui << 8) & 0xFF00FF00) | ((ui >> 8) & 0xFF00FF);
     ui = (ui << 16) | (ui >> 16);
     val = ui;
+}
+void swapByteOrder(float& val)
+{
+    u32 ui = *((u32*)&val); // pretend it's a u32
+    ui = ((ui << 8) & 0xFF00FF00) | ((ui >> 8) & 0xFF00FF);
+    ui = (ui << 16) | (ui >> 16);
+    val = *((float*)&ui); // back to float
 }
 
 void swapByteOrder(u64& val)

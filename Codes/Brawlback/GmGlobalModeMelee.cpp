@@ -11,11 +11,11 @@ const u8 defaultGmGlobalModeMelee[] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 namespace GMMelee {
 
     bool isMatchChoicesPopulated = false;
-    vector<int> charChoices = {-1, -1, -1, -1};
+    int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     int stageChoice = -1;
 
-    void PopulateMatchSettings(vector<int> chars, int stageID) {
-        for (int i = 0; i < 4; i++) {
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int stageID) {
+        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
         }
         stageChoice = stageID;
@@ -41,12 +41,29 @@ namespace GMMelee {
         //PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
 
         if (isMatchChoicesPopulated) {
+            OSReport("postSetupMelee stage: 0x%x p1: 0x%x p2: 0x%x\n", stageChoice, charChoices[0], charChoices[1]);
+
             memcpy(GM_GLOBAL_MODE_MELEE, defaultGmGlobalModeMelee, 0x320);
             u8* melee = (u8*)GM_GLOBAL_MODE_MELEE;
 
             melee[P1_CHAR_ID_IDX] = charChoices[0];
             melee[P2_CHAR_ID_IDX] = charChoices[1];
-            melee[STAGE_ID_IDX] = stageChoice;
+            GM_GLOBAL_MODE_MELEE->playerData[0].slotID = charChoices[0];
+            GM_GLOBAL_MODE_MELEE->playerData[1].slotID = charChoices[1];
+            
+            GM_GLOBAL_MODE_MELEE->playerData[0].playerType = 0;
+            GM_GLOBAL_MODE_MELEE->playerData[1].playerType = 0;
+
+            GM_GLOBAL_MODE_MELEE->playerData[0].unk1 = 0x80;
+            GM_GLOBAL_MODE_MELEE->playerData[1].unk1 = 0x80;
+
+            GM_GLOBAL_MODE_MELEE->playerData[0].unk2 = 0x0;
+            GM_GLOBAL_MODE_MELEE->playerData[1].unk2 = 0x1;
+
+            // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
+            // melee[P2_CHAR_ID_IDX+1] = 0;
+            // melee[STAGE_ID_IDX] = stageChoice;
+            melee[STAGE_ID_IDX] = 0x01; // TODO uncomment and use above line, just testing with battlefield
         }
 
         _OSEnableInterrupts();

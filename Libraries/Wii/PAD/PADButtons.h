@@ -18,7 +18,7 @@ enum PADButtonBits : u16 {
 
 //This is the representation of the physical buttons pressed on a GC controller
 union PADButtons {
-    unsigned short bits;
+    u32 bits;
     struct {
         unsigned _none: 3;
         unsigned Start: 1;
@@ -36,3 +36,5 @@ union PADButtons {
         unsigned LeftDPad: 1;
     }__attribute__((packed, aligned(2)));
 }__attribute__((packed, aligned(2)));
+
+static_assert(sizeof(PADButtons) == 4, "PADButtons is wrong size");
