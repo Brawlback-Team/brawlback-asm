@@ -29,7 +29,7 @@ namespace ReplayMenus {
         for(int i = 0; i < numReplays; i++)
         {
             u8 index = i;
-            EXIPacket getStartReplay = EXIPacket(GET_START_REPLAY, index, 0);
+            EXIPacket getStartReplay = EXIPacket(GET_START_REPLAY, &index, 1);
             getStartReplay.Send();
 
             do
