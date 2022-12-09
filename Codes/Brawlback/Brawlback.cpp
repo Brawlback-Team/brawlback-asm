@@ -14,8 +14,17 @@ STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
 
+
+/**
+ * @brief Custom frame counter tracking all frames the game has been active from,
+ * including pause frames.
+ * This is necessary until we find an in-game frame counter that tracks this.
+ * (used to send to dolphin so pads are always sent to remote players)
+ */
+u32 bbFrameCounter = 0; 
+
 u32 getCurrentFrame() {
-    return GAME_FRAME->persistentFrameCounter;
+    return bbFrameCounter;
 }
 
 namespace Util {
@@ -71,8 +80,8 @@ namespace Util {
 
     BrawlbackPad GamePadToBrawlbackPad(const gfPadGamecube& pad) {
         BrawlbackPad ret;
+        ret._buttons = pad._buttons.bits;
         ret.buttons = pad.buttons.bits;
-        // *(ret.newPressedButtons-0x2) = (int)*(pad+0x14);
         ret.holdButtons = pad.holdButtons.bits;
         ret.rapidFireButtons = pad.rapidFireButtons.bits;
         ret.releasedButtons = pad.releasedButtons.bits;
@@ -107,13 +116,12 @@ namespace Util {
         
 
         gamePad.isNotConnected = isNotConnected;
+        gamePad._buttons.bits = pad._buttons;
         gamePad.buttons.bits = pad.buttons;
-        // int* addr  = (int*) &gamePad;
-        // *(addr+0x14+0x2) = pad.buttons;
-        // gamePad.holdButtons.bits = pad.holdButtons;
-        // gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
-        // gamePad.releasedButtons.bits = pad.releasedButtons;
-        // gamePad.newPressedButtons.bits = pad.newPressedButtons;
+        gamePad.holdButtons.bits = pad.holdButtons;
+        gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
+        gamePad.releasedButtons.bits = pad.releasedButtons;
+        gamePad.newPressedButtons.bits = pad.newPressedButtons;
         gamePad.cStickX = pad.cStickX;
         gamePad.cStickY = pad.cStickY;
         gamePad.stickX = pad.stickX;
@@ -190,6 +198,7 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 
 namespace Match {
 
+
     void PopulateGameReport(GameReport& report) {
         ftManager* fighterManager = FIGHTER_MANAGER;
 
@@ -245,6 +254,7 @@ namespace Match {
     SIMPLE_INJECTION(exitSceneMelee, 0x806d4844, "li r4, 0x0") {
         _OSDisableInterrupts();
         OSReport("  ~~~~~~~~~~~~~~~~  Exit Scene Melee  ~~~~~~~~~~~~~~~~  \n");
+        bbFrameCounter = 0;
         #ifdef NETPLAY_IMPL
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
@@ -349,36 +359,20 @@ namespace FrameAdvance {
     // On vBrawl this is only iterated over Human players
     extern "C" void getGamePadStatusInjection(gfPadSystem* pad_system, int port, gfPadGamecube* ddst, bool isGamePad) {
         _OSDisableInterrupts();
-        // OSReport("PAD %i 0x%x\n", 0, &PAD_SYSTEM->sysPads[0]);
-        // OSReport("PAD %i 0x%x\n", 1, &PAD_SYSTEM->sysPads[1]);
-        // OSReport("PAD %i 0x%x\n", 2, &PAD_SYSTEM->sysPads[2]);
-        // OSReport("PAD %i 0x%x\n", 3, &PAD_SYSTEM->sysPads[3]);
-        //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
-        //  if((ddst->releasedButtons.bits + ddst->newPressedButtons.bits) != 0){
-        //         OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
-        //         OSReport("releasedButtons 0x%x\n", ddst->releasedButtons.bits);
-        //         OSReport("newPressedButtons 0x%x\n", ddst->newPressedButtons.bits);
-        // }
 
-        // if((ddst->buttons.bits) != 0){
-        //     // OSReport("LOCAL BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
-        //     // OSReport("buttons 0x%x\n", ddst->buttons.bits);
-        //     OSReport("Melee Info=====\n");
-        //     OSReport("p1 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[0].charId, GM_GLOBAL_MODE_MELEE->playerData[0].playerType, GM_GLOBAL_MODE_MELEE->playerData[0].unk1, GM_GLOBAL_MODE_MELEE->playerData[0].unk2);
-        //     OSReport("p2 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[1].charId, GM_GLOBAL_MODE_MELEE->playerData[1].playerType, GM_GLOBAL_MODE_MELEE->playerData[1].unk1, GM_GLOBAL_MODE_MELEE->playerData[1].unk2);
-        //     OSReport("p3 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[2].charId, GM_GLOBAL_MODE_MELEE->playerData[2].playerType, GM_GLOBAL_MODE_MELEE->playerData[2].unk1, GM_GLOBAL_MODE_MELEE->playerData[2].unk2);
-        //     OSReport("p4 charId=0x%x ptype=0x%x unk1=0x%x unk2=0x%x\n", GM_GLOBAL_MODE_MELEE->playerData[3].charId, GM_GLOBAL_MODE_MELEE->playerData[3].playerType, GM_GLOBAL_MODE_MELEE->playerData[3].unk1, GM_GLOBAL_MODE_MELEE->playerData[3].unk2);
 
-        // }
 
         if (Netplay::IsInMatch()) {
             //OSReport("Injecting pad for- frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
             auto frameData = currentFrameData.playerFrameDatas[port];
             auto pad = isGamePad ? frameData.pad : frameData.sysPad;
             Util::InjectBrawlbackPadToPadStatus(*ddst, pad, port);
-            // if(ddst->newPressedButtons.bits == 0x1000){
-            //     bp();
-            // }
+
+
+            if(!isGamePad && (pad.newPressedButtons > 0 || pad.buttons > 0) && port != Netplay::localPlayerIdx && port <= 1) {
+                OSReport("Game Inputs buttons 0x%x\n", pad.buttons);
+                OSReport("Game Inputs newPressedButtons 0x%x\n", pad.newPressedButtons);
+            }
 
             // TODO: make whole game struct be filled in from dolphin based off a known good match between two characters on a stage like battlefield
             if((ddst->releasedButtons.bits + ddst->newPressedButtons.bits) != 0){
@@ -386,11 +380,6 @@ namespace FrameAdvance {
                 OSReport("releasedButtons 0x%x\n", ddst->releasedButtons.bits);
                 OSReport("newPressedButtons 0x%x\n", ddst->newPressedButtons.bits);
             }
-
-            // if((ddst->buttons.bits) != 0){
-                // OSReport("BUTTONS(P%i)===GP(%i)===\n", port, isGamePad);
-                // OSReport("buttons 0x%x\n", ddst->buttons.bits);
-            // }
 
         }
         _OSEnableInterrupts();
@@ -457,14 +446,7 @@ namespace FrameLogic {
     // a this point, inputs are populated for this frame
     // but the game logic that operates on those inputs has not yet happened
     void BeginFrame() {
-
         u32 currentFrame = getCurrentFrame();
-
-
-        //Util::printGameInputs(PAD_SYSTEM->pads[0]);
-
-        //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
-
         // this is the start of all our logic for each frame. Because EXI writes/reads are synchronous,
         // you can think of the control flow going like this
         // this function -> write data to emulator through exi -> emulator processes data and possibly queues up data
@@ -477,7 +459,6 @@ namespace FrameLogic {
             // just resimulated/stalled/skipped/whatever, reset to normal
             FrameAdvance::ResetFrameAdvance();
 
-            //OSReport("------ Frame %u ------\n", currentFrame);
 
             // lol
             DEFAULT_MT_RAND->seed = 0x496ffd00;
@@ -511,6 +492,19 @@ namespace FrameLogic {
     //SIMPLE_INJECTION(beginFrame, 0x80017344, "li r25, 0x0") { BeginFrame(); } // just before gameProc loop
     //SIMPLE_INJECTION(beginFrame, 0x800171b4, "li r25, 0x1") { BeginFrame(); } // top of full game loop
     SIMPLE_INJECTION(beginFrame, 0x80147394, "li r0, 0x1") { BeginFrame(); } // inside beginFrameLogic()
+    
+
+    // Hooked at initGameFrameForReplay which is where persistentGameFrame is initialized
+    SIMPLE_INJECTION(initBBFrameCounterForReplay, 0x8004e884, "li r0, 0") { 
+        bbFrameCounter = 0;
+    }
+    
+
+    // Make sure somehow that bbframeCouunter is also persisted into the savestates, I think that when a rollback occurs this is not being saved/restored back
+    // Hooked at gameProc/[gfApplication]/gf_app.o before doing the check if paused or not to call the updateGameProc function
+    SIMPLE_INJECTION(updateBBFrameCouunter, 0x80017760, "lbz r0, 0x00ED (r30)") { 
+        bbFrameCounter++;
+    }
     
     //SIMPLE_INJECTION(pauseCheckHook, 0x800171d8, "rlwinm. r0, r3, 0x1c, 0x1f, 0x1f") { BeginFrame(); }
 

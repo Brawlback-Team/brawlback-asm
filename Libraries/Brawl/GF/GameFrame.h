@@ -5,6 +5,13 @@
 #ifndef PROJECTMCODES_GAMEFRAME_H
 #define PROJECTMCODES_GAMEFRAME_H
 
+#define AS_FLOAT(num) *(float *)&num
+#define AS_INT(num) *(int *)&num
+#define ACCESS_INT(addr) *(int *)(addr)
+#define ACCESS_U8(addr) *(u8 *)(addr)
+#define ACCESS_U32(addr) *(u32 *)(addr)
+#define ACCESS_PTR(addr) *(void **)(addr)
+
 #include "../../../Globals/stdtypes.h"
 
 struct GameFrame {
@@ -23,9 +30,10 @@ struct GameFrame {
     //Then, some time after, frameCounter is reset
     //This happens on the same frame startRec is called, so this is probably when the game *really* starts
     u32 persistentFrameCounter;
+    // It gets set to 0 at 0x8004e888 on InitGameFrameforReplay
 };
 
-
+#define GAME_FRAMES_INTO_RUNTIME ACCESS_U32(0x805B5014)
 #define GAME_FRAME ((GameFrame*) 0x901812a0)
 
 #endif //PROJECTMCODES_GAMEFRAME_H
