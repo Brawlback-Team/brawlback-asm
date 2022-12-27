@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 
 project(ProjectMCodes)
 
-set(CMAKE_CXX_COMPILER ${PROJECT_SOURCE_DIR}\\BuildSystem\\Compiler\\bin\\powerpc-eabi-g++.exe)
-set(CMAKE_LINKER ${PROJECT_SOURCE_DIR}\\BuildSystem\\Compiler\\bin\\powerpc-eabi-ld.exe)
 set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 set(CMAKE_SYSTEM_NAME Generic)
