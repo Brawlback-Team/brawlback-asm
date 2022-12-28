@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/Codes/**",
                 "${workspaceFolder}/Globals/**",
@@ -12,8 +12,7 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "windowsSdkVersion": "10.0.18362.0",
-            "compilerPath": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe",
+            "compilerPath": "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-g++",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64",

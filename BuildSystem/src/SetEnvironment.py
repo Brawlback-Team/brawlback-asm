@@ -32,7 +32,4 @@ def resetDir(directory):
 def clearDir(directory):
     files = glob.glob(f"{directory}/*")
     for f in files:
-        try:
-            os.remove(f)
-        except PermissionError:
-            shutil.rmtree(f)
+        shutil.rmtree(f)

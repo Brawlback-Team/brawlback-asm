@@ -91,10 +91,10 @@
   {
     "name": "Brawlback",
     "compilers": {
-      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
+      "CXX": "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-g++"
     },
     "preferredGenerator": {
-      "name": "MinGW Makefiles"
+      "name": "Unix Makefiles"
     },
     "cmakeSettings": {
       "CMAKE_CXX_COMPILER_WORKS": 1,
