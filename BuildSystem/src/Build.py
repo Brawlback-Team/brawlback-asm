@@ -481,7 +481,7 @@ def makeInjectionsInfo(compiledCodes: Library):
     else:
         return data
 
-# This file is read by Dolphin to determine whether SD card folder should be synced
+# This file can be read by Dolphin to determine whether SD card folder should be synced
 def createLatestUpdateTimeFile():
     filename = "../.latest_sd_update_time"
 
