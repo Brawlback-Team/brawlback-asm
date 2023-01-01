@@ -30,3 +30,4 @@ class File:
 
     def size(self):
         return os.stat(self.path).st_size
+        
