@@ -21,8 +21,8 @@ from Symbol import Symbol
 from itertools import chain
 from BinUtils import objdump
 from math import ceil
-renamedCodesDir = 'IntermediateFiles\\Renamed'
-removedConstructorsDir = 'IntermediateFiles\\Removed'
+renamedCodesDir = 'IntermediateFiles/Renamed'
+removedConstructorsDir = 'IntermediateFiles/Removed'
 disassemblyDir = 'Disassembly'
 symbolMapFile: File = None
 settings: Settings = None
@@ -481,23 +481,32 @@ def makeInjectionsInfo(compiledCodes: Library):
     else:
         return data
 
+# This file can be read by Dolphin to determine whether SD card folder should be synced
+def createLatestUpdateTimeFile():
+    filename = "../.latest_sd_update_time"
+
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    f = open(filename, "x")
+    f.close()
+
 def buildSDCard():
-    outputfiles = [f for f in listdir('.\\Output') if isfile(join('.\\Output', f))]
-    subfolders = [ f for f in os.scandir('..\\SDCard') if f.is_dir() ]
+    outputfiles = [f for f in listdir('./Output') if isfile(join('./Output', f))]
+    subfolders = [ f for f in os.scandir('../SDCard') if f.is_dir() ]
 
     for subfolder in subfolders:
-        codesFolder = os.path.abspath(subfolder.path + "\\codes")
+        codesFolder = os.path.abspath(subfolder.path + "/codes")
         if not os.path.exists(codesFolder):
             os.makedirs(codesFolder)
         for outputfile in outputfiles:
-            shutil.copyfile(os.path.abspath("Output\\" + outputfile), os.path.abspath(codesFolder + "\\" + outputfile))
-        subprocess.run(['..\\GCTRM\\GCTRealMate.exe', "-q", "..\\GCTRM\\" + subfolder.name + "RSBE01.txt"])
-        shutil.copyfile(os.path.abspath("..\\GCTRM\\" + subfolder.name + "RSBE01.GCT"), os.path.abspath('..\\SDCard\\' + subfolder.name + "\\RSBE01.GCT"))
-        subprocess.run(['..\\GCTRM\\GCTRealMate.exe', "-q", "..\\GCTRM\\" + subfolder.name + "BOOST.txt"])
-        shutil.copyfile(os.path.abspath("..\\GCTRM\\" + subfolder.name + "BOOST.GCT"), os.path.abspath('..\\SDCard\\' + subfolder.name + "\\BOOST.GCT"))
-
-    
-
+            shutil.copyfile(os.path.abspath("Output/" + outputfile), os.path.abspath(codesFolder + "/" + outputfile))
+        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "RSBE01.txt"])
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "RSBE01.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/RSBE01.GCT"))
+        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "BOOST.txt"])
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "BOOST.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/BOOST.GCT"))
+   
+    createLatestUpdateTimeFile()
 
 if __name__ == '__main__':
 
@@ -506,7 +515,6 @@ if __name__ == '__main__':
         traceback.print_exception(exc_type, exc_value, tb)
         input('Press enter to exit.')
         sys.exit(-1)
-
 
     sys.excepthook = show_exception_and_exit
     build(*sys.argv[1:])

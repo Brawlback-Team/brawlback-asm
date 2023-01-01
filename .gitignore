@@ -19,6 +19,7 @@ SDCard/vBrawl/RSBE01.gct
 SDCard/Project+/codes/*
 SDCard/Project+/BOOST.gct
 SDCard/Project+/RSBE01.gct
+.latest_sd_update_time
 
 # User-specific files
 *.rsuser
