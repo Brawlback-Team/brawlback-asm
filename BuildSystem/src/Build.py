@@ -8,8 +8,9 @@
 #                  254  GET_ITER
 #                  256  CALL_FUNCTION_1       1  ''
 #                  258  STORE_FAST               'initSymbols'
-
-import sys, os, re
+from os import listdir
+from os.path import isfile, join
+import sys, os, re, shutil, subprocess
 from SetEnvironment import setEnvironment
 from LibraryDirectory import LibraryDirectory
 from Library import Library, InitialSectionNameLibrary, File, FinalSectionNameLibrary
@@ -20,8 +21,8 @@ from Symbol import Symbol
 from itertools import chain
 from BinUtils import objdump
 from math import ceil
-renamedCodesDir = 'IntermediateFiles\\Renamed'
-removedConstructorsDir = 'IntermediateFiles\\Removed'
+renamedCodesDir = 'IntermediateFiles/Renamed'
+removedConstructorsDir = 'IntermediateFiles/Removed'
 disassemblyDir = 'Disassembly'
 symbolMapFile: File = None
 settings: Settings = None
@@ -66,7 +67,6 @@ def build(buildDir=None, codesDir=None, ppcBinDirectory=None, brawlFuncMapPath=N
     data = makeFilesFile(compiledCodes, files)
     f = File('Output/files')
     f.writeBinary(data)
-
 
 def renameSections(codesDirectory: LibraryDirectory):
     name2NewName = {}
@@ -481,6 +481,32 @@ def makeInjectionsInfo(compiledCodes: Library):
     else:
         return data
 
+# This file can be read by Dolphin to determine whether SD card folder should be synced
+def createLatestUpdateTimeFile():
+    filename = "../.latest_sd_update_time"
+
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    f = open(filename, "x")
+    f.close()
+
+def buildSDCard():
+    outputfiles = [f for f in listdir('./Output') if isfile(join('./Output', f))]
+    subfolders = [ f for f in os.scandir('../SDCard') if f.is_dir() ]
+
+    for subfolder in subfolders:
+        codesFolder = os.path.abspath(subfolder.path + "/codes")
+        if not os.path.exists(codesFolder):
+            os.makedirs(codesFolder)
+        for outputfile in outputfiles:
+            shutil.copyfile(os.path.abspath("Output/" + outputfile), os.path.abspath(codesFolder + "/" + outputfile))
+        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "RSBE01.txt"])
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "RSBE01.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/RSBE01.GCT"))
+        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "BOOST.txt"])
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "BOOST.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/BOOST.GCT"))
+   
+    createLatestUpdateTimeFile()
 
 if __name__ == '__main__':
 
@@ -490,6 +516,6 @@ if __name__ == '__main__':
         input('Press enter to exit.')
         sys.exit(-1)
 
-
     sys.excepthook = show_exception_and_exit
     build(*sys.argv[1:])
+    buildSDCard()
