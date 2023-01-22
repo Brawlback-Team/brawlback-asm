@@ -19,6 +19,19 @@ Set CMAKE_BUILD_DIR in `MakeSD/Config.ini` to the path that cmake builds to (def
 
 Get submodule for EXI structures: `git submodule update --init --recursive`
 
+### Install DevKitProdevkitPro (Linux)
+For Windows we redistribute the devkitpro build tools in the BuildSystem/ folder of this repo. On other platforms, you must install the toolchain yourself.
+
+Follow the installation instructions here: https://devkitpro.org/wiki/Getting_Started
+
+You will want the following packages:
+
+- devkitPPC
+- wii-dev
+- gamecube-dev
+
+Using dkp-pacman the command will be `sudo dkp-pacman -S wii-dev gamecube-dev devkitppc` once dkp-pacman is installed.
+
 ## Build and Run
 
 To compile the C++ codes, refer to https://github.com/Fracture17/ProjectMCodes/tree/master/notes/guides or https://www.youtube.com/watch?v=oGg2dgYN1Do
