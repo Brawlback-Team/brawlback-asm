@@ -13,3 +13,7 @@ endif()
 set(CMAKE_CXX_COMPILER ${buildSystemDirectory}/bin/powerpc-eabi-g++)
 
 set(CMAKE_CXX_STANDARD 17)
+
+#Hard coding cmake build type to Debug because we don't have any reason 
+#to something else - Is that correct?? TODO: ask on discord
+set(CMAKE_BUILD_TYPE "Debug")

@@ -10,9 +10,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     include(CMake/DebugSettings.cmake)
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-include(CMake/Paths.cmake)
 include(CMake/Functions.cmake)
-
 
 create_folder(${PROJECT_BINARY_DIR}/TempCodes)
 
