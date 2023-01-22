@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.15)
-
 #conditionalAddSubdirectory("CSSControls" CSS_CONTROLS)
 #conditionalAddSubdirectory("ReplayFix" REPLAY_FIX)
 #conditionalAddSubdirectory("CustomAiFunctions" CUSTOM_AI_FUNCTIONS)
