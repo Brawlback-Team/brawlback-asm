@@ -1,5 +1,7 @@
 # Setting up CLion
 
+TODO: these settings need to be updated with how to use toolchain file
+
 1. Open CLion
 2. Clone this repository in CLion 
    1. make a new project

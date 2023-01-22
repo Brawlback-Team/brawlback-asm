@@ -19,8 +19,7 @@ def removeDevkitFromPath():
 
 
 def setDevkitPath(ppcBinDirectory):
-    os.environ['PATH'] += f";{ppcBinDirectory}"
-
+    os.environ['PATH'] += os.pathsep + ppcBinDirectory
 
 def resetDir(directory):
     if os.path.exists(directory):
