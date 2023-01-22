@@ -501,9 +501,20 @@ def buildSDCard():
             os.makedirs(codesFolder)
         for outputfile in outputfiles:
             shutil.copyfile(os.path.abspath("Output/" + outputfile), os.path.abspath(codesFolder + "/" + outputfile))
-        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "RSBE01.txt"])
+
+        if sys.platform == "linux":
+            gctrm_exec = '../GCTRM/GCTRealMateLinux'
+        elif sys.platform == "win32":
+            gctrm_exec = '../GCTRM/GCTRealMate.exe'
+        else:
+            raise Exception("No GCTRM executable for platform: " + sys.platform )
+
+        RSBE01_file = "../GCTRM/" + subfolder.name + "RSBE01.txt"
+        subprocess.run([gctrm_exec, "-q", RSBE01_file])
         shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "RSBE01.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/RSBE01.GCT"))
-        subprocess.run(['../GCTRM/GCTRealMate.exe', "-q", "../GCTRM/" + subfolder.name + "BOOST.txt"])
+
+        BOOST_file = "../GCTRM/" + subfolder.name + "BOOST.txt"
+        subprocess.run([gctrm_exec, "-q", BOOST_file])
         shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "BOOST.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/BOOST.GCT"))
    
     createLatestUpdateTimeFile()
