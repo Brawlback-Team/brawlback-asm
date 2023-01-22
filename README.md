@@ -36,9 +36,8 @@ Using dkp-pacman the command will be `sudo dkp-pacman -S wii-dev gamecube-dev de
 
 To compile the C++ codes, refer to https://github.com/Fracture17/ProjectMCodes/tree/master/notes/guides or https://www.youtube.com/watch?v=oGg2dgYN1Do
 
-To assemble the ASM for both Brawl and Project+, copy the compiled C++ binaries as well as make the sd.raw, run *CreateSD.bat*.
-
-Then using Dolphin, launch using one of the relevant launchers in the *Launchers* folder (make sure Brawl is set as the default ISO and insert SD card is checked in Config->Wii)
+Then using Dolphin, make sure an SD Card \*.raw file is selected under *Settings->Wii->SD Card Path* and the *SDCard* folder is selected under *Settings->Wii->SD Sync Folder*.
+Launch using one of the relevant launchers in the *Launchers* folder (make sure Brawl is set as the default ISO and insert SD card is checked in *Config->Wii*)
 
 ## ASM Tutorials
 
@@ -47,8 +46,6 @@ To learn PowerPC ASM, see: https://mariokartwii.com/showthread.php?tid=1114 <br 
 As well as https://github.com/WhiteTPoison5/brawlback-wiki for more resources
 
 ## Acknowledgements
-
-Credit to [Bird](https://github.com/jlambert360) and [Syvkal](http://forums.kc-mm.com/index.php?topic=79470) for MakeSD
 
 DukeItOut for GCTRM
 

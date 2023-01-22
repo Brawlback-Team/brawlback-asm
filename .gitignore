@@ -12,7 +12,8 @@ pf/
 rp/
 st/
 *.gct
-MakeSD/Config.ini
+SDCard/*
+.latest_sd_update_time
 
 # User-specific files
 *.rsuser
