@@ -11,6 +11,8 @@ C++ Source is found in the *Codes* folder
 
 This build does not come with Project+ assets, it only includes the Project+ source code. You will have to extract the pf folder from the Project+ download and place it in *SDCard/Project+*.
 
+If on Linux, you will need Boost's libraries built and installed to your system. A quick way to do this in Debian-based systems is to install via apt-get: `sudo apt-get install libboost-all-dev`
+
 Duplicate the file located at `MakeSD/SAMPLE-Config.ini` and rename the copy to `Config.ini`
 
 Set SD_CARD_PATH in `MakeSD/Config.ini` to the path of the sd.raw used by your configuration of Dolphin
