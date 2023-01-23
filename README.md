@@ -39,6 +39,16 @@ To compile the C++ codes, refer to https://github.com/Fracture17/ProjectMCodes/t
 Then using Dolphin, make sure an SD Card \*.raw file is selected under *Settings->Wii->SD Card Path* and the *SDCard* folder is selected under *Settings->Wii->SD Sync Folder*.
 Launch using one of the relevant launchers in the *Launchers* folder (make sure Brawl is set as the default ISO and insert SD card is checked in *Config->Wii*)
 
+### Build on Linux from command line
+```
+# set DEVKITPPC environment variable to wherever your dev kit tools are installed (probably /opt/devkitpro/devkitPPC)
+export DEVKITPPC=/opt/devkitpro/devkitPPC
+
+# configure cmake with toolchain file
+cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake
+cmake --build build/
+```
+
 ## ASM Tutorials
 
 To learn PowerPC ASM, see: https://mariokartwii.com/showthread.php?tid=1114 <br />

@@ -1,15 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 
-message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS "Using toolchain file: ${CMAKE_CURRENT_LIST_DIR}/${CMAKE_TOOLCHAIN_FILE}")
 
 project(ProjectMCodes)
 
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    include(CMake/DebugSettings.cmake)
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
+include(CMake/CompilerSettings.cmake)
 include(CMake/Functions.cmake)
 
 create_folder(${PROJECT_BINARY_DIR}/TempCodes)
@@ -34,7 +29,7 @@ add_subdirectory(Globals)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 set(builder ${PROJECT_SOURCE_DIR}/BuildSystem/src/Build.py)
-set(PPC_BIN_DIRECTORY "${buildSystemDirectory}/bin")
+set(PPC_BIN_DIRECTORY "${DEVKIT_DIR}/bin")
 set(functionMapDirectory "${PROJECT_SOURCE_DIR}/BuildSystem/BrawlFuncMap.map")
 
 add_custom_target(build ALL
