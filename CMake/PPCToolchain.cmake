@@ -6,9 +6,8 @@ set(CMAKE_CROSSCOMPILING 1)
 # equal to on Linux
 if(WIN32)
   set(DEVKIT_DIR ${CMAKE_CURRENT_LIST_DIR}/../BuildSystem/Compiler)
+  set(CMAKE_CXX_COMPILER ${DEVKIT_DIR}/bin/powerpc-eabi-g++.exe)
 else()
   set(DEVKIT_DIR $ENV{DEVKITPPC})
+  set(CMAKE_CXX_COMPILER ${DEVKIT_DIR}/bin/powerpc-eabi-g++)
 endif()
-
-set(CMAKE_CXX_COMPILER ${DEVKIT_DIR}/bin/powerpc-eabi-g++)
-set(CMAKE_C_COMPILER "")

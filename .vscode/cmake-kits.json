@@ -91,9 +91,6 @@
   {
     "name": "Brawlback",
     "toolchainFile": "${workspaceFolder}/CMake/PPCToolchain.cmake",
-    "preferredGenerator": {
-      "name": "MinGW Makefiles"
-    },
     "cmakeSettings": {
       "CMAKE_CXX_COMPILER_WORKS": 1,
       "CMAKE_BUILD_TYPE": "Debug",
