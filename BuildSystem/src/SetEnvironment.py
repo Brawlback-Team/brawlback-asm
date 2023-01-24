@@ -27,8 +27,10 @@ def resetDir(directory):
     else:
         os.mkdir(directory)
 
-
 def clearDir(directory):
-    files = glob.glob(f"{directory}/*")
-    for f in files:
-        shutil.rmtree(f)
+    paths = glob.glob(f"{directory}/*")
+    for path in paths:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)

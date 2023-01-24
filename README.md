@@ -45,7 +45,7 @@ Launch using one of the relevant launchers in the *Launchers* folder (make sure 
 export DEVKITPPC=/opt/devkitpro/devkitPPC
 
 # configure cmake with toolchain file
-cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake
+cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake -DBRAWLBACK=1
 cmake --build build/
 ```
 

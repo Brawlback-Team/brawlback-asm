@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-message(STATUS "Using toolchain file: ${CMAKE_CURRENT_LIST_DIR}/${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
 
 project(ProjectMCodes)
 
