@@ -1,0 +1,33 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Dependencies
+      run: sudo apt-get install cmake build-essential |
+           wget https://apt.devkitpro.org/install-devkitpro-pacman |
+           chmod +x ./install-devkitpro-pacman |
+           sudo ./install-devkitpro-pacman |
+           sudo installer -pkg devkitpro-pacman-installer.pkg -target / |
+           dkp-pacman -S wii-dev
+
+    - name: Configure CMake
+      run: export DEVKITPPC=/opt/devkitpro/devkitPPC |
+           cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=./CMake/PPCToolchain.cmake -DBRAWLBACK=1
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build build/
