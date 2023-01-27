@@ -19,12 +19,35 @@ Set CMAKE_BUILD_DIR in `MakeSD/Config.ini` to the path that cmake builds to (def
 
 Get submodule for EXI structures: `git submodule update --init --recursive`
 
+### Install DevKitProdevkitPro (Linux)
+For Windows we redistribute the devkitpro build tools in the BuildSystem/ folder of this repo. On other platforms, you must install the toolchain yourself.
+
+Follow the installation instructions here: https://devkitpro.org/wiki/Getting_Started
+
+You will want the following packages:
+
+- devkitPPC
+- wii-dev
+- gamecube-dev
+
+Using dkp-pacman the command will be `sudo dkp-pacman -S wii-dev gamecube-dev devkitppc` once dkp-pacman is installed.
+
 ## Build and Run
 
 To compile the C++ codes, refer to https://github.com/Fracture17/ProjectMCodes/tree/master/notes/guides or https://www.youtube.com/watch?v=oGg2dgYN1Do
 
 Then using Dolphin, make sure an SD Card \*.raw file is selected under *Settings->Wii->SD Card Path* and the *SDCard* folder is selected under *Settings->Wii->SD Sync Folder*.
 Launch using one of the relevant launchers in the *Launchers* folder (make sure Brawl is set as the default ISO and insert SD card is checked in *Config->Wii*)
+
+### Build on Linux from command line
+```
+# set DEVKITPPC environment variable to wherever your dev kit tools are installed (probably /opt/devkitpro/devkitPPC)
+export DEVKITPPC=/opt/devkitpro/devkitPPC
+
+# configure cmake with toolchain file
+cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=./CMake/PPCToolchain.cmake -DBRAWLBACK=1
+cmake --build build/
+```
 
 ## ASM Tutorials
 

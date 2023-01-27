@@ -3,8 +3,8 @@ from Library import File, Library
 from Section import Section
 from Common import cmdLineOutput, makeBinUtilCommandFile
 from typing import List
-ppcCompiler = 'powerpc-eabi-g++.exe'
-binUtilCommandFilePath = 'IntermediateFiles\\binUtilCommands.txt'
+ppcCompiler = 'powerpc-eabi-g++'
+binUtilCommandFilePath = 'IntermediateFiles/binUtilCommands.txt'
 
 class Compiler:
     STANDARD_OPTIONS = [

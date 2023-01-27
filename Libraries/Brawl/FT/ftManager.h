@@ -9,7 +9,7 @@
 #include "Brawl/IP/Inputs.h"
 #include "Brawl/AI/aiScriptData.h"
 #include "ftOwner.h"
-#include "brawl/AI/aiInput.h"
+#include "Brawl/AI/aiInput.h"
 #include "ftEntryManager.h"
 
 //the port of the fighter
