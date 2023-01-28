@@ -6,13 +6,10 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  BUILD_TYPE: Debug
-
 jobs:
   build:
-    name: ubuntu-20.04
-    runs-on: ubuntu-20.04
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
     container: devkitpro/devkitppc:latest
 
     steps:
@@ -28,8 +25,7 @@ jobs:
     - name: Configure CMake
       run: |
            export DEVKITPPC=/opt/devkitpro/devkitPPC
-           cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=./CMake/PPCToolchain.cmake -DBRAWLBACK=1
+           cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake -DBRAWLBACK=1
 
     - name: Build
-      # Build your program with the given configuration
       run: cmake --build build/
