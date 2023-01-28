@@ -29,7 +29,8 @@ jobs:
            dkp-pacman -S wii-dev
 
     - name: Configure CMake
-      run: export DEVKITPPC=/opt/devkitpro/devkitPPC |
+      run: |
+           export DEVKITPPC=/opt/devkitpro/devkitPPC
            cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=./CMake/PPCToolchain.cmake -DBRAWLBACK=1
 
     - name: Build
