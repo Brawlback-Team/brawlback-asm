@@ -1,0 +1,35 @@
+name: Brawlback Kit
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    name: ubuntu-20.04
+    runs-on: ubuntu-20.04
+    container: devkitpro/devkitppc:latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+    
+    - name: Install Dependencies
+      run: |
+           sudo apt-get update
+           sudo apt-get install cmake build-essential -y
+
+    - name: Configure CMake
+      run: |
+           export DEVKITPPC=/opt/devkitpro/devkitPPC
+           cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=./CMake/PPCToolchain.cmake -DBRAWLBACK=1
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build build/
