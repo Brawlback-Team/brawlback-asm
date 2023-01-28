@@ -23,8 +23,9 @@ jobs:
       run: curl -# -O https://apt.devkitpro.org/install-devkitpro-pacman
     
     - name: Install pacman and DevKitPro
-      run: chmod +x ./install-devkitpro-pacman |
-           sudo ./install-devkitpro-pacman |
+      run: |
+           chmod +x ./install-devkitpro-pacman
+           sudo ./install-devkitpro-pacman
            dkp-pacman -S wii-dev
 
     - name: Configure CMake
