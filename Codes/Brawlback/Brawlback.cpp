@@ -2,17 +2,12 @@
 #include "Netplay.h"
 #include "GmGlobalModeMelee.h"
 #include <vector>
-#include "etl/string_utilities.h"
 
 // TODO: rename to gmGlobalModeMelee prefix or smth
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
-
-std::vector<SavestateMemRegionInfo> savestateMemRegions = {};
-
-static bool shouldTrackAllocs = false;
 
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -265,113 +260,7 @@ namespace Match {
         _OSEnableInterrupts();
     }
 
-    // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
-    // so we move it into r3 to get easy access to it in our hook
-    INJECTION("dump_gfMemoryPool_hook", 0x8002625c, R"(
-        SAVE_REGS
-        mr r3, r30
-        bl dumpGfMemoryPoolHook
-        RESTORE_REGS
-    )");
-    extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
-        _OSDisableInterrupts();
-        char* heap_name = *r30_reg_val;
-        OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s | ", addr_start, addr_end, mem_size, heap_name);
-        SavestateMemRegionInfo memRegion = {};
-        memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
-        memRegion.size = mem_size;
-        memRegion.TAddFRemove = true;
-        memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-        memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
-        memRegion.nameSize = etl::strlen(heap_name);
-        EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(memRegion));
-        _OSEnableInterrupts();
-    }
 
-    // gets rid of some printouts when calling dumpAll
-    INJECTION("dumpGfMemoryPoolPrintNop", 0x80026288, "nop");
-    INJECTION("dumpGfMemoryPoolPrintNop2", 0x8002619c, "nop");
-    INJECTION("dumpGfMemoryPoolPrintNop3", 0x800261b4, "nop");
-    INJECTION("dumpGfMemoryPoolPrintNop4", 0x800262e0, "nop");
-    INJECTION("dumpGfMemoryPoolPrintNop5", 0x800260fc, "nop");
-    INJECTION("dumpGfMemoryPoolPrintNop6", 0x80026114, "nop");
-
-
-    // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
-    // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
-    void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
-        if (shouldTrackAllocs) {
-            //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
-            SavestateMemRegionInfo memRegion = {};
-            memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
-            memRegion.size = size;
-            memRegion.TAddFRemove = true;
-            memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-            memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
-            memRegion.nameSize = etl::strlen(heap_name);
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_ALLOCS, &memRegion, sizeof(memRegion));
-        }
-    }
-    // called when the game calls free/[gfMemoryPool] which is it's main free function
-    // address is the address being freed
-    void ProcessGameFree(u8* address, char* heap_name) {
-        if (shouldTrackAllocs) {
-            //OSReport("FREE: addr = 0x%08x\n", address);
-            SavestateMemRegionInfo memRegion = {};
-            memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-            memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
-            memRegion.nameSize = etl::strlen(heap_name);
-            memRegion.address = (u32)address; // is this cast ok?
-            memRegion.TAddFRemove = false;
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(memRegion));
-        }
-    }
-
-
-    static bool shouldSaveThisAlloc = false;
-    static u32 allocSizeTracker = 0;
-    static char allocHeapName[20];
-    // at the very beginning of alloc/[gfMemoryPool]
-    INJECTION("alloc_gfMemoryPool_hook", 0x80025c6c, R"(
-        SAVE_REGS
-        bl allocGfMemoryPoolBeginHook
-        RESTORE_REGS
-        lbz	r7, 0x0024 (r3)
-    )");
-    extern "C" void allocGfMemoryPoolBeginHook(char** internal_heap_data, u32 size, u32 alignment) {
-        char* heap_name = *internal_heap_data;
-        auto heapNameSize = etl::strlen(heap_name);
-        for(int i = 0; i < heapNameSize; i++) {
-            allocHeapName[i] = heap_name[i];
-        }
-        allocHeapName[heapNameSize + 1] = '\0';
-        shouldSaveThisAlloc = true;
-        allocSizeTracker = size;
-    }
-    // at the very end of alloc/[gfMemoryPool]
-    INJECTION("alloc_gfMemoryPool_END_hook", 0x80025ec4, R"(
-        mr r3, r30
-        SAVE_REGS
-        bl allocGfMemoryPoolEndHook
-        RESTORE_REGS
-    )");
-    extern "C" void allocGfMemoryPoolEndHook(u8* alloc_addr) {
-        if (shouldSaveThisAlloc) {
-            ProcessGameAllocation(alloc_addr, allocSizeTracker, allocHeapName);
-        }
-    }
-    // at the very beginning of free/[gfMemoryPool]
-    INJECTION("free_gfMemoryPool_hook", 0x80025f40, R"(
-        addi r31, r3, 40
-        SAVE_REGS
-        bl freeGfMemoryPoolHook
-        RESTORE_REGS
-    )");
-    extern "C" void freeGfMemoryPoolHook(char** internal_heap_data, u8* address) {
-        char* heap_name = *internal_heap_data;
-        // if the current heap is one we care about
-        ProcessGameFree(address, heap_name);
-    }
 }
 
 namespace FrameAdvance {

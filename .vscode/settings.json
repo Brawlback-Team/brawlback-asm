@@ -3,18 +3,7 @@
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "files.associations": {
     "*.ksy": "yaml",
-    "vector": "cpp",
-    "array": "cpp",
-    "bitset": "cpp",
-    "string_view": "cpp",
-    "rope": "cpp",
-    "slist": "cpp",
-    "initializer_list": "cpp",
-    "ranges": "cpp",
-    "span": "cpp",
-    "regex": "cpp",
-    "utility": "cpp",
-    "valarray": "cpp"
+    "vector": "cpp"
   },
   "C_Cpp.errorSquiggles": "Disabled",
   "cmake.preferredGenerators": ["MinGW Makefiles","Unix Makefiles"]
