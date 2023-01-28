@@ -20,7 +20,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-           sudo apt-get install software-properties-common gnupg-agent ubuntu-keyring -y
+           sudo apt-get install software-properties-common gnupg-agent ubuntu-keyring ca-certificates -y
            sudo gpg-agent --daemon
            sudo add-apt-repository ppa:ubuntu-toolchain-r/test
            sudo apt-get update
