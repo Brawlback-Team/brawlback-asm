@@ -21,7 +21,6 @@ jobs:
            wget https://apt.devkitpro.org/install-devkitpro-pacman |
            chmod +x ./install-devkitpro-pacman |
            sudo ./install-devkitpro-pacman |
-           sudo installer -pkg devkitpro-pacman-installer.pkg -target / |
            dkp-pacman -S wii-dev
 
     - name: Configure CMake
