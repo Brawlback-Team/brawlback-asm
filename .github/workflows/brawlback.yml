@@ -18,10 +18,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install Dependencies
+    - name: Install Dependencies (1/2)
       run: |
            sudo apt-get install software-properties-common ca-certificates gpgconf -y
            export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+           
+    - name: Install Dependencies (2/2)
+      run: |
            sudo add-apt-repository ppa:ubuntu-toolchain-r/test
            sudo apt-get update
            sudo apt-get install gcc-10 g++-10 -y
