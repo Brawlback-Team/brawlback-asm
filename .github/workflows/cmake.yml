@@ -18,7 +18,7 @@ jobs:
 
     - name: Install Dependencies
       run: sudo apt-get install cmake build-essential |
-           wget https://apt.devkitpro.org/install-devkitpro-pacman |
+           curl -# -O https://apt.devkitpro.org/install-devkitpro-pacman |
            chmod +x ./install-devkitpro-pacman |
            sudo ./install-devkitpro-pacman |
            dkp-pacman -S wii-dev
