@@ -12,21 +12,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: devkitpro/devkitppc:latest
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Install Dependencies
       run: sudo apt-get install cmake build-essential
-    
-    - name: Download pacman install
-      run: curl -# -O https://apt.devkitpro.org/install-devkitpro-pacman
-    
-    - name: Install pacman and DevKitPro
-      run: |
-           chmod +x ./install-devkitpro-pacman
-           sudo ./install-devkitpro-pacman
-           sudo dkp-pacman -S wii-dev
 
     - name: Configure CMake
       run: |
