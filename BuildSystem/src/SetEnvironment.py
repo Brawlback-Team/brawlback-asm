@@ -19,8 +19,7 @@ def removeDevkitFromPath():
 
 
 def setDevkitPath(ppcBinDirectory):
-    os.environ['PATH'] += f";{ppcBinDirectory}"
-
+    os.environ['PATH'] += os.pathsep + ppcBinDirectory
 
 def resetDir(directory):
     if os.path.exists(directory):
@@ -28,11 +27,10 @@ def resetDir(directory):
     else:
         os.mkdir(directory)
 
-
 def clearDir(directory):
-    files = glob.glob(f"{directory}/*")
-    for f in files:
-        try:
-            os.remove(f)
-        except PermissionError:
-            shutil.rmtree(f)
+    paths = glob.glob(f"{directory}/*")
+    for path in paths:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)

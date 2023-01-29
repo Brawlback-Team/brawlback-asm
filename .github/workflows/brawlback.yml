@@ -1,0 +1,38 @@
+
+name: Brawlback Kit
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+    container: 
+      image: devkitpro/devkitppc:latest
+      options: --user root
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+    
+    - name: Install Dependencies
+      run: |
+           sudo apt-get update
+           sudo apt-get install gcc -y
+           wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.sh
+           sudo chmod +x cmake-3.25.2-linux-x86_64.sh
+           ./cmake-3.25.2-linux-x86_64.sh --skip-license --include-subdir
+           
+    
+    - name: Configure CMake
+      run: |
+           export DEVKITPPC=/opt/devkitpro/devkitPPC
+           ./cmake-3.25.2-linux-x86_64/bin/cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake -DBRAWLBACK=1
+           
+    - name: Build
+      run: ./cmake-3.25.2-linux-x86_64/bin/cmake --build build/

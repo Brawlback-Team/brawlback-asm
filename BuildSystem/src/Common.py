@@ -8,7 +8,7 @@ def cmdLineOutput(cmd):
 
 
 def makeBinUtilCommandFile(command: str) -> File:
-    BIN_UTILS_COMMAND_FILE_PATH = 'IntermediateFiles\\binUtilCommands.txt'
+    BIN_UTILS_COMMAND_FILE_PATH = 'IntermediateFiles/binUtilCommands.txt'
     commandFile = File(BIN_UTILS_COMMAND_FILE_PATH)
     commandFile.write(command)
     assert commandFile.exists()

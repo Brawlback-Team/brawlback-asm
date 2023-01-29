@@ -15,20 +15,20 @@ from File import File
 import os
 
 def objdump(source: 'Library', options: str, cmdOutput: File=None):
-    OBJDUMP_PATH = 'powerpc-eabi-objdump.exe'
+    OBJDUMP_PATH = 'powerpc-eabi-objdump'
     output = binutil(OBJDUMP_PATH, f"{options} {source.path}", cmdOutput)
     return output
 
 
 def objcopy(source: 'Library', dest: File, options: str, cmdOutput: File=None):
-    OBJCOPY_PATH = 'powerpc-eabi-objcopy.exe'
+    OBJCOPY_PATH = 'powerpc-eabi-objcopy'
     output = binutil(OBJCOPY_PATH, f"{options} {source.path} {dest.path}", cmdOutput)
     assert dest.exists()
     return output
 
 
 def nm(source: 'Library', options: str, cmdOutput: File=None):
-    NM_PATH = 'powerpc-eabi-nm.exe'
+    NM_PATH = 'powerpc-eabi-nm'
     output = binutil(NM_PATH, f"{options} {source.path}", cmdOutput)
     return output
 
