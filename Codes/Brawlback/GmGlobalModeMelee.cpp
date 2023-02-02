@@ -65,7 +65,7 @@ namespace GMMelee {
             // melee[STAGE_ID_IDX] = stageChoice;
             melee[STAGE_ID_IDX] = 0x01; // TODO uncomment and use above line, just testing with battlefield
         }
-
+        
         _OSEnableInterrupts();
     }
 

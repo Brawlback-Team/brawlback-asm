@@ -70,7 +70,7 @@ u32 getCurrentFrame();
 
 void fillOutGameSettings(GameSettings& settings);
 void MergeGameSettingsIntoGame(GameSettings& settings);
-
+extern bool canRollback;
 namespace FrameLogic {
     void SaveState(u32 frame);
     void GetInputsForFrame(u32 frame, FrameData* inputs);

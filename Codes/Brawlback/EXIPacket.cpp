@@ -5,6 +5,7 @@
 #include "Wii/EXI/EXI.h"
 #include "Wii/OS/OSInterrupt.h"
 
+
 EXICommand EXIPacket::getCmd() { return this->cmd; }
 
 EXIPacket::EXIPacket() : EXIPacket(EXICommand::CMD_UNKNOWN, nullptr, 0) { }

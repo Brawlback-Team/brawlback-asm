@@ -3,6 +3,8 @@
 #include "GmGlobalModeMelee.h"
 #include <vector>
 #include "etl/string_utilities.h"
+#include <Brawl/SC/scMelee.h>
+#include <Brawl/GF/gfSceneManager.h>
 
 // TODO: rename to gmGlobalModeMelee prefix or smth
 #define P1_CHAR_ID_IDX 0x98
@@ -10,9 +12,9 @@
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
 
-std::vector<SavestateMemRegionInfo> savestateMemRegions = {};
-
 static bool shouldTrackAllocs = false;
+
+std::vector<SavestateMemRegionInfo> allocsDeallocs;
 
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -73,8 +75,23 @@ namespace Util {
         swapByteOrder(fd->randomSeed);
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             swapByteOrder(fd->playerFrameDatas[i].frame);
+            swapByteOrder(fd->playerFrameDatas[i].syncData.anim);
+            swapByteOrder(fd->playerFrameDatas[i].syncData.locX);
+            swapByteOrder(fd->playerFrameDatas[i].syncData.locY);
+            swapByteOrder(fd->playerFrameDatas[i].syncData.percent);
+            swapByteOrder(fd->playerFrameDatas[i].pad.buttons);
+            swapByteOrder(fd->playerFrameDatas[i].pad.holdButtons);
+            swapByteOrder(fd->playerFrameDatas[i].pad.releasedButtons);
+            swapByteOrder(fd->playerFrameDatas[i].pad.rapidFireButtons);
+            swapByteOrder(fd->playerFrameDatas[i].pad.newPressedButtons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad.buttons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad.holdButtons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad.releasedButtons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad.rapidFireButtons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
         }
     }
+    
 
     // TODO: fix pause by making sure that the sys data thingy is also checking for one of the other button bits
 
@@ -105,6 +122,27 @@ namespace Util {
         // OSReport("Buttons newPressedButtons: 0x%x\n", pad.newPressedButtons.bits);
 
         return ret;
+    }
+
+    #define _getScMelee_GF_SCENE_MANAGER ((scMelee* (*)(gfSceneManager* This, char* searchName)) 0x8002d3f4)
+    void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 pIdx) {
+        if(_getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0)
+        {
+            ftManager* fighterManager = FIGHTER_MANAGER;
+            Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
+            ftOwner* ftowner = fighterManager->getOwner(fighterManager->getEntryIdFromIndex(pIdx));
+            
+            pfd.syncData.facingDir = fighter->modules->postureModule->direction < 0.0 ? -1 : 1;
+            pfd.syncData.locX = fighter->modules->postureModule->xPos;
+            pfd.syncData.locY = fighter->modules->postureModule->yPos;
+            pfd.syncData.anim = fighter->modules->statusModule->action;
+            
+            pfd.syncData.percent = (float)ftowner->getDamage();
+            pfd.syncData.stocks = (u8)ftowner->getStockCount();
+        }
+
+        pfd.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[pIdx]);
+        pfd.sysPad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->sysPads[pIdx]);
     }
     void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad, int port) {
         
@@ -203,6 +241,7 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 
 namespace Match {
 
+
     void PopulateGameReport(GameReport& report) {
         ftManager* fighterManager = FIGHTER_MANAGER;
 
@@ -261,6 +300,7 @@ namespace Match {
         #ifdef NETPLAY_IMPL
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
+        shouldTrackAllocs = false;
         #endif
         _OSEnableInterrupts();
     }
@@ -276,7 +316,7 @@ namespace Match {
     extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
         _OSDisableInterrupts();
         char* heap_name = *r30_reg_val;
-        OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s | ", addr_start, addr_end, mem_size, heap_name);
+        OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s |\n", addr_start, addr_end, mem_size, heap_name);
         SavestateMemRegionInfo memRegion = {};
         memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
         memRegion.size = mem_size;
@@ -284,7 +324,7 @@ namespace Match {
         memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
         memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
         memRegion.nameSize = etl::strlen(heap_name);
-        EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(memRegion));
+        EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
         _OSEnableInterrupts();
     }
 
@@ -295,13 +335,16 @@ namespace Match {
     INJECTION("dumpGfMemoryPoolPrintNop4", 0x800262e0, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop5", 0x800260fc, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop6", 0x80026114, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop7", 0x800260f0, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop8", 0x8002625c, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop9", 0x80026278, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop10", 0x800262ac, "nop");
 
 
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
         if (shouldTrackAllocs) {
-            //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion = {};
             memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
             memRegion.size = size;
@@ -309,28 +352,27 @@ namespace Match {
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_ALLOCS, &memRegion, sizeof(memRegion));
+            allocsDeallocs.push_back(memRegion);
         }
     }
     // called when the game calls free/[gfMemoryPool] which is it's main free function
     // address is the address being freed
     void ProcessGameFree(u8* address, char* heap_name) {
         if (shouldTrackAllocs) {
-            //OSReport("FREE: addr = 0x%08x\n", address);
             SavestateMemRegionInfo memRegion = {};
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
-            memRegion.address = (u32)address; // is this cast ok?
+            memRegion.address = (u32)address;
             memRegion.TAddFRemove = false;
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(memRegion));
+            allocsDeallocs.push_back(memRegion);
         }
     }
 
 
     static bool shouldSaveThisAlloc = false;
     static u32 allocSizeTracker = 0;
-    static char allocHeapName[20];
+    static char allocHeapName[30];
     // at the very beginning of alloc/[gfMemoryPool]
     INJECTION("alloc_gfMemoryPool_hook", 0x80025c6c, R"(
         SAVE_REGS
@@ -341,9 +383,7 @@ namespace Match {
     extern "C" void allocGfMemoryPoolBeginHook(char** internal_heap_data, u32 size, u32 alignment) {
         char* heap_name = *internal_heap_data;
         auto heapNameSize = etl::strlen(heap_name);
-        for(int i = 0; i < heapNameSize; i++) {
-            allocHeapName[i] = heap_name[i];
-        }
+        memcpy(allocHeapName, heap_name, etl::strlen(heap_name));
         allocHeapName[heapNameSize + 1] = '\0';
         shouldSaveThisAlloc = true;
         allocSizeTracker = size;
@@ -416,6 +456,7 @@ namespace FrameAdvance {
         Util::SaveState(gameLogicFrame);
 
         GetInputsForFrame(gameLogicFrame, inputs);
+        gameLogicFrame = getCurrentFrame();
 
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
         
@@ -553,14 +594,12 @@ namespace FrameLogic {
     void WriteInputsForFrame(u32 currentFrame) {
         u8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
-            PlayerFrameData fData;
-            fData.frame = currentFrame;
-            fData.playerIdx = localPlayerIdx;
-            auto port = Netplay::getGameSettings().localPlayerPort;
-            fData.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[port]);
-            fData.sysPad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->sysPads[port]);
+            PlayerFrameData playerFrame;
+            playerFrame.frame = currentFrame;
+            playerFrame.playerIdx = localPlayerIdx;
+            Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort);
             // sending inputs + current game frame
-            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &fData, sizeof(PlayerFrameData));
+            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
         }
         else {
             OSReport("Invalid player index! Can't send inputs to emulator!\n");
@@ -575,6 +614,7 @@ namespace FrameLogic {
     // called at the beginning of the game logic in a frame
     // a this point, inputs are populated for this frame
     // but the game logic that operates on those inputs has not yet happened
+    static bool dump = false;
     void BeginFrame() {
 
         u32 currentFrame = getCurrentFrame();
@@ -589,12 +629,17 @@ namespace FrameLogic {
         // to send back to the game -> send data to the game if there is any -> game processes that data -> repeat
 
         if (Netplay::IsInMatch()) {
+            if(!dump && _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0)
+            {
+                dumpAll();
+                shouldTrackAllocs = true;
+                dump = true;
+            }
             _OSDisableInterrupts();
             // reset flag to be used later
             FrameAdvance::isRollback = false;
             // just resimulated/stalled/skipped/whatever, reset to normal
             FrameAdvance::ResetFrameAdvance();
-
             OSReport("------ Frame %u ------\n", currentFrame);
 
             // lol
@@ -618,12 +663,6 @@ namespace FrameLogic {
     // called at the end of the game logic in a frame (rendering logic happens after this func in the frame)
     // at this point, I think its (maybe?) guarenteed that inputs are cleared out already
     void EndFrame() {
-        _OSDisableInterrupts();
-        if (Netplay::IsInMatch()) {
-
-            //OSReport("------ End Frame ------\n");
-        }
-        _OSEnableInterrupts();
     }
 
     //SIMPLE_INJECTION(beginFrame, 0x80017344, "li r25, 0x0") { BeginFrame(); } // just before gameProc loop
@@ -643,25 +682,38 @@ namespace FrameLogic {
         if (Netplay::IsInMatch()) {
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_END);
         }
+        EndFrame();
     }
 
     // very end of main game loop, after all game logic and graphics calls
     SIMPLE_INJECTION(endMainLoop, 0x800174fc, "lwz r3, 0x100(r23)") {
-        
+        if (Netplay::IsInMatch()) {
+            if(allocsDeallocs.size() > 0)
+            {
+                for(int i = 0; i < allocsDeallocs.size(); i++)
+                {
+                    if(allocsDeallocs[i].TAddFRemove)
+                    {
+                        EXIPacket(EXICommand::CMD_SEND_ALLOCS, &(allocsDeallocs[i]), sizeof(SavestateMemRegionInfo));
+                    }
+                    else 
+                    {
+                        EXIPacket(EXICommand::CMD_SEND_DEALLOCS, &(allocsDeallocs[i]), sizeof(SavestateMemRegionInfo));
+                    }
+                }
+                allocsDeallocs.clear();
+            }
+        }
     }
 
-
-
-
+    #if 1
     // resim optimization
     // gfTask names listed in the array below
     // will not be run during resimulation frames
     #define NUM_NON_RESIM_TASKS 2
-    const char* nonResimTasks[NUM_NON_RESIM_TASKS] = {
-        //"Camera",
-        "stShadow",
-        "grFinalMainBg",
-    };
+    const char* nonResimTasks = R"(
+        ecMgr EffectManager
+    )";
     INJECTION("gfTaskProcessHook", 0x8002dc74, R"(
         SAVE_REGS
         bl ShouldSkipGfTaskProcess
@@ -677,16 +729,11 @@ namespace FrameLogic {
         if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
-            for (int i = 0; i < NUM_NON_RESIM_TASKS; i++) {
-                if (!strcmp(taskName, nonResimTasks[i])) { // if they are equal
-                    //OSReport("Skipping task processing for %s\n", taskName);
-                    return true;
-                }
-            }
+            return strstr(taskName, nonResimTasks) ? true : false; 
         }
         return false;
     }
-    
+    #endif
 
 
 }

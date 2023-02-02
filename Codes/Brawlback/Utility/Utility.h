@@ -3,6 +3,7 @@
 #include "stdtypes.h"
 #include "Containers/vector.h"
 #include "Containers/Queue.h"
+#include <algorithm>
 #include <cstring>
 
 
@@ -37,4 +38,13 @@ T bufferToObject(const u8* buffer)
   T obj;
   memcpy(&obj, buffer, sizeof(T));
   return obj;
+}
+
+template <class T>
+T swap_endian(T in)
+{
+    char *const p = reinterpret_cast<char *>(&in);
+    for (size_t i = 0; i < sizeof(T) / 2; ++i)
+        std::swap(p[i], p[sizeof(T) - i - 1]);
+    return in;
 }
