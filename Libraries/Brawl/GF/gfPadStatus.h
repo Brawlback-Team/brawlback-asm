@@ -14,6 +14,9 @@ enum controllerType {
 //Just using gamecube for now
 #pragma pack(push, 2)
 
+// seems like  0x34 is the offset for the LAnalog
+// seems like  0x35 is the offset for the RAnalog
+
 struct gfPadGamecube {
 	PADButtons _buttons;
 	PADButtons buttons;
