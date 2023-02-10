@@ -3,26 +3,24 @@
 #include "EXIPacket.h"
 #include "Graphics/Drawable.h"
 #include "Utilities/Utility.h"
-#include "brawlback-common/StartReplay.h"
-#include <vector>
 #include <string>
+#include <cstring>
 #include "Brawl/GF/gfFileIOHandle.h"
 #include "Brawl/GF/gfCollectionIO.h"
+#include "etl/string_utilities.h"
+#include "Wii/OS/OSInterrupt.h"
+#include "Brawl/gmGlobalModeMelee.h"
+#include "Playback.h"
+#include "Wii/mtRand.h"
+#include "PlaybackMenu.h"
+#include "Brawl/GF/GameGlobal.h"
+
+bool playbackDecided = false;
+u32 curIndex = -1;
+std::vector<StartReplay> startReplays = {};
 
 namespace ReplayMenus {
-    std::vector<StartReplay> startReplays;
-    void FixStartReplayEndianness(StartReplay& startReplay)
-    {
-        startReplay.firstFrame = swap_endian(startReplay.firstFrame);
-        startReplay.otherRandomSeed = swap_endian(startReplay.otherRandomSeed);
-        startReplay.randomSeed = swap_endian(startReplay.randomSeed);
-        for (auto& player : startReplay.players)
-        {
-            player.startPlayer.xPos = swap_endian(player.startPlayer.xPos);
-            player.startPlayer.yPos = swap_endian(player.startPlayer.yPos);
-            player.startPlayer.zPos = swap_endian(player.startPlayer.zPos);
-        }
-    }
+    
     void PopulateStartReplays()
     {
         EXIPacket getNumReplays = EXIPacket(GET_NUM_REPLAYS, nullptr, 0);
@@ -54,7 +52,6 @@ namespace ReplayMenus {
             {
                 StartReplay startReplayData;
                 readEXI(&startReplayData, sizeof(StartReplay), EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
-                FixStartReplayEndianness(startReplayData);
                 startReplays.push_back(startReplayData);
                 OSReport("REPLAY FOUND AT INDEX %u -- STARTING FRAME IS %u\n", (u32)i, startReplays[i].firstFrame);
             }
@@ -118,9 +115,10 @@ namespace ReplayMenus {
             PopulateStartReplays();
             collection->dataType = 7;
             collection->dataSize = startReplays.size();
+            OSReport("%x\n", startReplays.size());
             collection->summaryErrorCode = 0;
             collection->fileSystemType = 0;
-            auto sizeOfNames = (MAX_REPLAY_NAME_SIZE + 1) * startReplays.size();
+            auto sizeOfNames = (MAX_REPLAY_NAME_SIZE) * startReplays.size();
             collection->data = new char[sizeOfNames];
             auto names = reinterpret_cast<char*>(collection->data);
 
@@ -135,6 +133,7 @@ namespace ReplayMenus {
                 index += startReplay.nameSize;
                 names[index] = '\0';
                 index++;
+                OSReport("%s\n", names);
             }
             OSReport("%s\n", collection->data);
             return true;
@@ -208,10 +207,58 @@ namespace ReplayMenus {
 
     extern "C" void printName(char* title, u32 index)
     {
-        std::string name = std::string(reinterpret_cast<const char*>(startReplays[index].nameBuffer), startReplays[index].nameSize);
-        strcpy(title, name.c_str());
+        curIndex = index;
+        strcpy(title, (const char*)startReplays[index].nameBuffer);
+    }
+
+    INJECTION("setupPlayback", 0x81198090, R"(
+        SAVE_REGS
+        bl setupPlayback
+        RESTORE_REGS
+        stwu sp, -0x0380 (sp)
+    )");
+    extern "C" void setupPlayback()
+    {
+        PlaybackLogic::replayHeader = startReplays[curIndex];
     }
 
     INJECTION("forceOnDecided", 0x81198118, "li r0, 1");
     INJECTION("forceLoadReplay", 0x811a1568, "li r0, 0");
+
+    INJECTION("setupMelee", 0x811983e4, R"(
+        SAVE_REGS
+        bl setupScMelee
+        RESTORE_REGS
+    )")
+
+    extern "C" void setupScMelee()
+    {
+        gmGlobalModeMelee* melee = GAME_GLOBAL->globalModeMelee;
+        memcpy(melee, PlaybackLogic::replayHeader.gameData, 0x320);
+        playbackDecided = true;
+        EXIPacket loadBuffer = EXIPacket(EXICommand::LOAD_FRAMES, nullptr, 0);
+        loadBuffer.Send();
+
+        u8 cmd_byte = 0;
+        do
+        {
+            readEXI(&cmd_byte, 1, EXIChannel::slotB, EXIDevice::device0, EXIFrequency::EXI_32MHz);
+        } while (cmd_byte != EXICommand::LOAD_FRAMES);
+    }
+
+    INJECTION("forceLoadScene", 0x81198684, R"(
+        lwz	r31, 0x1D10 (r3)
+        mr r3, r31
+        bl forceLoadMelee
+        mr r31, r3
+    )")
+
+    extern "C" u32 forceLoadMelee(u32 unk)
+    {
+        if(unk == 0xffffffff)
+        {
+            return 0;
+        }
+        return unk;
+    }
 }

@@ -82,7 +82,9 @@ PULSE
 
 * E2000002 00000000
 
-.include Source/vBrawl/FilePatchCode.asm
+# File patch code
+.include Source/vBrawl/FilePatchCode.asm 
+
 
 ##################################################
 [Legacy TE] Boot Directly to CSS v4  [PyotrLuzhin]

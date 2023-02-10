@@ -25,7 +25,8 @@ struct stOperatorReadyGo {
 };
 
 struct scMelee {
-    char _spacer[0x48];
+    char* sceneName;
+    char _spacer[0x44];
     stOperatorReadyGo* stOperatorReadyGo1;
     stOperatorReadyGo* stOperatorReadyGo2;
     char _spacer1[0x88];
@@ -33,6 +34,7 @@ struct scMelee {
     //0x20 is game end flag
     //is on in game, clear to trigger game end
     u8 flags;
+    char _spacer2[0x27];
 };
 
 

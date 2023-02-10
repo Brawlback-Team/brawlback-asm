@@ -12,16 +12,16 @@
 
 
 struct ftControllerModuleImpl: public soControllerModuleImpl {
-    char _spacer_ft[0x2C - sizeof(soControllerModuleImpl)];
-    //0x2C
-    soModuleAccessor* modules;
+    soControllerModuleImpl so;
+    char _spacer[28];
     //0x30
     soControllerImpl controller;
-    char _spacer_ft2[0x14C - 0x30 - sizeof(soControllerImpl)];
+    soControllerImpl controller2;
+    char _spacer2[4];
     //0x14C
     //Seems to just be a ptr back to controller
     soControllerImpl* controllerPtr;
+    char _spacer3[25];
 };
-
 
 #endif //PROJECTMCODES_FTCONTROLLERMODULEIMPL_H

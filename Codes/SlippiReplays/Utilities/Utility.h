@@ -3,6 +3,7 @@
 #include "stdtypes.h"
 #include <algorithm>
 #include <cstring>
+#include "Brawl/GF/gfSceneManager.h"
 
 //USE WITH CAUTION!!!
 //buffer assumed to contain at least sizeof(T) bytes
@@ -15,11 +16,11 @@ T bufferToObject(const u8* buffer)
   memcpy(&obj, buffer, sizeof(T));
   return obj;
 }
-template <class T>
-T swap_endian(T in)
-{
-    char *const p = reinterpret_cast<char *>(&in);
-    for (size_t i = 0; i < sizeof(T) / 2; ++i)
-        std::swap(p[i], p[sizeof(T) - i - 1]);
-    return in;
-}
+
+void swapByteOrder(u16& val);
+void swapByteOrder(u32& val);
+void swapByteOrder(u64& val);
+void swapByteOrder(float& val);
+
+#define changeNextScene ((void (*)(gfSceneManager* gfSceneManager)) 0x8002d020)
+#define setNextScene ((void (*)(gfSceneManager* gfSceneManager, const char* name, int memLayout)) 0x8002d5ac)

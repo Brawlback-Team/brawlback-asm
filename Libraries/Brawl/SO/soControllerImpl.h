@@ -16,13 +16,14 @@ struct soControllerImpl {
     float stickX;
     //0xC
     float stickY;
-    char _spacer2[0x46 - 0x10];
-    //0x46
+    char _spacer2[0x44 - 0x10];
+    //0x44
     Inputs inputs;
     char _spacer3[2];
     //0x4A
     Inputs prevInputs;
+    char _spacer4[0x8C  - 0x4C];
 };
-
+static_assert(sizeof(soControllerImpl) == 0x8c, "soControllerImpl has incorrect size");
 
 #endif //PROJECTMCODES_SOCONTROLLERIMPL_H
