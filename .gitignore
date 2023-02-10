@@ -14,6 +14,7 @@ st/
 *.gct
 SDCard/*
 .latest_sd_update_time
+Codes/Testing
 
 # User-specific files
 *.rsuser

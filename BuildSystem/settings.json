@@ -1,0 +1,18 @@
+{ "codeSegments": [
+    {
+      "startAddress": "0x8055A600",
+      "endAddress": "0x80563100"
+    },
+    {
+      "startAddress": "0x805B5200",
+      "endAddress": "0x805B61D0"
+    },
+    {
+      "startAddress": "0x817CE880",
+      "endAddress": "0x817DA590"
+    }],
+    "infoSegmentAddress": "0x935D0000",
+    "memoryHeapEndAddress": "0x935E0000",
+    "initializerInfoAddress": "0x81500000",
+    "initializerSegmentAddress": "0x81410000"
+  }

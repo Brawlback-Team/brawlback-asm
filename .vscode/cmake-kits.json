@@ -99,17 +99,25 @@
     }
   },
   {
-    "name": "Replays Test",
-    "compilers": {
-      "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
-    },
-    "preferredGenerator": {
-      "name": "MinGW Makefiles"
-    },
+    "name": "Testing",
+    "toolchainFile": "${workspaceFolder}/CMake/PPCToolchain.cmake",
     "cmakeSettings": {
       "CMAKE_CXX_COMPILER_WORKS": 1,
       "CMAKE_BUILD_TYPE": "Debug",
-      "SLIPPIREPLAYS": 1
+      "BRAWLBACK": 0,
+      "SLIPPIREPLAYS": 0,
+      "TESTING": 1
+    }
+  },
+  {
+    "name": "Replays",
+    "toolchainFile": "${workspaceFolder}/CMake/PPCToolchain.cmake",
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "BRAWLBACK": 0,
+      "SLIPPIREPLAYS": 1,
+      "TESTING": 0
     }
   },
   {

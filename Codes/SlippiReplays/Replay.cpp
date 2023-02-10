@@ -206,9 +206,7 @@ namespace ReplayLogic {
             ddst->RTrigger = inputs.RTrigger;
         }
     }
-    #define exitScMelee ((void (*)()) 0x806d483c)
-    #define stopGameFirst ((void (*)(scMelee* scMelee, int param2)) 0x806d4888)
-    #define stopGame ((void (*)(scMelee* scMelee, int param2)) 0x806d49f8)
+    
     Replay GetFrame(u32 frameNum)
     { 
         EXIPacket framePacket = EXIPacket(EXICommand::GET_NEXT_FRAME, &frameNum, sizeof(u32));
