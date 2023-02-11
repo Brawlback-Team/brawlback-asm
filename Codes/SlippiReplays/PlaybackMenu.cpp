@@ -219,7 +219,7 @@ namespace ReplayMenus {
     )");
     extern "C" void setupPlayback()
     {
-        PlaybackLogic::replayHeader = startReplays[curIndex];
+        replayHeader = startReplays[curIndex];
     }
 
     INJECTION("forceOnDecided", 0x81198118, "li r0, 1");
@@ -234,7 +234,7 @@ namespace ReplayMenus {
     extern "C" void setupScMelee()
     {
         gmGlobalModeMelee* melee = GAME_GLOBAL->globalModeMelee;
-        memcpy(melee, PlaybackLogic::replayHeader.gameData, 0x320);
+        memcpy(melee, replayHeader.gameData, 0x320);
         playbackDecided = true;
         EXIPacket loadBuffer = EXIPacket(EXICommand::LOAD_FRAMES, nullptr, 0);
         loadBuffer.Send();

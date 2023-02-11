@@ -2,6 +2,4 @@
 
 #include "brawlback-common/ExiStructures.h"
 
-namespace PlaybackLogic {
-    static StartReplay replayHeader;
-}
+extern StartReplay replayHeader;

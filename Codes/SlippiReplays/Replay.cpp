@@ -24,6 +24,7 @@
 #include "Playback.h"
 
 bool isInReplay = false;
+StartReplay replayHeader = {};
 namespace ReplayLogic {
     bool replayLogicFlag = false;
     bool entryFrame = false;
@@ -263,11 +264,11 @@ namespace ReplayLogic {
         lis r3, isInReplay@ha
         lbz r3, isInReplay@l(r3)
     )");
-    SIMPLE_INJECTION(postSetupMelee, 0x806dd03c, "addi	sp, sp, 48") {
+    SIMPLE_INJECTION(setRandSeed, 0x8003fac4, "lis r4, 0x41C6") {
         if(playbackDecided)
         {
-            DEFAULT_MT_RAND->seed = PlaybackLogic::replayHeader.randomSeed;
-            OTHER_MT_RAND->seed = PlaybackLogic::replayHeader.otherRandomSeed;
+            DEFAULT_MT_RAND->seed = replayHeader.randomSeed;
+            OTHER_MT_RAND->seed = replayHeader.otherRandomSeed;
         }
     }
     SIMPLE_INJECTION(initiateMatch, 0x800dc590, "li r9, 0x2") { InitiateMatch(); } // when starting match
