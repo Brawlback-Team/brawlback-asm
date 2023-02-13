@@ -25,6 +25,7 @@
 
 bool isInReplay = false;
 StartReplay replayHeader = {};
+
 namespace ReplayLogic {
     bool replayLogicFlag = false;
     bool entryFrame = false;
@@ -180,8 +181,7 @@ namespace ReplayLogic {
         
         }
     }
-
-    void Playback(Replay replay, int port, gfPadGamecube* ddst)
+    void Playback(Replay replay, gfPadGamecube* ddst)
     {
         auto fighterManager = FIGHTER_MANAGER;
         u8 playerCount = fighterManager->getEntryCount();
@@ -189,22 +189,28 @@ namespace ReplayLogic {
 
         if(playerCount >= 2 && countDownEnded != 0 && !isGamePaused())
         {
-            auto& player = replay.players[port];
-            auto& inputs = player.inputs;
-
-            ddst->buttons.bits = inputs.buttons;
-            ddst->holdButtons.bits = inputs.holdButtons;
-            ddst->releasedButtons.bits = inputs.releasedButtons;
-            ddst->rapidFireButtons.bits = inputs.rapidFireButtons;
-            ddst->newPressedButtons.bits = inputs.newPressedButtons;
-            ddst->cStickX = inputs.cStickX;
-            ddst->cStickY = inputs.cStickY;
-            ddst->stickX = inputs.stickX;
-            ddst->stickY = inputs.stickY;
-            ddst->LAnalogue = inputs.LAnalogue;
-            ddst->RAnalogue = inputs.RAnalogue;
-            ddst->LTrigger = inputs.LTrigger;
-            ddst->RTrigger = inputs.RTrigger;
+            for(int i = 0; i < playerCount; i++)
+            {
+                auto& player = replay.players[i];
+                auto& inputs = player.inputs;
+                if(inputs.buttons != 0x1000 && inputs.holdButtons != 0x1000 && inputs.releasedButtons != 0x1000 &&
+                   inputs.rapidFireButtons != 0x1000 && inputs.newPressedButtons != 0x1000)
+                {
+                    (ddst + i * sizeof(gfPadGamecube))->buttons.bits = inputs.buttons;
+                    (ddst + i * sizeof(gfPadGamecube))->holdButtons.bits = inputs.holdButtons;
+                    (ddst + i * sizeof(gfPadGamecube))->releasedButtons.bits = inputs.releasedButtons;
+                    (ddst + i * sizeof(gfPadGamecube))->rapidFireButtons.bits = inputs.rapidFireButtons;
+                    (ddst + i * sizeof(gfPadGamecube))->newPressedButtons.bits = inputs.newPressedButtons;
+                    (ddst + i * sizeof(gfPadGamecube))->cStickX = inputs.cStickX;
+                    (ddst + i * sizeof(gfPadGamecube))->cStickY = inputs.cStickY;
+                    (ddst + i * sizeof(gfPadGamecube))->stickX = inputs.stickX;
+                    (ddst + i * sizeof(gfPadGamecube))->stickY = inputs.stickY;
+                    (ddst + i * sizeof(gfPadGamecube))->LAnalogue = inputs.LAnalogue;
+                    (ddst + i * sizeof(gfPadGamecube))->RAnalogue = inputs.RAnalogue;
+                    (ddst + i * sizeof(gfPadGamecube))->LTrigger = inputs.LTrigger;
+                    (ddst + i * sizeof(gfPadGamecube))->RTrigger = inputs.RTrigger;
+                }
+            }
         }
     }
     
@@ -241,25 +247,45 @@ namespace ReplayLogic {
         }
         _OSEnableInterrupts();
     }
-    INJECTION("getGamePadStatusHook", 0x8002ae40, R"(
+    
+    // TODO: Still reading inputs from the menu into the replay. This should not occur.
+    INJECTION("updateLowGCHook", 0x80029464, R"(
         SAVE_REGS
         bl StartPlayback
+        cmpwi r3, 0
+        beq runUpdateLowGCNormally
         RESTORE_REGS
-        li r3, 0x1
+        lis r12, 0x8002
+        ori r12, r12, 0x9468
+        mtctr r12
+        bctrl
+    runUpdateLowGCNormally:
+        RESTORE_REGS
+        lis r12, 0x8002
+        ori r12, r12, 0x9578
+        mtctr r12
+        bctrl
     )");
-    extern "C" void StartPlayback(gfPadSystem* pad_system, int port, gfPadGamecube* ddst)
+
+    extern "C" bool StartPlayback(gfPadSystem* pad_system, gfPadGamecube* ddst)
     {
-        if(replayLogicFlag && playbackDecided)
+        if(playbackDecided)
         {
-            auto countDownEnded = _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd();
-            if(countDownEnded != 0)
+            if(replayLogicFlag)
             {
-                Replay frame = GetFrame(GAME_GLOBAL->gameFrame->frameCounter);
-                Playback(frame, port, ddst);
-                isInReplay = true;
+                auto countDownEnded = _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd();
+                if(countDownEnded != 0)
+                {
+                    Replay frame = GetFrame(GAME_GLOBAL->gameFrame->frameCounter);
+                    Playback(frame, ddst);
+                    isInReplay = true;
+                }
             }
+            return true;
         }
+        return false;
     }
+    
     INJECTION("exitReplay", 0x806d49a4, R"(
         lis r3, isInReplay@ha
         lbz r3, isInReplay@l(r3)

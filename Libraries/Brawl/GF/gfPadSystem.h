@@ -11,6 +11,8 @@ struct gfPadSystem {
 
 	char _spacer2[0x104];
 	gfPadGamecube sysPads[4];
+
+	
 	//0x0244 seems like where inputmask starts (during SystemPadStatus checks)
 	//0x0444 seems like where inputmask starts (during GamePadStatus checks)
 };
