@@ -313,18 +313,28 @@ namespace Match {
         bl dumpGfMemoryPoolHook
         RESTORE_REGS
     )");
+    const char* relevantHeaps = R"(
+        System FW System Effect WiiPad IteamResource InfoResource CommonResource CopyFB Physics
+        ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter3Resoruce Fighter4Resoruce Fighter1Resoruce2
+        Fighter2Resoruce2 Fighter3Resoruce2 Fighter4Resoruce2 FighterEffect Fighter1Instance Fighter2Instance
+        Fighter3Instance Fighter4Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal 
+        GlobalMode OverlayCommon GlobalMode
+    )";
     extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
         _OSDisableInterrupts();
         char* heap_name = *r30_reg_val;
         OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s |\n", addr_start, addr_end, mem_size, heap_name);
-        SavestateMemRegionInfo memRegion = {};
-        memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
-        memRegion.size = mem_size;
-        memRegion.TAddFRemove = true;
-        memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-        memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
-        memRegion.nameSize = etl::strlen(heap_name);
-        EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
+        if(strstr(relevantHeaps, heap_name))
+        {
+            SavestateMemRegionInfo memRegion = {};
+            memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
+            memRegion.size = mem_size;
+            memRegion.TAddFRemove = true;
+            memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
+            memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
+            memRegion.nameSize = etl::strlen(heap_name);
+            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
+        }
         _OSEnableInterrupts();
     }
 
@@ -340,7 +350,6 @@ namespace Match {
     INJECTION("dumpGfMemoryPoolPrintNop9", 0x80026278, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop10", 0x800262ac, "nop");
 
-
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
@@ -352,7 +361,7 @@ namespace Match {
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
-            allocsDeallocs.push_back(memRegion);
+            EXIPacket(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(SavestateMemRegionInfo));
         }
     }
     // called when the game calls free/[gfMemoryPool] which is it's main free function
@@ -365,7 +374,7 @@ namespace Match {
             memRegion.nameSize = etl::strlen(heap_name);
             memRegion.address = (u32)address;
             memRegion.TAddFRemove = false;
-            allocsDeallocs.push_back(memRegion);
+            EXIPacket(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(SavestateMemRegionInfo));
         }
     }
 
@@ -629,7 +638,7 @@ namespace FrameLogic {
         // to send back to the game -> send data to the game if there is any -> game processes that data -> repeat
 
         if (Netplay::IsInMatch()) {
-            if(!dump && _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0)
+            if(!dump)
             {
                 dumpAll();
                 shouldTrackAllocs = true;
@@ -687,23 +696,6 @@ namespace FrameLogic {
 
     // very end of main game loop, after all game logic and graphics calls
     SIMPLE_INJECTION(endMainLoop, 0x800174fc, "lwz r3, 0x100(r23)") {
-        if (Netplay::IsInMatch()) {
-            if(allocsDeallocs.size() > 0)
-            {
-                for(int i = 0; i < allocsDeallocs.size(); i++)
-                {
-                    if(allocsDeallocs[i].TAddFRemove)
-                    {
-                        EXIPacket(EXICommand::CMD_SEND_ALLOCS, &(allocsDeallocs[i]), sizeof(SavestateMemRegionInfo));
-                    }
-                    else 
-                    {
-                        EXIPacket(EXICommand::CMD_SEND_DEALLOCS, &(allocsDeallocs[i]), sizeof(SavestateMemRegionInfo));
-                    }
-                }
-                allocsDeallocs.clear();
-            }
-        }
     }
 
     #if 1
@@ -729,7 +721,7 @@ namespace FrameLogic {
         if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
-            return strstr(taskName, nonResimTasks) ? true : false; 
+            return strstr(nonResimTasks, taskName) ? true : false; 
         }
         return false;
     }
