@@ -323,9 +323,9 @@ namespace Match {
     extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
         _OSDisableInterrupts();
         char* heap_name = *r30_reg_val;
-        OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s |\n", addr_start, addr_end, mem_size, heap_name);
-        if(strstr(relevantHeaps, heap_name))
+        if(strstr(relevantHeaps, heap_name) != nullptr)
         {
+            OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s |\n", addr_start, addr_end, mem_size, heap_name);
             SavestateMemRegionInfo memRegion = {};
             memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
             memRegion.size = mem_size;
