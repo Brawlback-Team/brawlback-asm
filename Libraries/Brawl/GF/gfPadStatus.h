@@ -2,7 +2,7 @@
 
 #include "Wii/PAD/PADButtons.h"
 
-enum controllerType {
+enum controllerType: int {
     GAMECUBE,
     CLASSIC,
     WIIMOTE,
@@ -33,13 +33,12 @@ struct gfPadGamecube {
 	s8 RAnalogue;
 	s8 LTrigger;
 	s8 RTrigger;
-	
-	char _spacer3[0x1];
+
 	//0x38
 	//0xFF if not connected, else 0
 	bool isNotConnected;
 
-    s8 _spacer4[0x3C - 0x38 - 1];
+    s8 _spacer4[0x3];
 
 	//0x3C
 	controllerType type = GAMECUBE;

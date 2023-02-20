@@ -125,7 +125,7 @@ namespace Util {
     }
 
     #define _getScMelee_GF_SCENE_MANAGER ((scMelee* (*)(gfSceneManager* This, char* searchName)) 0x8002d3f4)
-    void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 pIdx) {
+    void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 port, u8 pIdx) {
         if(_getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0)
         {
             ftManager* fighterManager = FIGHTER_MANAGER;
@@ -140,9 +140,10 @@ namespace Util {
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (u8)ftowner->getStockCount();
         }
-
-        pfd.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[pIdx]);
-        pfd.sysPad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->sysPads[pIdx]);
+        
+        pfd.pad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->pads[port]);
+        OSReport("STICK X: %d\n", pfd.pad.stickX);
+        pfd.sysPad = Util::GamePadToBrawlbackPad(PAD_SYSTEM->sysPads[port]);
     }
     void InjectBrawlbackPadToPadStatus(gfPadGamecube& gamePad, const BrawlbackPad& pad, int port) {
         
@@ -606,7 +607,7 @@ namespace FrameLogic {
             PlayerFrameData playerFrame;
             playerFrame.frame = currentFrame;
             playerFrame.playerIdx = localPlayerIdx;
-            Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort);
+            Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             // sending inputs + current game frame
             EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
         }
