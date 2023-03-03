@@ -15,6 +15,9 @@ st/
 SDCard/*
 .latest_sd_update_time
 
+#Ignore SD card  files
+*.raw
+
 # User-specific files
 *.rsuser
 *.suo
