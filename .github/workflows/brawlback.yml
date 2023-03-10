@@ -14,7 +14,17 @@ jobs:
     container: 
       image: devkitpro/devkitppc:latest
       options: --user root
-
+    strategy:
+        fail-fast: false
+        matrix:
+          build_type: [Netcode, Replays]
+          include:
+            - build_type: Netcode
+              toolchain: CMake/PPCToolchain.cmake
+              sd_contents: BRAWLBACK
+            - build_type: Replays
+              toolchain: CMake/PPCToolchain.cmake
+              sd_contents: SLIPPIREPLAYS
     steps:
     - uses: actions/checkout@v3
       with:
@@ -32,7 +42,7 @@ jobs:
     - name: Configure CMake
       run: |
            export DEVKITPPC=/opt/devkitpro/devkitPPC
-           ./cmake-3.25.2-linux-x86_64/bin/cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=CMake/PPCToolchain.cmake -DBRAWLBACK=1
+           ./cmake-3.25.2-linux-x86_64/bin/cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain }} -D${{ matrix.sd_contents }}=1
            
     - name: Build
       run: ./cmake-3.25.2-linux-x86_64/bin/cmake --build build/
