@@ -69,5 +69,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
-        name: ${{ matrix.artifact_name }}
+        name: ${{ matrix.build_type }}
         path: "./artifact/"
