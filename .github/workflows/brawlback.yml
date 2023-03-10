@@ -29,7 +29,16 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: 'true'
-    
+        
+    - name: 'Fetch Git Tags'
+      shell: bash
+      if: success()
+      run: |
+            git fetch --prune --unshallow
+            echo "GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+            echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+            echo "CURR_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+            
     - name: Install Dependencies
       run: |
            sudo apt-get update
@@ -46,3 +55,19 @@ jobs:
            
     - name: Build
       run: ./cmake-3.25.2-linux-x86_64/bin/cmake --build build/
+      
+    - name: "Package"
+      if: success()
+      working-directory: ${{ github.workspace }}
+      run: |
+           mkdir artifact
+           FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}-${{ matrix.build_type }}.zip
+           zip -r "${FILE_NAME}" "./SDCard"
+           mv "${FILE_NAME}" ./artifact/
+           
+    - name: "Publish"
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: "./artifact/"
