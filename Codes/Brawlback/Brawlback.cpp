@@ -145,7 +145,7 @@ namespace Util {
 // fill gamesettings struct with game info
 void fillOutGameSettings(GameSettings& settings) {
     settings.randomSeed = DEFAULT_MT_RAND->seed;
-    settings.stageID = GM_GLOBAL_MODE_MELEE->stageID;
+    settings.stageID = GM_GLOBAL_MODE_MELEE->m_meleeInitData.m_stageID;
 
     u8 p1_id = *(((u8*)GM_GLOBAL_MODE_MELEE)+P1_CHAR_ID_IDX);
     OSReport("P1 pre-override char id: %u\n", (unsigned int)p1_id);

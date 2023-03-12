@@ -71,7 +71,8 @@ struct gmPlayerInitData {
     float m_damageRatio;       // 0x30
     float m_attackReactionMul; // 0x34
     float m_damageReactionMul; // 0x38
-    char _7[0x04];             // 0x3C
+    u8 unk1;             // 0x3C
+    u8 unk2;             // 0x3C
     float m_scale;             // 0x40
     float m_visibilityScale;   // 0x44
     float m_gravity;           // 0x48

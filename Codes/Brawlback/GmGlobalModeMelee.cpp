@@ -48,17 +48,17 @@ namespace GMMelee {
 
             melee[P1_CHAR_ID_IDX] = charChoices[0];
             melee[P2_CHAR_ID_IDX] = charChoices[1];
-            GM_GLOBAL_MODE_MELEE->playerData[0].slotID = charChoices[0];
-            GM_GLOBAL_MODE_MELEE->playerData[1].slotID = charChoices[1];
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[0].m_slotID = charChoices[0];
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[1].m_slotID = charChoices[1];
             
-            GM_GLOBAL_MODE_MELEE->playerData[0].playerType = 0;
-            GM_GLOBAL_MODE_MELEE->playerData[1].playerType = 0;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[0].m_initState = 0;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[1].m_initState = 0;
 
-            GM_GLOBAL_MODE_MELEE->playerData[0].unk1 = 0x80;
-            GM_GLOBAL_MODE_MELEE->playerData[1].unk1 = 0x80;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[0].unk1 = 0x80;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[1].unk1 = 0x80;
 
-            GM_GLOBAL_MODE_MELEE->playerData[0].unk2 = 0x0;
-            GM_GLOBAL_MODE_MELEE->playerData[1].unk2 = 0x1;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[0].unk2 = 0x0;
+            GM_GLOBAL_MODE_MELEE->m_playersInitData[1].unk2 = 0x1;
 
             // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
             // melee[P2_CHAR_ID_IDX+1] = 0;
