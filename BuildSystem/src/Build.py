@@ -504,6 +504,8 @@ def buildSDCard():
 
         if sys.platform == "linux":
             gctrm_exec = '../GCTRM/GCTRealMateLinux'
+        elif sys.platform == "darwin":
+            gctrm_exec = '../GCTRM/GCTRealMateMacOS'
         elif sys.platform == "win32":
             gctrm_exec = '../GCTRM/GCTRealMate.exe'
         else:
