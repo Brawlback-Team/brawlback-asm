@@ -12,7 +12,7 @@
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
 
-static bool shouldTrackAllocs = false;
+bool shouldTrackAllocs = false; 
 
 std::vector<SavestateMemRegionInfo> allocsDeallocs;
 
@@ -97,6 +97,7 @@ namespace Util {
 
     BrawlbackPad GamePadToBrawlbackPad(const gfPadGamecube& pad) {
         BrawlbackPad ret;
+        ret._buttons = pad._buttons.bits;
         ret.buttons = pad.buttons.bits;
         // *(ret.newPressedButtons-0x2) = (int)*(pad+0x14);
         ret.holdButtons = pad.holdButtons.bits;
@@ -125,8 +126,11 @@ namespace Util {
     }
 
     #define _getScMelee_GF_SCENE_MANAGER ((scMelee* (*)(gfSceneManager* This, char* searchName)) 0x8002d3f4)
+    bool ReadySetGoDone() {
+        return _getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0;
+    }
     void PopulatePlayerFrameData(PlayerFrameData& pfd, u8 port, u8 pIdx) {
-        if(_getScMelee_GF_SCENE_MANAGER(gfSceneManager::getInstance(), (char*)"scMelee")->stOperatorReadyGo1->isEnd() != 0)
+        if(ReadySetGoDone())
         {
             ftManager* fighterManager = FIGHTER_MANAGER;
             Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
@@ -157,13 +161,14 @@ namespace Util {
         
 
         gamePad.isNotConnected = isNotConnected;
+        gamePad._buttons.bits = pad._buttons;
         gamePad.buttons.bits = pad.buttons;
         // int* addr  = (int*) &gamePad;
         // *(addr+0x14+0x2) = pad.buttons;
-        // gamePad.holdButtons.bits = pad.holdButtons;
-        // gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
-        // gamePad.releasedButtons.bits = pad.releasedButtons;
-        // gamePad.newPressedButtons.bits = pad.newPressedButtons;
+        gamePad.holdButtons.bits = pad.holdButtons;
+        gamePad.rapidFireButtons.bits = pad.rapidFireButtons;
+        gamePad.releasedButtons.bits = pad.releasedButtons;
+        gamePad.newPressedButtons.bits = pad.newPressedButtons;
         gamePad.LAnalogue = pad.LAnalogue;
         gamePad.RAnalogue = pad.RAnalogue;
         gamePad.cStickX = pad.cStickX;
@@ -362,7 +367,7 @@ namespace Match {
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
-            EXIPacket(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(SavestateMemRegionInfo));
+            EXIPacket(EXICommand::CMD_SEND_ALLOCS, &memRegion, sizeof(SavestateMemRegionInfo));
         }
     }
     // called when the game calls free/[gfMemoryPool] which is it's main free function
@@ -624,7 +629,6 @@ namespace FrameLogic {
     // called at the beginning of the game logic in a frame
     // a this point, inputs are populated for this frame
     // but the game logic that operates on those inputs has not yet happened
-    static bool dump = false;
     void BeginFrame() {
 
         u32 currentFrame = getCurrentFrame();
@@ -639,12 +643,6 @@ namespace FrameLogic {
         // to send back to the game -> send data to the game if there is any -> game processes that data -> repeat
 
         if (Netplay::IsInMatch()) {
-            if(!dump)
-            {
-                dumpAll();
-                shouldTrackAllocs = true;
-                dump = true;
-            }
             _OSDisableInterrupts();
             // reset flag to be used later
             FrameAdvance::isRollback = false;
@@ -657,6 +655,11 @@ namespace FrameLogic {
 
 
             #ifdef NETPLAY_IMPL
+                if(!shouldTrackAllocs)
+                {
+                    dumpAll();
+                    shouldTrackAllocs = true;
+                }
                 FrameDataLogic(currentFrame);
             #endif
 
