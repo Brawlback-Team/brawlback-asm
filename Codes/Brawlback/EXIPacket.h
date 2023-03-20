@@ -29,6 +29,7 @@ enum EXICommand : u8
     CMD_GET_NUM_REPLAYS = 24,
     CMD_SET_CUR_INDEX = 25,
     CMD_GET_START_REPLAY = 26,
+    CMD_SEND_DUMPLIST = 31,
     CMD_SEND_DUMPALL = 32,
     
     CMD_MATCH_END = 4,

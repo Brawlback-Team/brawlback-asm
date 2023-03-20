@@ -12,7 +12,8 @@
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
 
-bool hasDumped = false; 
+bool hasDumped = false;
+bool doDumpList = false;
 
 std::vector<SavestateMemRegionInfo> allocsDeallocs;
 
@@ -313,9 +314,10 @@ namespace Match {
 
     // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
     // so we move it into r3 to get easy access to it in our hook
-    INJECTION("dump_gfMemoryPool_hook", 0x8002625c, R"(
+    INJECTION("dumpList_hook", 0x80024c48, R"(
         SAVE_REGS
-        mr r3, r30
+        mr r3, r6
+        mr r4, r7
         bl dumpGfMemoryPoolHook
         RESTORE_REGS
     )");
@@ -326,7 +328,32 @@ namespace Match {
         Fighter3Instance Fighter4Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal 
         GlobalMode OverlayCommon
     )";
-    extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
+
+    extern "C" void dumpGfMemoryPoolHook(u32 start, u32 end, char name[]) {
+        OSReport("%s: 0x%x - 0x%x\n", name, start, end);
+        if(doDumpList)
+        {
+            if(strstr(relevantHeaps, name) != nullptr) {
+                SavestateMemRegionInfo region = {};
+                region.address = start;
+                region.size = end - start;
+                memcpy(region.nameBuffer, name, etl::strlen(name));
+                region.nameBuffer[etl::strlen(name)] = (u8)'\0';
+                region.nameSize = etl::strlen(name);
+                region.TAddFRemove = true;
+                EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPLIST, &region, sizeof(SavestateMemRegionInfo));
+            }
+        }
+    }
+
+    INJECTION("dumpAll_gfMemoryPool_hook", 0x8002625c, R"(
+        SAVE_REGS
+        mr r3, r30
+        bl dumpAllGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+
+    extern "C" void dumpAllGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
         _OSDisableInterrupts();
         char* heap_name = *r30_reg_val;
         if(strstr(relevantHeaps, heap_name) != nullptr)
@@ -335,9 +362,9 @@ namespace Match {
             SavestateMemRegionInfo memRegion = {};
             memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
             memRegion.size = mem_size;
-            memRegion.TAddFRemove = true;
+            memRegion.TAddFRemove = false;
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-            memRegion.nameBuffer[etl::strlen(heap_name) + 1] = '\0';
+            memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
             EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
         }
@@ -585,8 +612,11 @@ namespace FrameLogic {
             #ifdef NETPLAY_IMPL
                 if(!hasDumped)
                 {
+                    doDumpList = true;
+                    dumpList();
                     dumpAll();
                     hasDumped = true;
+                    doDumpList = false;
                 }
                 FrameDataLogic(currentFrame);
             #endif
