@@ -72,7 +72,7 @@ void fillOutGameSettings(GameSettings& settings);
 void MergeGameSettingsIntoGame(GameSettings& settings);
 extern bool canRollback;
     
-extern bool shouldTrackAllocs;
+extern bool hasDumped;
 namespace FrameLogic {
     void SaveState(u32 frame);
     void GetInputsForFrame(u32 frame, FrameData* inputs);
