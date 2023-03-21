@@ -13,6 +13,7 @@
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
 u32 frameCounter = 0;
 bool shouldTrackAllocs = false;
+bool doDumpList = false;
 
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -77,11 +78,13 @@ namespace Util {
             swapByteOrder(fd->playerFrameDatas[i].syncData.locX);
             swapByteOrder(fd->playerFrameDatas[i].syncData.locY);
             swapByteOrder(fd->playerFrameDatas[i].syncData.percent);
+            swapByteOrder(fd->playerFrameDatas[i].pad._buttons);
             swapByteOrder(fd->playerFrameDatas[i].pad.buttons);
             swapByteOrder(fd->playerFrameDatas[i].pad.holdButtons);
             swapByteOrder(fd->playerFrameDatas[i].pad.releasedButtons);
             swapByteOrder(fd->playerFrameDatas[i].pad.rapidFireButtons);
             swapByteOrder(fd->playerFrameDatas[i].pad.newPressedButtons);
+            swapByteOrder(fd->playerFrameDatas[i].sysPad._buttons);
             swapByteOrder(fd->playerFrameDatas[i].sysPad.buttons);
             swapByteOrder(fd->playerFrameDatas[i].sysPad.holdButtons);
             swapByteOrder(fd->playerFrameDatas[i].sysPad.releasedButtons);
@@ -315,6 +318,28 @@ namespace Match {
         Fighter3Instance Fighter4Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal 
         GlobalMode OverlayCommon Tmp
     )";
+
+    INJECTION("dumpList_hook", 0x80024c48, R"(
+        SAVE_REGS
+        mr r3, r6
+        mr r4, r7
+        bl dumpListGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+
+    extern "C" void dumpListGfMemoryPoolHook(u32 start, u32 end, char name[]) {
+        OSReport("%s: 0x%x - 0x%x\n", name, start, end);
+        if(doDumpList && strstr(relevantHeaps, name) != nullptr)
+        {
+            SavestateMemRegionInfo region = {};
+            region.address = start;
+            region.size = end - start;
+            memcpy(region.nameBuffer, name, etl::strlen(name));
+            region.nameBuffer[etl::strlen(name)] = '\0';
+            region.nameSize = etl::strlen(name);
+            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPLIST, &region, sizeof(SavestateMemRegionInfo));
+        }
+    }
 
     INJECTION("dumpAll_gfMemoryPool_hook", 0x80024aac, R"(
         mr r3, r29
@@ -680,6 +705,9 @@ namespace FrameLogic {
                 if(frameCounter == 0)
                 {
                     dumpAll();
+                    doDumpList = true;
+                    dumpList();
+                    doDumpList = false;
                     shouldTrackAllocs = true;
                 }
                 FrameDataLogic(currentFrame);
@@ -723,13 +751,13 @@ namespace FrameLogic {
     SIMPLE_INJECTION(endMainLoop, 0x800174fc, "lwz r3, 0x100(r23)") {
     }
 
-    #if 0
+    #if 1
     // resim optimization
     // gfTask names listed in the array below
     // will not be run during resimulation frames
     #define NUM_NON_RESIM_TASKS 2
     const char* nonResimTasks = R"(
-        ecMgr efManager
+        ecMgr EffectManager
     )";
     INJECTION("gfTaskProcessHook", 0x8002dc74, R"(
         SAVE_REGS
