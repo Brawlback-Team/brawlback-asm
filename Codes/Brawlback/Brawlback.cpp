@@ -11,10 +11,7 @@
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
-
-bool hasDumped = false;
-bool doDumpList = false;
-
+bool firstDump = true;
 std::vector<SavestateMemRegionInfo> allocsDeallocs;
 
 STARTUP(startupNotif) {
@@ -307,71 +304,87 @@ namespace Match {
         #ifdef NETPLAY_IMPL
         Netplay::EndMatch();
         Netplay::SetIsInMatch(false);
-        hasDumped = false;
         #endif
         _OSEnableInterrupts();
     }
 
-    // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
-    // so we move it into r3 to get easy access to it in our hook
-    INJECTION("dumpList_hook", 0x80024c48, R"(
-        SAVE_REGS
-        mr r3, r6
-        mr r4, r7
-        bl dumpGfMemoryPoolHook
-        RESTORE_REGS
-    )");
     const char* relevantHeaps = R"(
-        System FW System Effect WiiPad IteamResource InfoResource CommonResource CopyFB Physics
-        ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter3Resoruce Fighter4Resoruce Fighter1Resoruce2
-        Fighter2Resoruce2 Fighter3Resoruce2 Fighter4Resoruce2 FighterEffect Fighter1Instance Fighter2Instance
+        System Effect WiiPad IteamResource InfoResource CommonResource CopyFB Physics
+        ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2
+        Fighter2Resoruce2 FighterEffect Fighter1Instance Fighter2Instance
         Fighter3Instance Fighter4Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal 
-        GlobalMode OverlayCommon
+        GlobalMode OverlayCommon Tmp
     )";
 
-    extern "C" void dumpGfMemoryPoolHook(u32 start, u32 end, char name[]) {
-        OSReport("%s: 0x%x - 0x%x\n", name, start, end);
-        if(doDumpList)
-        {
-            if(strstr(relevantHeaps, name) != nullptr) {
-                SavestateMemRegionInfo region = {};
-                region.address = start;
-                region.size = end - start;
-                memcpy(region.nameBuffer, name, etl::strlen(name));
-                region.nameBuffer[etl::strlen(name)] = (u8)'\0';
-                region.nameSize = etl::strlen(name);
-                region.TAddFRemove = true;
-                EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPLIST, &region, sizeof(SavestateMemRegionInfo));
-            }
-        }
-    }
-
-    INJECTION("dumpAll_gfMemoryPool_hook", 0x8002625c, R"(
+    INJECTION("dumpAll_gfMemoryPool_hook", 0x80024aac, R"(
+        mr r3, r29
         SAVE_REGS
-        mr r3, r30
         bl dumpAllGfMemoryPoolHook
+        cmpwi r3, 0
+        beq skipDump
         RESTORE_REGS
+        lis r12, 0x8002
+        ori r12, r12, 0x4ab0
+        mtctr r12
+        bctr
+    skipDump:
+        RESTORE_REGS
+        lis r12, 0x8002
+        ori r12, r12, 0x4ab4
+        mtctr r12
+        bctr
     )");
 
-    extern "C" void dumpAllGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
+    extern "C" bool dumpAllGfMemoryPoolHook(void* heap) {
         _OSDisableInterrupts();
-        char* heap_name = *r30_reg_val;
-        if(strstr(relevantHeaps, heap_name) != nullptr)
+        if(strstr(relevantHeaps, *(char**)(heap)) != nullptr)
         {
-            OSReport("| Hook!  [0x%08x, 0x%08x] size = 0x%08x  name = %s |\n", addr_start, addr_end, mem_size, heap_name);
-            SavestateMemRegionInfo memRegion = {};
-            memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
-            memRegion.size = mem_size;
-            memRegion.TAddFRemove = false;
-            memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
-            memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
-            memRegion.nameSize = etl::strlen(heap_name);
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
+            return true;
         }
+        return false;
         _OSEnableInterrupts();
     }
 
+    INJECTION("endDumpAll_gfMemoryPool_hook", 0x80024ad4, R"(
+        mr r4, r28
+        SAVE_REGS
+        bl endDumpAllGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+
+    extern "C" void endDumpAllGfMemoryPoolHook() {
+        firstDump = true;
+    }
+
+    // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
+    // so we move it into r3 to get easy access to it in our hook
+    INJECTION("dump_gfMemoryPool_hook", 0x8002625c, R"(
+        SAVE_REGS
+        mr r3, r30
+        bl dumpGfMemoryPoolHook
+        RESTORE_REGS
+    )");
+
+    extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
+        char* heap_name = *r30_reg_val;
+        SavestateMemRegionInfo memRegion = {};
+        memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
+        memRegion.size = mem_size;
+        memRegion.firstDump = firstDump;
+        memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
+        memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
+        memRegion.nameSize = etl::strlen(heap_name);
+        EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPALL, &memRegion, sizeof(SavestateMemRegionInfo));
+        firstDump = false;
+    }
+
     // gets rid of some printouts when calling dumpAll
+    INJECTION("dumpAllGfMemoryPoolPrintNop", 0x80024a78, "nop");
+    INJECTION("dumpAllGfMemoryPoolPrintNop1", 0x80024a84, "nop");
+    INJECTION("dumpAllGfMemoryPoolPrintNop2", 0x80024a90, "nop");
+    INJECTION("dumpAllGfMemoryPoolPrintNop3", 0x80024adc, "nop");
+    INJECTION("dumpAllGfMemoryPoolPrintNop4", 0x80024aec, "nop");
+    INJECTION("dumpAllGfMemoryPoolPrintNop5", 0x80024ae0, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop", 0x80026288, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop2", 0x8002619c, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop3", 0x800261b4, "nop");
@@ -382,6 +395,7 @@ namespace Match {
     INJECTION("dumpGfMemoryPoolPrintNop8", 0x8002625c, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop9", 0x80026278, "nop");
     INJECTION("dumpGfMemoryPoolPrintNop10", 0x800262ac, "nop");
+    INJECTION("dumpGfMemoryPoolPrintNop11", 0x800260e0, "nop");
 }
 
 namespace FrameAdvance {
@@ -610,18 +624,9 @@ namespace FrameLogic {
 
 
             #ifdef NETPLAY_IMPL
-                if(!hasDumped)
-                {
-                    doDumpList = true;
-                    dumpList();
-                    dumpAll();
-                    hasDumped = true;
-                    doDumpList = false;
-                }
+                dumpAll();
                 FrameDataLogic(currentFrame);
             #endif
-
-
             _OSEnableInterrupts();
         }
 
@@ -660,7 +665,7 @@ namespace FrameLogic {
     SIMPLE_INJECTION(endMainLoop, 0x800174fc, "lwz r3, 0x100(r23)") {
     }
 
-    #if 1
+    #if 0
     // resim optimization
     // gfTask names listed in the array below
     // will not be run during resimulation frames

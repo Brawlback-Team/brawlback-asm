@@ -64,6 +64,7 @@
 // dump Heap Infos
 #define dumpAll ( (void (*) ()) 0x80024a50)
 #define dumpList ( (void (*) ()) 0x80024b08)
+#define dump ( ( void (*) (void* heap) ) 0x800260b4)
 
 inline void updateGamePadSystem() { updateGame(PAD_SYSTEM); }
 
@@ -72,9 +73,7 @@ u32 getCurrentFrame();
 void fillOutGameSettings(GameSettings& settings);
 void MergeGameSettingsIntoGame(GameSettings& settings);
 extern bool canRollback;
-extern bool doDumpList;
-    
-extern bool hasDumped;
+extern bool firstDump;
 namespace FrameLogic {
     void SaveState(u32 frame);
     void GetInputsForFrame(u32 frame, FrameData* inputs);
