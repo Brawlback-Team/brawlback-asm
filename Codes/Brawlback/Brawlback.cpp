@@ -11,10 +11,8 @@
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
-bool firstDump = true;
 u32 frameCounter = 0;
 bool shouldTrackAllocs = false;
-std::vector<SavestateMemRegionInfo> allocsDeallocs;
 
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -345,17 +343,6 @@ namespace Match {
         return false;
     }
 
-    INJECTION("endDumpAll_gfMemoryPool_hook", 0x80024ad4, R"(
-        mr r4, r28
-        SAVE_REGS
-        bl endDumpAllGfMemoryPoolHook
-        RESTORE_REGS
-    )");
-
-    extern "C" void endDumpAllGfMemoryPoolHook() {
-        firstDump = true;
-    }
-
     // at this address, r30 contains a (double) ptr to the name of the heap it is dumping
     // so we move it into r3 to get easy access to it in our hook
     INJECTION("dump_gfMemoryPool_hook", 0x8002625c, R"(
@@ -370,8 +357,6 @@ namespace Match {
         SavestateMemRegionInfo memRegion = {};
         memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
         memRegion.size = mem_size;
-        memRegion.firstDump = firstDump;
-        firstDump = false;
         memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
         memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
         memRegion.nameSize = etl::strlen(heap_name);
