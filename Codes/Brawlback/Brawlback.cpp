@@ -369,7 +369,7 @@ namespace Match {
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
-        if (shouldTrackAllocs) {
+        if (shouldTrackAllocs && std::strstr(relevantHeaps, heap_name) != nullptr) {
             //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion = {};
             memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
@@ -383,7 +383,7 @@ namespace Match {
     // called when the game calls free/[gfMemoryPool] which is it's main free function
     // address is the address being freed
     void ProcessGameFree(u8* address, char* heap_name) {
-        if (shouldTrackAllocs) {
+        if (shouldTrackAllocs && std::strstr(relevantHeaps, heap_name) != nullptr) {
             //OSReport("FREE: addr = 0x%08x\n", address);
             SavestateMemRegionInfo memRegion = {};
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
