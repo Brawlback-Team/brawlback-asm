@@ -339,7 +339,7 @@ namespace Match {
     )");
 
     extern "C" bool dumpAllGfMemoryPoolHook(void* heap) {
-        if(std::strstr(relevantHeaps, *(char**)(heap)) != nullptr)
+        if(strstr(relevantHeaps, *(char**)(heap)) != nullptr)
         {
             return true;
         }
@@ -358,7 +358,7 @@ namespace Match {
     extern "C" void dumpGfMemoryPoolHook(char** r30_reg_val, u32 addr_start, u32 addr_end, u32 mem_size, u8 id) {
         char* heap_name = *r30_reg_val;
         SavestateMemRegionInfo memRegion = {};
-        memRegion.address = (u32)addr_start; // might be bad cast... 64 bit ptr to 32 bit int
+        memRegion.address = addr_start; // might be bad cast... 64 bit ptr to 32 bit int
         memRegion.size = mem_size;
         memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
         memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
@@ -369,10 +369,10 @@ namespace Match {
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
-        if (shouldTrackAllocs && std::strstr(relevantHeaps, heap_name) != nullptr) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr) {
             //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion = {};
-            memRegion.address = (u32)allocated_addr; // might be bad cast... 64 bit ptr to 32 bit int
+            memRegion.address = reinterpret_cast<u32>(allocated_addr); // might be bad cast... 64 bit ptr to 32 bit int
             memRegion.size = size;
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
@@ -383,19 +383,18 @@ namespace Match {
     // called when the game calls free/[gfMemoryPool] which is it's main free function
     // address is the address being freed
     void ProcessGameFree(u8* address, char* heap_name) {
-        if (shouldTrackAllocs && std::strstr(relevantHeaps, heap_name) != nullptr) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr) {
             //OSReport("FREE: addr = 0x%08x\n", address);
             SavestateMemRegionInfo memRegion = {};
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
             memRegion.nameBuffer[etl::strlen(heap_name)] = '\0';
             memRegion.nameSize = etl::strlen(heap_name);
-            memRegion.address = (u32)address; // is this cast ok?
+            memRegion.address = reinterpret_cast<u32>(address);
             EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DEALLOCS, &memRegion, sizeof(memRegion));
         }
     }
-    static bool shouldSaveThisAlloc = false;
-    static u32 allocSizeTracker = 0;
-    static char allocHeapName[20];
+    u32 allocSizeTracker = 0;
+    char allocHeapName[20];
     // at the very beginning of alloc/[gfMemoryPool]
     INJECTION("alloc_gfMemoryPool_hook", 0x80025c6c, R"(
         SAVE_REGS
@@ -408,7 +407,6 @@ namespace Match {
         auto heapNameSize = etl::strlen(heap_name);
         memcpy(allocHeapName, heap_name, heapNameSize);
         allocHeapName[heapNameSize] = '\0';
-        shouldSaveThisAlloc = true;
         allocSizeTracker = size;
     }
     // at the very end of alloc/[gfMemoryPool]
@@ -419,9 +417,7 @@ namespace Match {
         RESTORE_REGS
     )");
     extern "C" void allocGfMemoryPoolEndHook(u8* alloc_addr) {
-        if (shouldSaveThisAlloc) {
-            ProcessGameAllocation(alloc_addr, allocSizeTracker, allocHeapName);
-        }
+        ProcessGameAllocation(alloc_addr, allocSizeTracker, allocHeapName);
     }
     // at the very beginning of free/[gfMemoryPool]
     INJECTION("free_gfMemoryPool_hook", 0x80025f40, R"(
@@ -753,7 +749,7 @@ namespace FrameLogic {
         if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
-            return std::strstr(nonResimTasks, taskName) ? true : false; 
+            return strstr(nonResimTasks, taskName) ? true : false; 
         }
         return false;
     }
