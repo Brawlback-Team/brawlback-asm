@@ -31,7 +31,6 @@ enum EXICommand : u8
     CMD_GET_START_REPLAY = 26,
     CMD_SEND_ALLOCS = 30,
     CMD_SEND_DEALLOCS = 31,
-    CMD_SEND_DUMPLIST = 29,
     CMD_SEND_DUMPALL = 32,
     
     CMD_MATCH_END = 4,

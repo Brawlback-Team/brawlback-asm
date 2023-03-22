@@ -319,28 +319,6 @@ namespace Match {
         GlobalMode OverlayCommon Tmp
     )";
 
-    INJECTION("dumpList_hook", 0x80024c48, R"(
-        SAVE_REGS
-        mr r3, r6
-        mr r4, r7
-        bl dumpListGfMemoryPoolHook
-        RESTORE_REGS
-    )");
-
-    extern "C" void dumpListGfMemoryPoolHook(u32 start, u32 end, char name[]) {
-        OSReport("%s: 0x%x - 0x%x\n", name, start, end);
-        if(doDumpList && strstr(relevantHeaps, name) != nullptr)
-        {
-            SavestateMemRegionInfo region = {};
-            region.address = start;
-            region.size = end - start;
-            memcpy(region.nameBuffer, name, etl::strlen(name));
-            region.nameBuffer[etl::strlen(name)] = '\0';
-            region.nameSize = etl::strlen(name);
-            EXIPacket::CreateAndSend(EXICommand::CMD_SEND_DUMPLIST, &region, sizeof(SavestateMemRegionInfo));
-        }
-    }
-
     INJECTION("dumpAll_gfMemoryPool_hook", 0x80024aac, R"(
         mr r3, r29
         SAVE_REGS
@@ -361,7 +339,7 @@ namespace Match {
     )");
 
     extern "C" bool dumpAllGfMemoryPoolHook(void* heap) {
-        if(strstr(relevantHeaps, *(char**)(heap)) != nullptr)
+        if(std::strstr(relevantHeaps, *(char**)(heap)) != nullptr)
         {
             return true;
         }
@@ -634,6 +612,10 @@ namespace FrameAdvance {
     )");
     extern "C" void handleFrameAdvance() {
         //if (framesToAdvance == 1) return; // if we don't need to do anything special, let the game use it's own frame advance
+        if(framesToAdvance > 1)
+        {
+            FrameAdvance::isRollback = true;
+        }
         asm("mr r24, %0"
             :
             : "r" (framesToAdvance)
@@ -705,9 +687,6 @@ namespace FrameLogic {
                 if(frameCounter == 0)
                 {
                     dumpAll();
-                    doDumpList = true;
-                    dumpList();
-                    doDumpList = false;
                     shouldTrackAllocs = true;
                 }
                 FrameDataLogic(currentFrame);
@@ -757,7 +736,7 @@ namespace FrameLogic {
     // will not be run during resimulation frames
     #define NUM_NON_RESIM_TASKS 2
     const char* nonResimTasks = R"(
-        ecMgr EffectManager
+        ecMgr efManager
     )";
     INJECTION("gfTaskProcessHook", 0x8002dc74, R"(
         SAVE_REGS
@@ -774,7 +753,7 @@ namespace FrameLogic {
         if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
-            return strstr(nonResimTasks, taskName) ? true : false; 
+            return std::strstr(nonResimTasks, taskName) ? true : false; 
         }
         return false;
     }
