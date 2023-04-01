@@ -937,8 +937,8 @@ forceSkip:
 	mr r5, r29	# Restores song ID, original operation
 }
 	
-.include source/Project+/MyMusic.asm		# Integrated heavily into the above!
-.include source/Project+/Random.asm			# Custom random code to load expansion and non-striked slots, properly
+.include Source/Project+/MyMusic.asm		# Integrated heavily into the above!
+.include Source/Project+/Random.asm			# Custom random code to load expansion and non-striked slots, properly
 
 #####################################################################################################
 [Legacy TE] Hold Y on Smashville to Guarantee a Concert V2 (requires ASL Helper and SFSN) [DukeItOut]

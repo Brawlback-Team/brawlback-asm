@@ -2533,7 +2533,7 @@ op fmr f0, f3 @ $8010c888
 
 .include Source/ProjectM/CSS.asm
 .include Source/ProjectM/SSS.asm
-.include Source/ProjectM/SSSButtons.asm
+.include Source/ProjectM/SSSbuttons.asm
 
 .include Source/LegacyTE/AltCostume.asm
 .include Source/LegacyTE/Masquerade.asm
