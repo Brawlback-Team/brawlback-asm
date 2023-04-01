@@ -511,13 +511,13 @@ def buildSDCard():
         else:
             raise Exception("No GCTRM executable for platform: " + sys.platform )
 
-        RSBE01_file = "../GCTRM/" + subfolder.name + "RSBE01.txt"
+        RSBE01_file = "../GCTRM/" + subfolder.name + "/RSBE01.txt"
         subprocess.run([gctrm_exec, "-q", RSBE01_file])
-        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "RSBE01.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/RSBE01.GCT"))
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "/RSBE01.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/RSBE01.GCT"))
 
-        BOOST_file = "../GCTRM/" + subfolder.name + "BOOST.txt"
+        BOOST_file = "../GCTRM/" + subfolder.name + "/BOOST.txt"
         subprocess.run([gctrm_exec, "-q", BOOST_file])
-        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "BOOST.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/BOOST.GCT"))
+        shutil.copyfile(os.path.abspath("../GCTRM/" + subfolder.name + "/BOOST.GCT"), os.path.abspath('../SDCard/' + subfolder.name + "/BOOST.GCT"))
    
     createLatestUpdateTimeFile()
 

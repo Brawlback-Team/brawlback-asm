@@ -99,6 +99,16 @@
     }
   },
   {
+    "name": "Testing",
+    "toolchainFile": "${workspaceFolder}/CMake/PPCToolchain.cmake",
+    "cmakeSettings": {
+      "CMAKE_CXX_COMPILER_WORKS": 1,
+      "CMAKE_BUILD_TYPE": "Debug",
+      "BRAWLBACK": 0,
+      "SLIPPIREPLAYS": 0
+    }
+  },
+  {
     "name": "Replays Test",
     "compilers": {
       "CXX": "${workspaceFolder}/BuildSystem/Compiler/bin/powerpc-eabi-g++.exe"
