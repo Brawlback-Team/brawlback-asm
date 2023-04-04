@@ -76,6 +76,7 @@ extern bool canRollback;
 extern u32 frameCounter;
 extern bool shouldTrackAllocs;
 extern bool doDumpList;
+extern bool isRollback;
 namespace FrameLogic {
     void SaveState(u32 frame);
     void GetInputsForFrame(u32 frame, FrameData* inputs);

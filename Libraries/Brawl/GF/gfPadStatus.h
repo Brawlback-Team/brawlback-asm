@@ -21,7 +21,7 @@ struct gfPadGamecube {
 	PADButtons rapidFireButtons;
 	PADButtons releasedButtons;
 	PADButtons newPressedButtons;
-	char _spacer2[0x30 - 6 * (sizeof(PADButtons))];
+	char _spacer2[0x18];
 	//0x30
 	// TODO: calculate new offset
 	s8 stickX;

@@ -14,7 +14,7 @@
 u32 frameCounter = 0;
 bool shouldTrackAllocs = false;
 bool doDumpList = false;
-
+bool isRollback = false;
 STARTUP(startupNotif) {
     OSReport("~~~~~~~~~~~~~~~~~~~~~~~~ Brawlback ~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
@@ -312,7 +312,7 @@ namespace Match {
     }
 
     const char* relevantHeaps = R"(
-        System Effect WiiPad IteamResource InfoResource CommonResource CopyFB Physics
+        System FW System Effect WiiPad IteamResource InfoResource CommonResource CopyFB Physics
         ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2
         Fighter2Resoruce2 FighterEffect Fighter1Instance Fighter2Instance
         Fighter3Instance Fighter4Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal 
@@ -369,7 +369,7 @@ namespace Match {
     // called when the game calls alloc/[gfMemoryPool] which is it's main allocation function
     // allocated_addr is the pointer to the block of memory allocated, and size is the size of that block
     void ProcessGameAllocation(u8* allocated_addr, u32 size, char* heap_name) {
-        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr && !isRollback) {
             //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion = {};
             memRegion.address = reinterpret_cast<u32>(allocated_addr); // might be bad cast... 64 bit ptr to 32 bit int
@@ -383,7 +383,7 @@ namespace Match {
     // called when the game calls free/[gfMemoryPool] which is it's main free function
     // address is the address being freed
     void ProcessGameFree(u8* address, char* heap_name) {
-        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != nullptr && !isRollback) {
             //OSReport("FREE: addr = 0x%08x\n", address);
             SavestateMemRegionInfo memRegion = {};
             memcpy(memRegion.nameBuffer, heap_name, etl::strlen(heap_name));
@@ -451,8 +451,6 @@ namespace Match {
 }
 
 namespace FrameAdvance {
-
-    bool isRollback = false;
     // how many game logic frames we should simulate this frame
     u32 framesToAdvance = 1;
     u32 getFramesToAdvance() { return framesToAdvance; }
@@ -610,7 +608,7 @@ namespace FrameAdvance {
         //if (framesToAdvance == 1) return; // if we don't need to do anything special, let the game use it's own frame advance
         if(framesToAdvance > 1)
         {
-            FrameAdvance::isRollback = true;
+            isRollback = true;
         }
         asm("mr r24, %0"
             :
@@ -670,7 +668,7 @@ namespace FrameLogic {
         if (Netplay::IsInMatch()) {
             _OSDisableInterrupts();
             // reset flag to be used later
-            FrameAdvance::isRollback = false;
+            isRollback = false;
             // just resimulated/stalled/skipped/whatever, reset to normal
             FrameAdvance::ResetFrameAdvance();
             OSReport("------ Frame %u ------\n", currentFrame);
@@ -732,7 +730,7 @@ namespace FrameLogic {
     // will not be run during resimulation frames
     #define NUM_NON_RESIM_TASKS 2
     const char* nonResimTasks = R"(
-        ecMgr efManager
+        ecMgr EffectScreen 
     )";
     INJECTION("gfTaskProcessHook", 0x8002dc74, R"(
         SAVE_REGS
@@ -746,7 +744,7 @@ namespace FrameLogic {
         cmpwi r4, 0x8
     )");
     extern "C" bool ShouldSkipGfTaskProcess(u32* gfTask, u32 task_type) {
-        if (FrameAdvance::isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
+        if (isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
             char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
             return strstr(nonResimTasks, taskName) ? true : false; 
