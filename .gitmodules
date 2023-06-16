@@ -1,6 +1,8 @@
 [submodule "lib/BrawlHeaders"]
 	path = lib/BrawlHeaders
 	url = https://github.com/JaredWhiteOne/BrawlHeaders
+	branch = main
 [submodule "lib/brawlback-common"]
 	path = lib/brawlback-common
 	url = https://github.com/Brawlback-Team/brawlback-common
+	branch = master
