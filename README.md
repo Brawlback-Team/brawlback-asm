@@ -11,6 +11,10 @@ Syriinge plugin for both online and offline Brawlback experiences.
 2. Enter the root of this repo and enter the command `make` into your terminal of choice.
 3. Place the modules created into pf/plugins.
 4. Place the Syriinge module into pf/module.
+5. Place Loader.asm in \<mod root\>/Source, add the line `.include Source/Loader.asm` to \<mod root\>/RSBE01.txt, and drag that file on top of GCTRealMate.exe to rebuild the GCT file.
+6. Open Brawlback Dolphin and set the expanded memory for MEM2 to max.
+7. Sync the SD card.
+8. Launch the game using the mod launcher of your choice from step 5.
 
 # Acknowledgements
 DukeItOut for GCTRM
