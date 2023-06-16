@@ -1,0 +1,9 @@
+*.rel
+*.map
+*.elf
+
+build/
+.idea/
+.vscode/
+
+tools/MWCC4_2
