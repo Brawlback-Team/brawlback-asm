@@ -5,4 +5,4 @@
 [submodule "lib/brawlback-common"]
 	path = lib/brawlback-common
 	url = https://github.com/Brawlback-Team/brawlback-common
-	branch = master
+	branch = unstable/syringe-refactor
