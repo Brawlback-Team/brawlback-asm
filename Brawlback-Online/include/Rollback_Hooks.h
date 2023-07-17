@@ -4,7 +4,7 @@
 #include <OS/OSError.h>
 #include <gf/gf_frame.h>
 #include <gf/gf_pad_system.h>
-#include <ft/ft_manager.h>
+//#include <ft/ft_manager.h>
 #include <gm/gm_global.h>
 #include <gm/gm_global_mode_melee.h>
 #include <gf/gf_game_application.h>
@@ -13,7 +13,7 @@
 #include <mt/mt_rand.h>
 #include <OS/OSTime.h>
 #include <ExiStructures.h>
-#include <ft/ft_manager.h>
+//#include <ft/ft_manager.h>
 
 #include "EXI_hooks.h"
 #include "utils.h"

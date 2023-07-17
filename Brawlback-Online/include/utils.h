@@ -6,16 +6,14 @@
 #include <OS/OSError.h>
 #include "BrawlbackTypes.h"
 
-namespace utils {
+namespace Utils {
     u32 EncodeBranch(u32 start, u32 dest, bool linked);
     u32 EncodeBranch(u32 start, u32 dest);
 
     void* myMemmove(void* dest, const void* src, bu32 n);
 
-    asm void SaveRegs();
-    asm void RestoreRegs();
-
-    asm void nop();
+    __attribute__((naked)) void SaveRegs();
+    __attribute__((naked)) void RestoreRegs();
 
     Vector<bu8> uint16ToVector(bu16 num);
     Vector<bu8> uint32ToVector(bu32 num);

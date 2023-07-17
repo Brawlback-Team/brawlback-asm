@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "BrawlbackTypes.h"
 #include "mem_exp_hooks.h"
-namespace utils {
+namespace Utils {
     u32 EncodeBranch(u32 start, u32 dest, bool linked)
     {
         u32 offset;
@@ -49,56 +49,55 @@ namespace utils {
         }
         return dest;
     }
-    asm void SaveRegs()
+    __attribute__((naked)) void SaveRegs()
     {
-        stw r0, 0x0004 (sp)
-        mfctr r0
-        stw r0, -0x0008 (sp)
-        stfd f0, -0x0010 (sp)
-        stfd f1, -0x0018 (sp)
-        stfd f2, -0x0020 (sp)
-        stfd f3, -0x0028 (sp)
-        stfd f4, -0x0030 (sp)
-        stfd f5, -0x0038 (sp)
-        stfd f6, -0x0040 (sp)
-        stfd f7, -0x0048 (sp)
-        stfd f8, -0x0050 (sp)
-        stfd f9, -0x0058 (sp)
-        stfd f10, -0x0060 (sp)
-        stfd f11, -0x0068 (sp)
-        stfd f12, -0x0070 (sp)
-        stfd f13, -0x0078 (sp)
-        stwu sp, -0x00F8 (sp)
-        stmw rtoc, 0x0008 (sp)
-        blr	
+        asm volatile(
+            "stw 0, 0x0004 (1)\n\t"
+            "mfctr 0\n\t"
+            "stw 0, -0x0008 (1)\n\t"
+            "stfd 0, -0x0010 (1)\n\t"
+            "stfd 1, -0x0018 (1)\n\t"
+            "stfd 2, -0x0020 (1)\n\t"
+            "stfd 3, -0x0028 (1)\n\t"
+            "stfd 4, -0x0030 (1)\n\t"
+            "stfd 5, -0x0038 (1)\n\t"
+            "stfd 6, -0x0040 (1)\n\t"
+            "stfd 7, -0x0048 (1)\n\t"
+            "stfd 8, -0x0050 (1)\n\t"
+            "stfd 9, -0x0058 (1)\n\t"
+            "stfd 10, -0x0060 (1)\n\t"
+            "stfd 11, -0x0068 (1)\n\t"
+            "stfd 12, -0x0070 (1)\n\t"
+            "stfd 13, -0x0078 (1)\n\t"
+            "stwu 1, -0x00F8 (1)\n\t"
+            "stmw 2, 0x0008 (1)\n\t"
+            "blr\n\t"
+        );
     }
-    asm void RestoreRegs()
+    __attribute__((naked)) void RestoreRegs()
     {
-        lmw	rtoc, 0x0008 (sp)
-        addi sp, sp, 248
-        lfd f0, -0x0010 (sp)
-        lfd f1, -0x0018 (sp)
-        lfd f2, -0x0020 (sp)
-        lfd f3, -0x0028 (sp)
-        lfd f4, -0x0030 (sp)
-        lfd f5, -0x0038 (sp)
-        lfd f6, -0x0040 (sp)
-        lfd f7, -0x0048 (sp)
-        lfd f8, -0x0050 (sp)
-        lfd f9, -0x0058 (sp)
-        lfd f10, -0x0060 (sp)
-        lfd f11, -0x0068 (sp)
-        lfd f12, -0x0070 (sp)
-        lfd f13, -0x0078 (sp)
-        lwz r0, -0x0008 (sp)
-        mtctr r0
-        lwz r0, 0x0004 (sp)
-        blr
-    }
-
-    asm void nop() 
-    {
-        nop
+        asm volatile(
+            "lmw 2, 0x0008 (1)\n\t"
+            "addi 1, 1, 248\n\t"
+            "lfd 0, -0x0010 (1)\n\t"
+            "lfd 1, -0x0018 (1)\n\t"
+            "lfd 2, -0x0020 (1)\n\t"
+            "lfd 3, -0x0028 (1)\n\t"
+            "lfd 4, -0x0030 (1)\n\t"
+            "lfd 5, -0x0038 (1)\n\t"
+            "lfd 6, -0x0040 (1)\n\t"
+            "lfd 7, -0x0048 (1)\n\t"
+            "lfd 8, -0x0050 (1)\n\t"
+            "lfd 9, -0x0058 (1)\n\t"
+            "lfd 10, -0x0060 (1)\n\t"
+            "lfd 11, -0x0068 (1)\n\t"
+            "lfd 12, -0x0070 (1)\n\t"
+            "lfd 13, -0x0078 (1)\n\t"
+            "lwz 0, -0x0008 (1)\n\t"
+            "mtctr 0\n\t"
+            "lwz 0, 0x0004 (1)\n\t"
+            "blr\n\t"
+        );
     }
 
     Vector<bu8> uint16ToVector(bu16 num)

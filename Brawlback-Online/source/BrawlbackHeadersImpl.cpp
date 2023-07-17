@@ -1,3 +1,4 @@
+#if __cplusplus == 199711L
 #include <stddef.h>
 #include <StaticAssert.h>
 #include <ExiStructures.h>
@@ -314,3 +315,4 @@ gfPadStatus& gfPadStatus::operator=(const gfPadStatus &D ) {
     }
     return *this;
 }
+#endif

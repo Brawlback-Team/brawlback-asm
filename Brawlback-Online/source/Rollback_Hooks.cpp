@@ -122,25 +122,25 @@ namespace Util {
     }
 
     void FixFrameDataEndianness(FrameData* fd) {
-        utils::swapByteOrder(fd->randomSeed);
+        Utils::swapByteOrder(fd->randomSeed);
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
-            utils::swapByteOrder(fd->playerFrameDatas[i].frame);
-            utils::swapByteOrder(fd->playerFrameDatas[i].syncData.anim);
-            utils::swapByteOrder(fd->playerFrameDatas[i].syncData.locX);
-            utils::swapByteOrder(fd->playerFrameDatas[i].syncData.locY);
-            utils::swapByteOrder(fd->playerFrameDatas[i].syncData.percent);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad._buttons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad.buttons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad.holdButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad.releasedButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad.rapidFireButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].pad.newPressedButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad._buttons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.buttons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.holdButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.releasedButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.rapidFireButtons);
-            utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].frame);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].syncData.anim);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].syncData.locX);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].syncData.locY);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].syncData.percent);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad._buttons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad.buttons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad.holdButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad.releasedButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad.rapidFireButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].pad.newPressedButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad._buttons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.buttons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.holdButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.releasedButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.rapidFireButtons);
+            Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
         }
     }
     
@@ -175,7 +175,7 @@ namespace Util {
     }
 
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx) {
-        if(gameHasStarted())
+        /*if(gameHasStarted())
         {
             ftManager* fighterManager = g_ftManager;
             Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
@@ -188,7 +188,7 @@ namespace Util {
             
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
-        }
+        }*/
         
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
@@ -234,6 +234,7 @@ namespace Match {
     const char* relevantHeaps = "System WiiPad IteamResource InfoResource CommonResource CopyFB Physics ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 Fighter1Instance Fighter2Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode OverlayCommon Tmp OverlayStage ItemExtraResource FighterKirbyResource2 FighterKirbyResource3";
     void PopulateGameReport(GameReport& report)
     {
+        /*
         ftManager* fighterManager = g_ftManager;
 
         for (int i = 0; i < Netplay::getGameSettings().numPlayers; i++) {
@@ -244,7 +245,7 @@ namespace Match {
             f64 damage = fighter->getOwner()->getDamage();
             OSReport("Damage for player idx %i = %f\n", i, damage);
             report.damage[i] = damage;
-        }
+        }*/
         report.frame_duration = getCurrentFrame();
     }
     void SendGameReport(GameReport& report)
@@ -253,7 +254,7 @@ namespace Match {
     }
     void StopGameScMeleeHook()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
         if (Netplay::getGameSettings().numPlayers > 1) {
             #if 0  // toggle for sending end match game stats
@@ -262,11 +263,11 @@ namespace Match {
             SendGameReport(report);
             #endif
         }
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void StartSceneMelee()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         OSDisableInterrupts();
         //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
         #ifdef NETPLAY_IMPL
@@ -281,11 +282,11 @@ namespace Match {
         Netplay::getGameSettings().numPlayers = 2;
         #endif
         OSEnableInterrupts();
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void ExitSceneMelee()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         OSDisableInterrupts();
         OSReport("  ~~~~~~~~~~~~~~~~  Exit Scene Melee  ~~~~~~~~~~~~~~~~  \n");
         frameCounter = 0;
@@ -294,36 +295,36 @@ namespace Match {
         Netplay::SetIsInMatch(false);
         #endif
         OSEnableInterrupts();
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void setRandSeed()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
         }
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void dump_gfMemoryPool_hook()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         char** r30_reg_val;
         bu32 addr_start;
         bu32 addr_end;
         bu32 mem_size;
         bu8 id;
         asm volatile(
-            "mr %0, r30\n\t"
-            "mr %1, r4\n\t"
-            "mr %2, r5\n\t"
-            "mr %3, r6\n\t"
-            "mr %4, r7\n\t"
+            "mr %0, 30\n\t"
+            "mr %1, 4\n\t"
+            "mr %2, 5\n\t"
+            "mr %3, 6\n\t"
+            "mr %4, 7\n\t"
             : "=r"(r30_reg_val), "=r"(addr_start), "=r"(addr_end), "=r"(mem_size), "=r"(id)
         );
         DumpGfMemoryPoolHook(r30_reg_val, addr_start, addr_end, mem_size, id);
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void DumpGfMemoryPoolHook(char** r30_reg_val, bu32 addr_start, bu32 addr_end, bu32 mem_size, u8 id)
     {
@@ -367,18 +368,18 @@ namespace Match {
     char allocHeapName[30];
     void alloc_gfMemoryPool_hook()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         char** internal_heap_data;
         bu32 size;
         bu32 alignment;
         asm(
-            "mr %0, r3\n\t"
-            "mr %1, r4\n\t"
-            "mr %2, r5\n\t" 
+            "mr %0, 3\n\t"
+            "mr %1, 4\n\t"
+            "mr %2, 5\n\t" 
             : "=r"(internal_heap_data), "=r"(size), "=r"(alignment)
         );
         AllocGfMemoryPoolBeginHook(internal_heap_data, size, alignment);
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void AllocGfMemoryPoolBeginHook(char** internal_heap_data, bu32 size, bu32 alignment)
     {
@@ -389,27 +390,27 @@ namespace Match {
     }
     void allocGfMemoryPoolEndHook()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         u8* alloc_addr;
         asm volatile(
-            "mr %0, r30\n\t"
+            "mr %0, 30\n\t"
             : "=r"(alloc_addr)
         );
         ProcessGameAllocation(alloc_addr, allocSizeTracker, allocHeapName);
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void free_gfMemoryPool_hook()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         char** internal_heap_data;
         u8* address;
         asm volatile(
-            "mr %0, r3\n\t"
-            "mr %1, r4\n\t"
+            "mr %0, 3\n\t"
+            "mr %1, 4\n\t"
             : "=r"(internal_heap_data), "=r"(address)
         );
         FreeGfMemoryPoolHook(internal_heap_data, address);
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void FreeGfMemoryPoolHook(char** internal_heap_data, bu8* address)
     {
@@ -476,34 +477,34 @@ namespace FrameAdvance {
 
     void updateIpSwitchPreProcess() 
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
             ProcessGameSimulationFrame(&currentFrameData);
         }
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void updateLowHook() 
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         gfPadSystem* padSystem;
         bu32 padStatus;
         asm volatile(
-            "mr %0, r25\n\t"
-            "mr %1, r26\n\t"
+            "mr %0, 25\n\t"
+            "mr %1, 26\n\t"
             : "=r"(padSystem), "=r"(padStatus)
         );
         getGamePadStatusInjection(padSystem, padStatus);
-        utils::RestoreRegs();
-        asm volatile {
-            lwz	r0, 0x0014 (sp)
-            mtlr r0
-            addi sp, sp, 16
-            lwz	r4, -0x4390 (r13)
-            lis r12, 0x8002
-            ori r12, r12, 0x946C
-            mtctr r12
-            bctr
-        }
+        Utils::RestoreRegs();
+        asm volatile (
+            "lwz 0, 0x0014 (1)\n\t"
+            "mtlr 0\n\t"
+            "addi 1, 1, 16\n\t"
+            "lwz 4, -0x4390 (13)\n\t"
+            "lis 12, 0x8002\n\t"
+            "ori 12, 12, 0x946C\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
     }
     void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus) 
     {
@@ -558,18 +559,18 @@ namespace FrameAdvance {
         }
     }
     void handleFrameAdvanceHook() {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         setFrameAdvanceFromEmu();
-        asm volatile("cmplw r19, %0\n\t"
+        asm volatile("cmplw 19, %0\n\t"
             :
             : "r" (framesToAdvance)
         );
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void setFrameAdvanceFromEmu() {
         EXIPacket::CreateAndSend(EXICommand::CMD_FRAMEADVANCE);
         EXIHooks::readEXI(&framesToAdvance, sizeof(bu32), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-        utils::swapByteOrder(framesToAdvance);
+        Utils::swapByteOrder(framesToAdvance);
         if(framesToAdvance > 1)
         {
             isRollback = true;
@@ -614,27 +615,27 @@ namespace FrameLogic {
     }
     void initFrameCounter()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         frameCounter = 0;
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void updateFrameCounter()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         frameCounter++;
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void beginningOfMainGameLoop()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void beginFrame()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         bu32 currentFrame = getCurrentFrame();
         //Util::printGameInputs(PAD_SYSTEM->pads[0]);
         //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
@@ -661,52 +662,53 @@ namespace FrameLogic {
             #endif
         }
         
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void endFrame()
     {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_END);
         }
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
     void endMainLoop()
     {
-        utils::SaveRegs();
-        utils::RestoreRegs();
+        Utils::SaveRegs();
+        Utils::RestoreRegs();
     }
     void gfTaskProcessHook()
     {
-        utils::SaveRegs();
-        register bu32* gfTask; 
-        register bu32 task_type;
+        Utils::SaveRegs();
+        bu32* gfTask; 
+        bu32 task_type;
         asm (
-            "mr gfTask, r3\n\t"
-            "mr task_type, r4\n\t"
+            "mr %0, 3\n\t"
+            "mr %1, 4\n\t"
+            : "=r"(gfTask), "=r"(task_type)
         );
         if(ShouldSkipGfTaskProcess(gfTask, task_type))
         {
-            utils::RestoreRegs();
-            asm volatile {
-                lwz	r0, 0x0014 (sp)
-                mtlr r0
-                addi sp, sp, 16
-                blr
-            }
+            Utils::RestoreRegs();
+            asm volatile (
+                "lwz 0, 0x0014 (1)\n\t"
+                "mtlr 0\n\t"
+                "addi 1, 1, 16\n\t"
+                "blr\n\t"
+            );
         }
         else {
-            utils::RestoreRegs();
-            asm volatile {
-                lwz	r0, 0x0014 (sp)
-                mtlr r0
-                addi sp, sp, 16
-                cmpwi r4, 0x8
-                lis r12, 0x8002
-                ori r12, r12, 0xdc78
-                mtctr r12
-                bctr
-            }
+            Utils::RestoreRegs();
+            asm volatile (
+                "lwz 0, 0x0014 (1)\n\t"
+                "mtlr 0\n\t"
+                "addi 1, 1, 16\n\t"
+                "cmpwi 4, 0x8\n\t"
+                "lis 12, 0x8002\n\t"
+                "ori 12, 12, 0xdc78\n\t"
+                "mtctr 12\n\t"
+                "bctr\n\t"
+            );
         }
     }
 }
@@ -730,7 +732,7 @@ namespace GMMelee {
     }
 
     void postSetupMelee() {
-        utils::SaveRegs();
+        Utils::SaveRegs();
         OSDisableInterrupts();
         OSReport("postSetupMelee\n");
 
@@ -764,7 +766,7 @@ namespace GMMelee {
             g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
         }
         OSEnableInterrupts();
-        utils::RestoreRegs();
+        Utils::RestoreRegs();
     }
 }
 
@@ -789,13 +791,13 @@ namespace Netplay {
 
     void FixGameSettingsEndianness(GameSettings& settings) 
     {
-        utils::swapByteOrder(settings.stageID);
-        utils::swapByteOrder(settings.randomSeed);
+        Utils::swapByteOrder(settings.stageID);
+        Utils::swapByteOrder(settings.randomSeed);
         for(int i = 0; i < MAX_NUM_PLAYERS; i++)
         {
             for(int f = 0; f < NAMETAG_SIZE; f++)
             {
-                utils::swapByteOrder(settings.playerSettings[i].nametag[f]);
+                Utils::swapByteOrder(settings.playerSettings[i].nametag[f]);
             }
         }
     }
