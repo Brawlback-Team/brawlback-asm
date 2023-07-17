@@ -4,10 +4,10 @@ Syriinge plugin for both online and offline Brawlback experiences.
 # Requirements
 * This repo. Remember to pull with recursive submodules.
 * Syriinge module (follow the README instructions [here](https://github.com/Sammi-Husky/Syriinge)).
-* A compiler compatible with Syriinge plugins, preferably the Clang fork found [here](https://github.com/DotKuribo/llvm-project).
+* A compiler and linker compatible with Syriinge plugins, preferably the Clang fork found [here](https://github.com/DotKuribo/llvm-project). You will need both Clang.exe and ld.lld compiled for use.
 
 # Instructions
-1. Place the compiler in tools/MWCC4_2, or some other folder and specify the folder in the makefile.
+1. Place the compiler and linker in tools/MWCC4_2, or some other folder and specify the folder in the makefile.
 2. Enter the root of this repo and enter the command `make` into your terminal of choice.
 3. Place the modules created into pf/plugins.
 4. Place the Syriinge module into pf/module.
