@@ -26,9 +26,9 @@ INCLUDES	:=	include
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CC 			:= $(TOOLS)/MWCC4_2/clang.exe
-CXX 		:= $(TOOLS)/MWCC4_2/clang.exe
-LD 			:= $(TOOLS)/MWCC4_2/ld.lld
+CC 			:= $(TOOLS)/Clang/clang.exe
+CXX 		:= $(TOOLS)/Clang/clang.exe
+LD 			:= $(TOOLS)/Clang/ld.lld
 ELF2REL		:= $(TOOLS)/elf2rel.exe
 
 
