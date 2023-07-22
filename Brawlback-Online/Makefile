@@ -26,18 +26,24 @@ INCLUDES	:=	include
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CC 			:= $(TOOLS)/Clang/clang.exe
-CXX 		:= $(TOOLS)/Clang/clang.exe
-LD 			:= $(TOOLS)/Clang/ld.lld
-ELF2REL		:= $(TOOLS)/elf2rel.exe
+CC 		:= $(LLVMPREFIX)/bin/clang
+CXX		:= $(LLVMPREFIX)/bin/clang
+LD 		:= $(LLVMPREFIX)/bin/ld.lld
 
+ifeq ($(OS),Windows_NT)
+	ELF2REL	:= $(TOOLS)/elf2rel.exe
+else
+	UNAME_OS := $(shell uname -s | tr A-Z a-z)
+	UNAME_ARCH := $(shell uname -m)
+	ELF2REL	:= $(TOOLS)/elf2rel.$(UNAME_OS).$(UNAME_ARCH)
+endif
 
 CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \
 			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec
 CXXFLAGS	:= $(CCFLAGS)
-LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r 
+LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -132,11 +138,11 @@ $(OFILES_SOURCES) : $(HFILES)
 %.rel: %.elf
 	@echo output ... $(notdir $@)
 	$(SILENTCMD)$(ELF2REL) $< -s $(MAPFILE) --rel-id $(RELID)
-	
+
 %.elf:
 	@echo linking ... $(notdir $@)
 	$(SILENTCMD)$(LD) $^ $(LDFLAGS) -Map $(OUTPUT).map -o $@
-	
+
 
 #---------------------------------------------------------------------------------
 # object files
