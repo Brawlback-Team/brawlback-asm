@@ -496,14 +496,7 @@ namespace FrameAdvance {
         getGamePadStatusInjection(padSystem, padStatus);
         Utils::RestoreRegs();
         asm volatile (
-            "lwz 0, 0x0014 (1)\n\t"
-            "mtlr 0\n\t"
-            "addi 1, 1, 16\n\t"
             "lwz 4, -0x4390 (13)\n\t"
-            "lis 12, 0x8002\n\t"
-            "ori 12, 12, 0x946C\n\t"
-            "mtctr 12\n\t"
-            "bctr\n\t"
         );
     }
     void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus) 
@@ -691,23 +684,13 @@ namespace FrameLogic {
         {
             Utils::RestoreRegs();
             asm volatile (
-                "lwz 0, 0x0014 (1)\n\t"
-                "mtlr 0\n\t"
-                "addi 1, 1, 16\n\t"
                 "blr\n\t"
             );
         }
         else {
             Utils::RestoreRegs();
             asm volatile (
-                "lwz 0, 0x0014 (1)\n\t"
-                "mtlr 0\n\t"
-                "addi 1, 1, 16\n\t"
                 "cmpwi 4, 0x8\n\t"
-                "lis 12, 0x8002\n\t"
-                "ori 12, 12, 0xdc78\n\t"
-                "mtctr 12\n\t"
-                "bctr\n\t"
             );
         }
     }
@@ -874,11 +857,11 @@ namespace RollbackHooks {
 
         // FrameAdvance Namespace
         SyringeCore::syInlineHook(0x8004aa2c, reinterpret_cast<void*>(FrameAdvance::updateIpSwitchPreProcess));
-        SyringeCore::sySimpleHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
+        SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
 
         // FrameLogic Namespace
-        SyringeCore::sySimpleHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
+        SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
         //SyringeCore::syHookFunction(0x800174fc, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
