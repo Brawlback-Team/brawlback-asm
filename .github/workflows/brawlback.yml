@@ -1,0 +1,35 @@
+name: Brawlback Syriinge
+
+on:
+  push:
+    branches: [ "syriinge" ]
+  pull_request:
+    branches: [ "syriinge" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+    - name: Build
+      run: make
+    - name: "Package"
+      if: success()
+      working-directory: ${{ github.workspace }}
+      run: |
+           mkdir SDCard
+           mv "Brawlback-Online.rel" "./SDCard"
+           mkdir artifact
+           FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}-${{ matrix.build_type }}.zip
+           zip -r "${FILE_NAME}" "./SDCard"
+           mv "${FILE_NAME}" ./artifact/
+           
+    - name: "Publish"
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: "Brawlback-Online"
+        path: "./artifact/"
