@@ -22,7 +22,15 @@ jobs:
       run: |
            chmod +x "./tools/Clang/Ubuntu/clang"
            chmod +x "./tools/Clang/Ubuntu/ld.lld"
-           sudo apt-get install clang -y
+           lsb_release -a
+    - name: 'Fetch Git Tags'
+      shell: bash
+      if: success()
+      run: |
+            git fetch --prune --unshallow
+            echo "GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+            echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+            echo "CURR_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
     - name: Build
       run: make linux
     - name: "Package"
