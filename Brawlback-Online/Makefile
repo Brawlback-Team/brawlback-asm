@@ -15,7 +15,6 @@ include $(DEVKITPPC)/wii_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-
 TARGET		:=	Brawlback-Online
 RELID		:=  200
 BUILD		:=	build
@@ -25,13 +24,6 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CC 			:= $(TOOLS)/Clang/clang.exe
-CXX 		:= $(TOOLS)/Clang/clang.exe
-LD 			:= $(TOOLS)/Clang/ld.lld
-ELF2REL		:= $(TOOLS)/elf2rel.exe
-
-
 CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \

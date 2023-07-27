@@ -11,12 +11,15 @@ export LIB 		:= $(CURDIR)/lib
 
 
 .PHONY: all clean
+windows: Brawlback-Online-windows
+linux: Brawlback-Online-linux
 
-all: Brawlback-Online.rel
-
-Brawlback-Online.rel:
-	$(MAKE) -C Brawlback-Online
-	@cp Brawlback-Online/$@ $@
+Brawlback-Online-linux:
+	$(MAKE) -C Brawlback-Online CC=$(TOOLS)/Clang/Ubuntu/clang CXX=$(TOOLS)/Clang/Ubuntu/clang ELF2REL=$(TOOLS)/elf2rel LD=$(TOOLS)/Clang/Ubuntu/ld.lld
+	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $(CURDIR)/Brawlback-Online.rel
+Brawlback-Online-windows:
+	$(MAKE) -C Brawlback-Online CC=$(TOOLS)/Clang/Windows/clang.exe CXX=$(TOOLS)/Clang/Windows/clang.exe LD=$(TOOLS)/Clang/Windows/ld.lld.exe ELF2REL=$(TOOLS)/elf2rel.exe
+	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $(CURDIR)/Brawlback-Online.rel
 
 clean:
 	@rm ./*.rel

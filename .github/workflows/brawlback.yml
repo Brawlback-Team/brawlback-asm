@@ -15,7 +15,7 @@ jobs:
       with:
         submodules: 'true'
     - name: Build
-      run: make
+      run: make linux
     - name: "Package"
       if: success()
       working-directory: ${{ github.workspace }}
@@ -23,7 +23,7 @@ jobs:
            mkdir SDCard
            mv "Brawlback-Online.rel" "./SDCard"
            mkdir artifact
-           FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}-${{ matrix.build_type }}.zip
+           FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}.zip
            zip -r "${FILE_NAME}" "./SDCard"
            mv "${FILE_NAME}" ./artifact/
            
