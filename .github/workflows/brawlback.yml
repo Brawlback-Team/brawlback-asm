@@ -8,7 +8,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+    container: 
+      image: devkitpro/devkitppc:latest
+      options: --user root
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -26,7 +30,6 @@ jobs:
            FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}.zip
            zip -r "${FILE_NAME}" "./SDCard"
            mv "${FILE_NAME}" ./artifact/
-           
     - name: "Publish"
       if: success()
       uses: actions/upload-artifact@v2-preview
