@@ -16,8 +16,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-    - name: Pull recursive submodules
-      run: git submodule update --init --recursive
+      with:
+        submodules: 'recursive'
     - name: Build
       run: make linux
     - name: "Package"
