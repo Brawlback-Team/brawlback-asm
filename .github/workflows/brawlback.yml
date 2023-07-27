@@ -22,6 +22,7 @@ jobs:
       run: |
            chmod +x "./tools/Clang/Ubuntu/clang"
            chmod +x "./tools/Clang/Ubuntu/ld.lld"
+           sudo apt-get install clang
     - name: Build
       run: make linux
     - name: "Package"
