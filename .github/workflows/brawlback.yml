@@ -22,7 +22,6 @@ jobs:
       run: |
            chmod +x "./tools/Clang/Ubuntu/clang"
            chmod +x "./tools/Clang/Ubuntu/ld.lld"
-           lsb_release -a
     - name: 'Fetch Git Tags'
       shell: bash
       if: success()
