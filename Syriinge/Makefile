@@ -26,16 +26,6 @@ INCLUDES	:=	include
 # options for code generation
 #---------------------------------------------------------------------------------
 
-# n.b: $WINE can be used to set *any* translation layer; you can use something
-# less bloated, like wibo (https://github.com/decompals/wibo)
-ifeq ($(WINE),)
-ifeq ($(WINDOWS),1)
-	WINE := 1
-else # everything other than windows defaults to wine
-	WINE := wine
-endif
-endif
-
 CC 			:= $(WINE) $(MWCCDIR)/mwcceppc.exe
 CXX 		:= $(WINE) $(MWCCDIR)/mwcceppc.exe
 LD 			:= $(WINE) $(MWCCDIR)/mwldeppc.exe
