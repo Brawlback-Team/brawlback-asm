@@ -2,7 +2,7 @@
 
 #include <types.h>
 #include <vector.h>
-#include <mem.h>
+#include <MEM.h>
 #include <OS/OSError.h>
 #include "BrawlbackTypes.h"
 
