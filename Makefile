@@ -6,9 +6,9 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
 
+export LLVMPREFIX ?= $(CURDIR)/tools/llvm
 export TOOLS 	:= $(CURDIR)/tools
 export LIB 		:= $(CURDIR)/lib
-
 
 .PHONY: all clean
 windows: Brawlback-Online-windows
@@ -22,5 +22,5 @@ Brawlback-Online-windows:
 	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $(CURDIR)/Brawlback-Online.rel
 
 clean:
-	@rm ./*.rel
+	@rm -f ./*.rel
 	$(MAKE) -s -C Brawlback-Online clean
