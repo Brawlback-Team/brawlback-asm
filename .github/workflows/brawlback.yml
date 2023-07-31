@@ -14,10 +14,18 @@ jobs:
       image: devkitpro/devkitppc:latest
       options: --user root
     steps:
+    - name: Setup LFS
+      run: sudo apt-get install git-lfs -y
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
         submodules: 'recursive'
+        lfs: true
+    - name: Checkout LFS objects
+      working-directory: ${{ github.workspace }}
+      run: |
+           git config --global --add safe.directory '*'
+           git lfs checkout
     - name: Setup Tools
       run: |
            chmod +x "./tools/Clang/Ubuntu/clang"
