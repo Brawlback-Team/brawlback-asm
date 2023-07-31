@@ -14,14 +14,14 @@ jobs:
       image: devkitpro/devkitppc:latest
       options: --user root
     steps:
+    - name: Setup LFS
+      run: sudo apt-get install git-lfs -y
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
         submodules: 'recursive'
     - name: Setup Tools
       run: |
-           sudo apt-get install git-lfs -y
-           git lfs fetch --all
            chmod +x "./tools/Clang/Ubuntu/clang"
            chmod +x "./tools/Clang/Ubuntu/ld.lld"
     - name: Build
