@@ -20,6 +20,8 @@ jobs:
         submodules: 'recursive'
     - name: Setup Tools
       run: |
+           git lfs install
+           git lfs fetch --all
            chmod +x "./tools/Clang/Ubuntu/clang"
            chmod +x "./tools/Clang/Ubuntu/ld.lld"
     - name: Build
