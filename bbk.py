@@ -10,6 +10,7 @@ import logging
 import shutil
 import tempfile
 import tarfile
+import platform
 from functools import partial
 from pathlib import Path
 import urllib.request
@@ -48,8 +49,28 @@ TOOLCHAINS_URI = 'https://dol-rvl-toolchains.s3.amazonaws.com'
 KURIBO_LLVM_VER = '377c67cd575495a2f818733e42b4913c4b365d65'
 ELF2REL_VER = 'b44c71434a68489061ab2550166f354a58faff14'
 
+def system_arch() -> str:
+    """canonicalize host processor architecture"""
+    arch = platform.machine()
+    if arch == 'x86_64':
+        return 'x86_64'
+    elif arch == 'arm64':
+        return 'aarch64'
+    else:
+        LOG.error(f'unsupported architecture {arch}')
+        sys.exit(1)
 
-def download_url(progress: Progress, task_id: TaskID, url: str, dest_file: BinaryIO) -> None:
+def target_triple() -> str:
+    arch = system_arch()
+    system = platform.system()
+    if system == 'Darwin':
+        return f'{arch}-apple-darwin'
+    elif system == 'Linux':
+        return f'{arch}-unknown-linux'
+    elif system == 'Windows':
+        return f'{arch}-pc-windows-msvc'
+
+def download_url(progress: Progress, task_id: TaskID, url: str, dest_file: BinaryIO):
     LOG.debug(f'downloading {url}')
     response = urllib.request.urlopen(url)
     # nb: breaks if the response doesn't contain Content-Length
@@ -84,7 +105,7 @@ def setup(redownload: bool):
         shutil.rmtree(kuribo_dir)
         elf2rel.unlink(missing_ok=True)
 
-    host_arch = 'aarch64-apple-darwin'
+    host_arch = target_triple()
 
     CONSOLE.print('--- downloading toolchain manifest', style='magenta')
     r = requests.get(f'{TOOLCHAINS_URI}/toolchains.json')
