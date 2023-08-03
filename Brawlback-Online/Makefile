@@ -41,7 +41,7 @@ CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \
 			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec
 CXXFLAGS	:= $(CCFLAGS)
-LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r
+LDFLAGS		:= -T $(TOPDIR)/../test.ld --unresolved-symbols=ignore-all -e _prolog -r
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

@@ -13,16 +13,6 @@ export SYRIINGE	:= $(CURDIR)/Syriinge
 export LLVMDIR	:= $(TOOLS)/llvm
 export MWCCDIR	:= $(TOOLS)/mwcc/Wii/1.0
 
-# n.b: $WINE can be used to set *any* translation layer; you can use something
-# less bloated, like wibo (https://github.com/decompals/wibo)
-ifeq ($(WINE),)
-ifeq ($(WINDOWS),1)
-	export WINE := 1
-else # everything other than windows defaults to wine
-	export WINE := wine
-endif
-endif
-
 .PHONY: all clean
 
 all: Brawlback-Online.rel sy_core.rel
@@ -32,7 +22,7 @@ Brawlback-Online.rel:
 	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $@
 
 sy_core.rel:
-	$(MAKE) -C Syriinge
+	$(MAKE) -C Syriinge CC=$(LLVMDIR)/bin/clang CXX=$(LLVMDIR)/bin/clang ELF2REL=$(TOOLS)/elf2rel LD=$(LLVMDIR)/bin/ld.lld
 	@cp $(CURDIR)/Syriinge/sy_core.rel $@
 
 clean:

@@ -18,9 +18,11 @@ namespace SyringeCore {
     {
         register gfModuleInfo* info;
 
-        asm {
-            mr info, r30
-        }
+        asm(
+            "mr %0, 30"
+            :"=r"(info)
+        );
+
 
         gfModuleHeader* header = info->m_module->header;
 

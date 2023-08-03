@@ -25,16 +25,18 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CC 			:= $(WINE) $(MWCCDIR)/mwcceppc.exe
-CXX 		:= $(WINE) $(MWCCDIR)/mwcceppc.exe
-LD 			:= $(WINE) $(MWCCDIR)/mwldeppc.exe
+CC 		:= $(LLVMPREFIX)/bin/clang
+CXX		:= $(LLVMPREFIX)/bin/clang
+LD 		:= $(LLVMPREFIX)/bin/ld.lld
 ELF2REL		:= $(TOOLS)/elf2rel
 
 
-CCFLAGS		:= -Cpp_exceptions off -c -proc gekko -nostdinc -O4,s -inline auto -fp hard -u _prolog -u _epilog -u _unresolved -enum int -sdata 0 -sdata2 0 -func_align 4
-CXXFLAGS	:= -lang=c++ $(CCFLAGS)
-LDFLAGS		:= -lcf $(LCF) -r1 -fp hard -m _prolog -g
+CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
+			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
+			   -fno-c++-static-destructors -fno-use-cxa-atexit \
+			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec
+CXXFLAGS	:= $(CCFLAGS)
+LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -71,14 +73,14 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 # For REL linking
 export LDFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ld)))
-export MAPFILE		:= $(TOPDIR)/lib/MWCCBrawlHeaders/RSBE01.lst
+export MAPFILE		:= $(TOPDIR)/lib/MWCCBrawlHeaders/RSBE01.lst $(CURDIR)/EXTRA.lst
 export LCF			:= $(CURDIR)/rel.lcf
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
 #---------------------------------------------------------------------------------
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			-I$(CURDIR)/$(BUILD) -I- \
+			-I$(CURDIR)/$(BUILD) -iquote \
 			-I$(TOPDIR)/lib/MWCCBrawlHeaders/PowerPC_EABI_Support/Runtime/Inc \
 			-I$(TOPDIR)/lib/MWCCBrawlHeaders/Brawl/Include \
 			-I$(TOPDIR)/lib/MWCCBrawlHeaders/nw4r/include \
