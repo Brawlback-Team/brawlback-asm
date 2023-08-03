@@ -2,10 +2,6 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
-endif
-
 export TOPDIR	:= $(CURDIR)
 export TOOLS 	:= $(CURDIR)/tools
 export LIB 		:= $(CURDIR)/lib

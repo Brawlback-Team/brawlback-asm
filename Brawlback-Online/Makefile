@@ -1,13 +1,10 @@
+include $(TOPDIR)/lib/base_rules
+
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
 #---------------------------------------------------------------------------------
 .SUFFIXES:
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(DEVKITPPC)),)
-$(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
-endif
-
-include $(DEVKITPPC)/wii_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -41,7 +38,7 @@ CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \
 			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec
 CXXFLAGS	:= $(CCFLAGS)
-LDFLAGS		:= -T $(TOPDIR)/../test.ld --unresolved-symbols=ignore-all -e _prolog -r
+LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -49,8 +46,6 @@ LDFLAGS		:= -T $(TOPDIR)/../test.ld --unresolved-symbols=ignore-all -e _prolog -
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
-
-export TOPDIR	:= $(CURDIR)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
@@ -80,7 +75,7 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 # For REL linking
 export LDFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ld)))
-export MAPFILE		:= $(LIB)/BrawlHeaders/RSBE01.lst $(SYRIINGE)/sy_core.lst $(TOPDIR)/EXTRA.lst
+export MAPFILE		:= $(LIB)/BrawlHeaders/RSBE01.lst $(SYRIINGE)/sy_core.lst $(CURDIR)/EXTRA.lst
 export LCF			:= $(TOPDIR)/rel.lcf
 
 #---------------------------------------------------------------------------------

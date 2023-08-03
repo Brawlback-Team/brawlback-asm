@@ -105,7 +105,6 @@ def setup(redownload: bool):
         LOG.error(f"tools directory ({tools_path}) is missing")
         sys.exit(1)
 
-    mwcc_dir = tools_path / "mwcc"
     kuribo_dir = tools_path / "llvm"
     elf2rel = tools_path / "elf2rel"
     if redownload:
@@ -118,15 +117,6 @@ def setup(redownload: bool):
     CONSOLE.print("--- downloading toolchain manifest", style="magenta")
     r = requests.get(f"{TOOLCHAINS_URI}/toolchains.json")
     toolchains_manifest = r.json()
-
-    CONSOLE.print("--- fetching MWCC toolchain", style="magenta")
-
-    if not mwcc_dir.exists() or not mwcc_dir.is_dir():
-        mwcc_dir.mkdir()
-
-        r = requests.get(MWCC_PACK_URI)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall(mwcc_dir)
 
     CONSOLE.print("--- fetching llvm toolchain", style="magenta")
     if not kuribo_dir.exists() or not kuribo_dir.is_dir():
