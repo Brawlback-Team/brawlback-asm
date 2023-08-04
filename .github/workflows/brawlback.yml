@@ -10,17 +10,17 @@ jobs:
   build:
     name: ubuntu-latest
     runs-on: ubuntu-latest
-    container:
-      image: devkitpro/devkitppc:latest
-      options: --user root
     steps:
-    - name: Setup LFS
-      run: sudo apt-get install git-lfs -y
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
         submodules: 'recursive'
-        lfs: true
+    - name: Cache toolchains
+      id: cache-toolchains
+      uses: actions/cache@v3
+      with:
+        path: tools/
+        key: toolchains-${{ runner.os }}-${{ hashFiles('bbk.py') }}
     - name: Set up for build
       run: |
         # install python deps; set up toolchains
@@ -32,15 +32,14 @@ jobs:
       if: success()
       working-directory: ${{ github.workspace }}
       run: |
-           mkdir SDCard
-           mv "Brawlback-Online.rel" "./SDCard"
-           mkdir artifact
+           mkdir SDCard artifact
+           mv sy_core.rel Brawlback-Online.rel ./SDCard
            FILE_NAME=Brawlback-Online.zip
            zip -r "${FILE_NAME}" "./SDCard"
            mv "${FILE_NAME}" ./artifact/
     - name: "Publish"
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v3
       with:
         name: "Brawlback-Online"
         path: "./artifact/"
