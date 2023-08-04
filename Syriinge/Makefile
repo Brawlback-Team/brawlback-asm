@@ -16,7 +16,7 @@ TARGET		:=	sy_core
 RELID		:=  224
 BUILD		:=	build
 # HACK: .. is gross; for various busted reasons, we can't use $TOPDIR here.
-SOURCES		:=	source $(wildcard source/*) ../lib/MWCCBrawlHeaders/PowerPC_EABI_Support/Runtime/Src
+SOURCES		:=	source $(wildcard source/*) ../lib/BrawlHeaders/PowerPC_EABI_Support/Runtime/Src
 INCLUDES	:=	include
 
 #---------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 # For REL linking
 export LDFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ld)))
-export MAPFILE		:= $(TOPDIR)/lib/MWCCBrawlHeaders/RSBE01.lst $(CURDIR)/EXTRA.lst
+export MAPFILE		:= $(TOPDIR)/lib/BrawlHeaders/RSBE01.lst $(CURDIR)/EXTRA.lst
 export LCF			:= $(CURDIR)/rel.lcf
 
 #---------------------------------------------------------------------------------
@@ -78,16 +78,16 @@ export LCF			:= $(CURDIR)/rel.lcf
 #---------------------------------------------------------------------------------
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			-I$(CURDIR)/$(BUILD) -iquote \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/PowerPC_EABI_Support/Runtime/Inc \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/Brawl/Include \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/nw4r/include \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/OpenRVL/include/ \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/OpenRVL/include/MetroTRK \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/OpenRVL/include/revolution \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/OpenRVL/include/RVLFaceLib \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/OpenRVL/include/stl \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/std/Include \
-			-I$(TOPDIR)/lib/MWCCBrawlHeaders/utils/include \
+			-I$(TOPDIR)/lib/BrawlHeaders/PowerPC_EABI_Support/Runtime/Inc \
+			-I$(TOPDIR)/lib/BrawlHeaders/Brawl/Include \
+			-I$(TOPDIR)/lib/BrawlHeaders/nw4r/include \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/ \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/MetroTRK \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/revolution \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/RVLFaceLib \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/stl \
+			-I$(TOPDIR)/lib/BrawlHeaders/std/Include \
+			-I$(TOPDIR)/lib/BrawlHeaders/utils/include \
 
 #---------------------------------------------------------------------------------
 # build a list of library paths

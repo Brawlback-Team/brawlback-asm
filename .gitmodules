@@ -6,6 +6,3 @@
 	path = lib/brawlback-common
 	url = https://github.com/Brawlback-Team/brawlback-common
 	branch = unstable/syringe-refactor
-[submodule "lib/MWCCBrawlHeaders"]
-	path = lib/MWCCBrawlHeaders
-	url = https://github.com/Sammi-Husky/BrawlHeaders

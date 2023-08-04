@@ -7,7 +7,7 @@ export TOOLS 	:= $(CURDIR)/tools
 export LIB 		:= $(CURDIR)/lib
 export SYRIINGE	:= $(CURDIR)/Syriinge
 export LLVMDIR	:= $(TOOLS)/llvm
-export MWCCDIR	:= $(TOOLS)/mwcc/Wii/1.0
+# export MWCCDIR	:= $(TOOLS)/mwcc/Wii/1.0
 
 .PHONY: all clean
 
