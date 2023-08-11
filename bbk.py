@@ -57,7 +57,7 @@ ELF2REL_VER = "b44c71434a68489061ab2550166f354a58faff14"
 def system_arch() -> str:
     """canonicalize host processor architecture"""
     arch = platform.machine()
-    if arch == "x86_64":
+    if arch == "x86_64" or arch == "AMD64":
         return "x86_64"
     elif arch == "arm64":
         return "aarch64"
