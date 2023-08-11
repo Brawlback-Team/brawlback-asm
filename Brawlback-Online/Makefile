@@ -25,14 +25,6 @@ CC 		:= $(LLVMPREFIX)/bin/clang
 CXX		:= $(LLVMPREFIX)/bin/clang
 LD 		:= $(LLVMPREFIX)/bin/ld.lld
 
-ifeq ($(OS),Windows_NT)
-	ELF2REL	:= $(TOOLS)/elf2rel.exe
-else
-	UNAME_OS := $(shell uname -s | tr A-Z a-z)
-	UNAME_ARCH := $(shell uname -m)
-	ELF2REL	:= $(TOOLS)/elf2rel.$(UNAME_OS).$(UNAME_ARCH)
-endif
-
 CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \

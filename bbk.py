@@ -107,6 +107,9 @@ def setup(redownload: bool):
 
     kuribo_dir = tools_path / "llvm"
     elf2rel = tools_path / "elf2rel"
+    if platform.system() == 'Windows':
+        elf2rel = elf2rel.with_suffix('.exe') # :\
+
     if redownload:
         shutil.rmtree(mwcc_dir)
         shutil.rmtree(kuribo_dir)

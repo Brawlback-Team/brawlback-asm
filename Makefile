@@ -9,16 +9,28 @@ export SYRIINGE	:= $(CURDIR)/Syriinge
 export LLVMDIR	:= $(TOOLS)/llvm
 # export MWCCDIR	:= $(TOOLS)/mwcc/Wii/1.0
 
+ifeq ($(OS),Windows_NT)
+	CC := $(LLVMDIR)/bin/clang.exe
+	CXX := $(LLVMDIR)/bin/clang.exe
+	LD := $(LLVMDIR)/bin/ld.lld.exe
+	ELF2REL := $(TOOLS)/elf2rel.exe
+else
+	CC := $(LLVMDIR)/bin/clang
+	CXX := $(LLVMDIR)/bin/clang
+	LD := $(LLVMDIR)/bin/ld.lld
+	ELF2REL := $(TOOLS)/elf2rel
+endif
+
 .PHONY: all clean
 
 all: Brawlback-Online.rel sy_core.rel
 
 Brawlback-Online.rel:
-	$(MAKE) -C Brawlback-Online CC=$(LLVMDIR)/bin/clang CXX=$(LLVMDIR)/bin/clang ELF2REL=$(TOOLS)/elf2rel LD=$(LLVMDIR)/bin/ld.lld
+	$(MAKE) -C Brawlback-Online CC=$(CC) CXX=$(CXX) ELF2REL=$(ELF2REL) LD=$(LD)
 	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $@
 
 sy_core.rel:
-	$(MAKE) -C Syriinge CC=$(LLVMDIR)/bin/clang CXX=$(LLVMDIR)/bin/clang ELF2REL=$(TOOLS)/elf2rel LD=$(LLVMDIR)/bin/ld.lld
+	$(MAKE) -C Syriinge CC=$(CC) CXX=$(CXX) ELF2REL=$(ELF2REL) LD=$(LD)
 	@cp $(CURDIR)/Syriinge/sy_core.rel $@
 
 clean:
