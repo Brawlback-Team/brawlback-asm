@@ -5,7 +5,7 @@
 export TOPDIR	:= $(CURDIR)
 export TOOLS 	:= $(CURDIR)/tools
 export LIB 		:= $(CURDIR)/lib
-export SYRIINGE	:= $(CURDIR)/Syriinge
+export SYRIINGE	:= $(CURDIR)/lib/Syriinge
 export LLVMDIR	:= $(TOOLS)/llvm
 # export MWCCDIR	:= $(TOOLS)/mwcc/Wii/1.0
 
@@ -30,10 +30,10 @@ Brawlback-Online.rel:
 	@cp $(CURDIR)/Brawlback-Online/Brawlback-Online.rel $@
 
 sy_core.rel:
-	$(MAKE) -C Syriinge CC=$(CC) CXX=$(CXX) ELF2REL=$(ELF2REL) LD=$(LD)
-	@cp $(CURDIR)/Syriinge/sy_core.rel $@
+	$(MAKE) -C $(SYRIINGE) CC=$(CC) CXX=$(CXX) ELF2REL=$(ELF2REL) LD=$(LD)
+	@cp $(SYRIINGE)/sy_core.rel $@
 
 clean:
 	@rm -f ./*.rel
 	$(MAKE) -s -C Brawlback-Online clean
-	$(MAKE) -s -C Syriinge clean
+	$(MAKE) -s -C $(SYRIINGE) clean
