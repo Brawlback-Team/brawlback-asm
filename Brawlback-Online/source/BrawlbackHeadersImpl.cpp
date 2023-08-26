@@ -315,4 +315,52 @@ gfPadStatus& gfPadStatus::operator=(const gfPadStatus &D ) {
     }
     return *this;
 }
+BrawlbackControls::BrawlbackControls() 
+{
+    L = 0;
+    R = 0;
+    Z = 0;
+    UpDPad = 0;
+    LeftRightDPad = 0;
+    DownDPad = 0;
+    A = 0;
+    B = 0;
+    subStick = 0;
+    Y = 0;
+    X = 0;
+    tapJumpToggle = 0;
+}
+BrawlbackControls& BrawlbackControls::operator=(const BrawlbackControls &D ) 
+{
+    if( this != &D ) {
+        L = D.L;
+        R = D.R;
+        Z = D.Z;
+        UpDPad = D.UpDPad;
+        LeftRightDPad = D.LeftRightDPad;
+        DownDPad = D.DownDPad;
+        A = D.A;
+        B = D.B;
+        subStick = D.subStick;
+        Y = D.Y;
+        X = D.X;
+        tapJumpToggle = D.tapJumpToggle;
+    }
+    return *this;
+}
+BrawlbackControls::BrawlbackControls(const BrawlbackControls& D) 
+{
+    L = D.L;
+    R = D.R;
+    Z = D.Z;
+    UpDPad = D.UpDPad;
+    LeftRightDPad = D.LeftRightDPad;
+    DownDPad = D.DownDPad;
+    A = D.A;
+    B = D.B;
+    subStick = D.subStick;
+    Y = D.Y;
+    X = D.X;
+    tapJumpToggle = D.tapJumpToggle;
+}
 #endif

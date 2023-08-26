@@ -3,6 +3,7 @@
 #include <EXI/EXIBios.h>
 #include <gf/gf_heap_manager.h>
 #include <modules.h>
+#include "ip/ip_pad_config.h"
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -33,10 +34,10 @@ void fillOutGameSettings(GameSettings& settings) {
     settings.randomSeed = g_mtRandDefault.seed;
     settings.stageID = g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID;
 
-    bu8 p1_id = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_slotID;
+    bu8 p1_id = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind;
     //OSReport("P1 pre-override char id: %d\n", p1_id);
     
-    bu8 p2_id = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_slotID;
+    bu8 p2_id = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind;
     //OSReport("P2 pre-override char id: %d\n", p2_id);
 
     // brawl loads all players into the earliest slots.
@@ -144,6 +145,23 @@ namespace Util {
         }
     }
     
+    BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls)
+    {
+        BrawlbackControls ret = BrawlbackControls();
+        ret.L = controls.L;
+        ret.R = controls.R;
+        ret.Z = controls.Z;
+        ret.UpDPad = controls.UpDPad;
+        ret.LeftRightDPad = controls.LeftRightDPad;
+        ret.DownDPad = controls.DownDPad;
+        ret.A = controls.A;
+        ret.B = controls.B;
+        ret.subStick = controls.subStick;
+        ret.Y = controls.Y;
+        ret.X = controls.X;
+        ret.tapJumpToggle = controls.tapJumpToggle;
+        return ret;
+    }
 
     // TODO: fix pause by making sure that the sys data thingy is also checking for one of the other button bits
 
@@ -174,6 +192,21 @@ namespace Util {
         return ret;
     }
 
+    void BrawlbackControlsToGameControls(const BrawlbackControls& brawlbackControls, Controls& controls) {
+        controls.L = brawlbackControls.L;
+        controls.R = brawlbackControls.R;
+        controls.Z = brawlbackControls.Z;
+        controls.UpDPad = brawlbackControls.UpDPad;
+        controls.LeftRightDPad = brawlbackControls.LeftRightDPad;
+        controls.DownDPad = brawlbackControls.DownDPad;
+        controls.A = brawlbackControls.A;
+        controls.B = brawlbackControls.B;
+        controls.subStick = brawlbackControls.subStick;
+        controls.Y = brawlbackControls.Y;
+        controls.X = brawlbackControls.X;
+        controls.tapJumpToggle = brawlbackControls.tapJumpToggle;
+    }
+
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx) {
         /*if(gameHasStarted())
         {
@@ -198,7 +231,7 @@ namespace Util {
         // TODO: do this once on match start or whatever, so we don't need to access this so often and lose cpu cycles
         //bool isNotConnected = Netplay::getGameSettings().playerSettings[port].playerType == PlayerType::PLAYERTYPE_NONE;
         // get current char selection and if none, the set as not connected
-        bu8 charId = g_globalMelee.m_playersInitData[port].m_slotID;
+        bu8 charId = g_globalMelee.m_playersInitData[port].m_characterKind;
         // bu8 charId = GM_GLOBAL_MODE_MELEE->playerData[port].charId;
         bool isNotConnected = charId == -1;
         // GM_GLOBAL_MODE_MELEE->playerData[port].playerType = isNotConnected ? 03 : 0 ; // Set to Human
@@ -731,11 +764,11 @@ namespace GMMelee {
 
             memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 0x320);
         
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_slotID = charChoices[0];
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_slotID = charChoices[1];
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = (gmCharacterKind)charChoices[0];
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = (gmCharacterKind)charChoices[1];
             
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_initState = 0;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_initState = 0;
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
 
             g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
             g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
