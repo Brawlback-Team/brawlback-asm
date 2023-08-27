@@ -1,10 +1,10 @@
-include $(TOPDIR)/lib/base_rules
-
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
 #---------------------------------------------------------------------------------
 .SUFFIXES:
 #---------------------------------------------------------------------------------
+
+include $(TOPDIR)/lib/base_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -12,10 +12,11 @@ include $(TOPDIR)/lib/base_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	Brawlback-Online
-RELID		:=  200
+TARGET		:=	sy_core
+RELID		:=  224
 BUILD		:=	build
-SOURCES		:=	source $(wildcard source/*) ../lib/BrawlHeaders/PowerPC_EABI_Support/Runtime/Src/
+# HACK: .. is gross; for various busted reasons, we can't use $TOPDIR here.
+SOURCES		:=	source $(wildcard source/*) ../lib/BrawlHeaders/PowerPC_EABI_Support/Runtime/Src
 INCLUDES	:=	include
 
 #---------------------------------------------------------------------------------
@@ -24,6 +25,8 @@ INCLUDES	:=	include
 CC 		:= $(LLVMPREFIX)/bin/clang
 CXX		:= $(LLVMPREFIX)/bin/clang
 LD 		:= $(LLVMPREFIX)/bin/ld.lld
+ELF2REL		:= $(TOOLS)/elf2rel
+
 
 CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
@@ -67,26 +70,24 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 # For REL linking
 export LDFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ld)))
-export MAPFILE		:= $(LIB)/BrawlHeaders/RSBE01.lst $(SYRIINGE)/sy_core.lst $(CURDIR)/EXTRA.lst
-export LCF			:= $(TOPDIR)/rel.lcf
+export MAPFILE		:= $(TOPDIR)/lib/BrawlHeaders/RSBE01.lst $(CURDIR)/EXTRA.lst
+export LCF			:= $(CURDIR)/rel.lcf
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
 #---------------------------------------------------------------------------------
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			-I$(CURDIR)/$(BUILD) -iquote \
-			-I$(LIB)/PowerPC_EABI_Support/Runtime/Inc \
-			-I$(LIB)/BrawlHeaders/Brawl/Include \
-			-I$(LIB)/BrawlHeaders/nw4r/include \
-			-I$(LIB)/BrawlHeaders/OpenRVL/include/ \
-			-I$(LIB)/BrawlHeaders/OpenRVL/include/MetroTRK \
-			-I$(LIB)/BrawlHeaders/OpenRVL/include/revolution \
-			-I$(LIB)/BrawlHeaders/OpenRVL/include/RVLFaceLib \
-			-I$(LIB)/BrawlHeaders/OpenRVL/include/stl \
-			-I$(LIB)/BrawlHeaders/std/Include \
-			-I$(LIB)/BrawlHeaders/utils/include \
-			-I$(SYRIINGE)/include \
-			-I$(LIB)/brawlback-common
+			-I$(TOPDIR)/lib/BrawlHeaders/PowerPC_EABI_Support/Runtime/Inc \
+			-I$(TOPDIR)/lib/BrawlHeaders/Brawl/Include \
+			-I$(TOPDIR)/lib/BrawlHeaders/nw4r/include \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/ \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/MetroTRK \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/revolution \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/RVLFaceLib \
+			-I$(TOPDIR)/lib/BrawlHeaders/OpenRVL/include/stl \
+			-I$(TOPDIR)/lib/BrawlHeaders/std/Include \
+			-I$(TOPDIR)/lib/BrawlHeaders/utils/include \
 
 #---------------------------------------------------------------------------------
 # build a list of library paths
@@ -99,6 +100,9 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+ifdef ADDR
+	py -3 ./convertMap.py $(TARGET).map $(ADDR) $(TARGET)-dolphin.map
+endif
 
 
 #---------------------------------------------------------------------------------
@@ -133,13 +137,11 @@ $(OFILES_SOURCES) : $(HFILES)
 # object files
 #---------------------------------------------------------------------------------
 %.o: %.cpp
-#	$(info $<)
 	$(SILENTMSG) $(notdir $<)
 	$(SILENTCMD)$(CXX) $(CXXFLAGS) -MMD $< $(INCLUDE) -o $(DEPSDIR)/$*.d
 	$(SILENTCMD)$(CXX) $(CXXFLAGS) -c $< $(INCLUDE) -o $@
 
 %.o: %.c
-#	$(info $<)
 	$(SILENTMSG) $(notdir $<)
 	$(SILENTCMD)$(CC) $(CCFLAGS) -MMD $< $(INCLUDE) -o $(DEPSDIR)/$*.d
 	$(SILENTCMD)$(CC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
