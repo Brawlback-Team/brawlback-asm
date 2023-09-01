@@ -2,6 +2,7 @@
 #include "BrawlbackTypes.h"
 #include "mem_exp_hooks.h"
 namespace Utils {
+    bool setControls = false;
     u32 EncodeBranch(u32 start, u32 dest, bool linked)
     {
         u32 offset;

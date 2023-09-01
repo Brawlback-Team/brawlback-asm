@@ -222,7 +222,8 @@ namespace Util {
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }*/
-        
+        pfd.controls = Util::GameControlsToBrawlbackControls(g_PadConfig.controls[port]);
+        setControls = true;
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
@@ -530,6 +531,28 @@ namespace FrameAdvance {
         Utils::RestoreRegs();
         asm volatile (
             "lwz 4, -0x4390 (13)\n\t"
+        );
+    }
+    void updateControls()
+    {
+        Utils::SaveRegs();
+        if (Netplay::IsInMatch() && Utils::setControls) 
+        {  
+            ipPadConfig* padConfig;
+            asm volatile(
+                "mr %0, 5\n\t"
+                : "=r"(padConfig)
+            );
+            for(int i  = 0; i < MAX_NUM_PLAYERS; i++)
+            {
+                PlayerFrameData frameData = currentFrameData.playerFrameDatas[i];
+                BrawlbackControls controls = frameData.controls;
+                Util::BrawlbackControlsToGameControls(controls, padConfig->controls[i]);
+            }
+        }
+        Utils::RestoreRegs();
+        asm volatile (
+            "lwz 0, 0x0004 (4)\n\t"
         );
     }
     void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus) 

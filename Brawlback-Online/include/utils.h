@@ -7,6 +7,7 @@
 #include "BrawlbackTypes.h"
 
 namespace Utils {
+    extern bool setControls;
     u32 EncodeBranch(u32 start, u32 dest, bool linked);
     u32 EncodeBranch(u32 start, u32 dest);
 
