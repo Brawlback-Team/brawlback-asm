@@ -23,7 +23,7 @@ bool gameHasStarted() {
     {
         return melee->m_operatorReadyGo->isEnd() != 0;
     }
-    else 
+    else
     {
         return false;
     }
@@ -36,7 +36,6 @@ void fillOutGameSettings(GameSettings& settings) {
 
     bu8 p1_id = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind;
     //OSReport("P1 pre-override char id: %d\n", p1_id);
-    
     bu8 p2_id = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind;
     //OSReport("P2 pre-override char id: %d\n", p2_id);
 
@@ -53,7 +52,7 @@ void fillOutGameSettings(GameSettings& settings) {
     PlayerSettings playerSettings[2];
     playerSettings[0].charID = p1_id;
     playerSettings[1].charID = p2_id;
-    
+
     for (int i = 0; i < settings.numPlayers; i++) {
         settings.playerSettings[i] = playerSettings[i];
     }
@@ -92,7 +91,7 @@ namespace Util {
         OSReport("Buttons: ");
         OSReport("Buttons: 0x%x", pad.buttons);
         OSReport("holdButtons: 0x%x", pad.holdButtons);
-        //OSReport(" ---------\n"); 
+        //OSReport(" ---------\n");
     }
 
     void printGameInputs(const gfPadStatus& pad) {
@@ -106,7 +105,7 @@ namespace Util {
         OSReport("B1: 0x%x ", pad.buttons);
         OSReport("B2: 0x%x ", pad._buttons);
         OSReport("B3: 0x%x \n", pad.newPressedButtons);
-        //OSReport(" ---------\n"); 
+        //OSReport(" ---------\n");
     }
 
     void printFrameData(const FrameData& fd) {
@@ -144,7 +143,7 @@ namespace Util {
             Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
         }
     }
-    
+
     BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls)
     {
         BrawlbackControls ret = BrawlbackControls();
@@ -213,22 +212,22 @@ namespace Util {
             ftManager* fighterManager = g_ftManager;
             Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
             ftOwner* ftowner = fighterManager->getOwner(fighterManager->getEntryIdFromIndex(pIdx));
-            
+
             pfd.syncData.facingDir = fighter->m_moduleAccesser->getPostureModule()->getLr() < 0.0 ? -1 : 1;
             pfd.syncData.locX = fighter->m_moduleAccesser->getPostureModule()->getPos().m_x;
             pfd.syncData.locY = fighter->m_moduleAccesser->getPostureModule()->getPos().m_y;
             pfd.syncData.anim = fighter->m_moduleAccesser->getStatusModule()->getStatusKind();
-            
+
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }*/
         pfd.controls = Util::GameControlsToBrawlbackControls(g_PadConfig.controls[port]);
-        setControls = true;
+setControls = true;
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
     void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port) {
-        
+
         // TODO: do this once on match start or whatever, so we don't need to access this so often and lose cpu cycles
         //bool isNotConnected = Netplay::getGameSettings().playerSettings[port].playerType == PlayerType::PLAYERTYPE_NONE;
         // get current char selection and if none, the set as not connected
@@ -236,7 +235,7 @@ namespace Util {
         // bu8 charId = GM_GLOBAL_MODE_MELEE->playerData[port].charId;
         bool isNotConnected = charId == -1;
         // GM_GLOBAL_MODE_MELEE->playerData[port].playerType = isNotConnected ? 03 : 0 ; // Set to Human
-        
+
 
         gamePad.isNotConnected = isNotConnected;
         gamePad._buttons = pad._buttons;
@@ -409,7 +408,7 @@ namespace Match {
         asm(
             "mr %0, 3\n\t"
             "mr %1, 4\n\t"
-            "mr %2, 5\n\t" 
+            "mr %2, 5\n\t"
             : "=r"(internal_heap_data), "=r"(size), "=r"(alignment)
         );
         AllocGfMemoryPoolBeginHook(internal_heap_data, size, alignment);
@@ -456,26 +455,26 @@ namespace Match {
 namespace FrameAdvance {
     bu32 framesToAdvance = 1;
     FrameData currentFrameData = FrameData();
-    bu32 getFramesToAdvance() 
-    { 
-        return framesToAdvance; 
+    bu32 getFramesToAdvance()
+    {
+        return framesToAdvance;
     }
 
-    void TriggerFastForwardState(bu8 numFramesToFF) 
+    void TriggerFastForwardState(bu8 numFramesToFF)
     {
         if (framesToAdvance == 1 && numFramesToFF > 0) {
             framesToAdvance = numFramesToFF;
         }
     }
-    void StallOneFrame() 
-    { 
+    void StallOneFrame()
+    {
         if (framesToAdvance == 1) {
-            framesToAdvance = 0; 
+            framesToAdvance = 0;
         }
     }
 
-    void ResetFrameAdvance() 
-    { 
+    void ResetFrameAdvance()
+    {
         //OSReport("Resetting frameadvance to normal\n");
         framesToAdvance = 1;
         isRollback = false;
@@ -483,7 +482,7 @@ namespace FrameAdvance {
 
 
     // requests FrameData for specified frame from emulator and assigns it to inputs
-    void GetInputsForFrame(bu32 frame, FrameData* inputs) 
+    void GetInputsForFrame(bu32 frame, FrameData* inputs)
     {
         EXIPacket::CreateAndSend(EXICommand::CMD_FRAMEDATA, &frame, sizeof(frame));
         EXIHooks::readEXI(inputs, sizeof(FrameData), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
@@ -491,11 +490,11 @@ namespace FrameAdvance {
     }
 
     // should be called on every simulation frame
-    void ProcessGameSimulationFrame(FrameData* inputs) 
+    void ProcessGameSimulationFrame(FrameData* inputs)
     {
         bu32 gameLogicFrame = getCurrentFrame();
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
-        
+
         // save state on each simulated frame (this includes resim frames)
         if(shouldTrackAllocs)
         {
@@ -505,11 +504,11 @@ namespace FrameAdvance {
         }
 
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
-        
+
         //Util::printFrameData(*inputs);
     }
 
-    void updateIpSwitchPreProcess() 
+    void updateIpSwitchPreProcess()
     {
         Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
@@ -517,7 +516,7 @@ namespace FrameAdvance {
         }
         Utils::RestoreRegs();
     }
-    void updateLowHook() 
+    void updateLowHook()
     {
         Utils::SaveRegs();
         gfPadSystem* padSystem;
@@ -555,7 +554,7 @@ namespace FrameAdvance {
             "lwz 0, 0x0004 (4)\n\t"
         );
     }
-    void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus) 
+    void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus)
     {
         // OSReport("PAD %i 0x%x\n", 0, &PAD_SYSTEM->sysPads[0]);
         // OSReport("PAD %i 0x%x\n", 1, &PAD_SYSTEM->sysPads[1]);
@@ -580,7 +579,7 @@ namespace FrameAdvance {
         // }
         if (Netplay::IsInMatch()) {
             //OSReport("Injecting pad for- frame %u port %i\n", currentFrameData.playerFrameDatas[port].frame, port);
-            
+
             FrameLogic::FrameDataLogic(getCurrentFrame());
             for(int i  = 0; i < MAX_NUM_PLAYERS; i++)
             {
@@ -710,7 +709,7 @@ namespace FrameLogic {
                 }
             #endif
         }
-        
+
         Utils::RestoreRegs();
     }
     void endFrame()
@@ -729,7 +728,7 @@ namespace FrameLogic {
     void gfTaskProcessHook()
     {
         Utils::SaveRegs();
-        bu32* gfTask; 
+        bu32* gfTask;
         bu32 task_type;
         asm (
             "mr %0, 3\n\t"
@@ -756,7 +755,7 @@ namespace GMMelee {
     bool isMatchChoicesPopulated = false;
     int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     int stageChoice = -1;
-    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int stageID) 
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int stageID)
     {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
@@ -765,9 +764,9 @@ namespace GMMelee {
         isMatchChoicesPopulated = true;
     }
     // called on match end
-    void ResetMatchChoicesPopulated() 
-    { 
-        isMatchChoicesPopulated = false; 
+    void ResetMatchChoicesPopulated()
+    {
+        isMatchChoicesPopulated = false;
     }
 
     void postSetupMelee() {
@@ -786,10 +785,10 @@ namespace GMMelee {
             OSReport("postSetupMelee stage: 0x%x p1: 0x%x p2: 0x%x\n", stageChoice, charChoices[0], charChoices[1]);
 
             memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 0x320);
-        
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = (gmCharacterKind)charChoices[0];
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = (gmCharacterKind)charChoices[1];
-            
+
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(charChoices[0]);
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(charChoices[1]);
+
             g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
             g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
 
@@ -814,21 +813,21 @@ namespace Netplay {
     const bu8 localPlayerIdxInvalid = 200;
     bu8 localPlayerIdx = localPlayerIdxInvalid;
     bool isInMatch = false;
-    bool IsInMatch() 
-    { 
-        return isInMatch; 
-    }
-    void SetIsInMatch(bool isMatch) 
+    bool IsInMatch()
     {
-        isInMatch = isMatch; 
+        return isInMatch;
+    }
+    void SetIsInMatch(bool isMatch)
+    {
+        isInMatch = isMatch;
     }
 
-    GameSettings& getGameSettings() 
-    { 
+    GameSettings& getGameSettings()
+    {
         return gameSettings;
     }
 
-    void FixGameSettingsEndianness(GameSettings& settings) 
+    void FixGameSettingsEndianness(GameSettings& settings)
     {
         Utils::swapByteOrder(settings.stageID);
         Utils::swapByteOrder(settings.randomSeed);
@@ -841,7 +840,7 @@ namespace Netplay {
         }
     }
 
-    void StartMatching() 
+    void StartMatching()
     {
         OSReport("Filling in game settings from game\n");
         // populate game settings
@@ -860,7 +859,7 @@ namespace Netplay {
 
     }
 
-    
+
     bool CheckIsMatched() {
         bool matched = false;
         bu8 cmd_byte = EXICommand::CMD_UNKNOWN;
@@ -899,7 +898,7 @@ namespace Netplay {
 }
 
 namespace RollbackHooks {
-    void InstallHooks() 
+    void InstallHooks()
     {
         // Match Namespace
         SyringeCore::syInlineHook(0x806d4c10, reinterpret_cast<void*>(Match::StopGameScMeleeHook));
