@@ -222,7 +222,7 @@ namespace Util {
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }*/
         pfd.controls = Util::GameControlsToBrawlbackControls(g_PadConfig.controls[port]);
-setControls = true;
+        Utils::setControls = true;
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
@@ -914,6 +914,7 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x8004aa2c, reinterpret_cast<void*>(FrameAdvance::updateIpSwitchPreProcess));
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
+        SyringeCore::syInlineHook(0x80048bf8, reinterpret_cast<void*>(FrameAdvance::updateControls));
 
         // FrameLogic Namespace
         SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));

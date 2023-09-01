@@ -35,6 +35,7 @@ PlayerFrameData::PlayerFrameData()
     randomSeed = 0;
     frame = 0;
     playerIdx = 0;
+    controls = BrawlbackControls();
     pad = BrawlbackPad();
     sysPad = BrawlbackPad();
     syncData = SyncData();
@@ -44,6 +45,7 @@ PlayerFrameData::PlayerFrameData(const PlayerFrameData &D)
     randomSeed = D.randomSeed;
     frame = D.frame;
     pad = D.pad;
+    controls = D.controls;
     sysPad = D.sysPad;
     syncData = D.syncData;
     playerIdx = D.playerIdx;
@@ -52,6 +54,7 @@ PlayerFrameData& PlayerFrameData::operator=(const PlayerFrameData &D ) {
     if( this != &D ) {
         randomSeed = D.randomSeed;
         frame = D.frame;
+        controls = D.controls;
         pad = D.pad;
         sysPad = D.sysPad;
         syncData = D.syncData;
