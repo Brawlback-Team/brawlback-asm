@@ -52,6 +52,8 @@ void fillOutGameSettings(GameSettings& settings) {
     PlayerSettings playerSettings[2];
     playerSettings[0].charID = p1_id;
     playerSettings[1].charID = p2_id;
+    playerSettings[0].rumble = g_GameGlobal->m_record1->m_menuData.rumble[0];
+    playerSettings[1].rumble = g_GameGlobal->m_record1->m_menuData.rumble[1];
 
     for (int i = 0; i < settings.numPlayers; i++) {
         settings.playerSettings[i] = playerSettings[i];
@@ -77,11 +79,12 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     //OSReport("Stage id: %d\n", settings.stageID);
 
     int chars[MAX_NUM_PLAYERS] = {p1_char, p2_char, -1, -1};
-    GMMelee::PopulateMatchSettings(chars, settings.stageID );
+    bool rumble[MAX_NUM_PLAYERS] = {settings.playerSettings[0].rumble, settings.playerSettings[1].rumble, true, true};
+    GMMelee::PopulateMatchSettings(chars, rumble, settings.stageID );
 }
 
 namespace Util {
-
+    bool hasSetControls = false;
     void printInputs(const BrawlbackPad& pad) {
         OSReport(" -- Pad --\n");
         OSReport("StickX: %hhu ", pad.stickX);
@@ -205,7 +208,7 @@ namespace Util {
         controls.X = brawlbackControls.X;
         controls.tapJumpToggle = brawlbackControls.tapJumpToggle;
     }
-
+    
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx) {
         /*if(gameHasStarted())
         {
@@ -221,8 +224,11 @@ namespace Util {
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }*/
-        pfd.controls = Util::GameControlsToBrawlbackControls(g_PadConfig.controls[port]);
-        Utils::setControls = true;
+        if(!hasSetControls) {
+            pfd.controls = Util::GameControlsToBrawlbackControls(g_PadConfig.controls[port]);
+            Utils::setControls = true;
+            hasSetControls = true;
+        }
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
@@ -547,6 +553,7 @@ namespace FrameAdvance {
                 PlayerFrameData frameData = currentFrameData.playerFrameDatas[i];
                 BrawlbackControls controls = frameData.controls;
                 Util::BrawlbackControlsToGameControls(controls, padConfig->controls[i]);
+                Utils::setControls = false;
             }
         }
         Utils::RestoreRegs();
@@ -754,11 +761,13 @@ u8 defaultGmGlobalModeMelee[0x320] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0
 namespace GMMelee {
     bool isMatchChoicesPopulated = false;
     int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
+    bool rumbleChoices[MAX_NUM_PLAYERS] = {true, true, true, true};
     int stageChoice = -1;
-    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int stageID)
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], int stageID)
     {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
+            rumbleChoices[i] = rumble[i]; 
         }
         stageChoice = stageID;
         isMatchChoicesPopulated = true;
@@ -797,6 +806,9 @@ namespace GMMelee {
 
             g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
             g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
+
+            g_GameGlobal->m_record1->m_menuData.rumble[0] = rumbleChoices[0];
+            g_GameGlobal->m_record1->m_menuData.rumble[1] = rumbleChoices[1];
 
             // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
             // melee[P2_CHAR_ID_IDX+1] = 0;

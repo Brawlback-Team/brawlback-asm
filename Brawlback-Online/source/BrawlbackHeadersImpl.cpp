@@ -332,6 +332,7 @@ BrawlbackControls::BrawlbackControls()
     Y = 0;
     X = 0;
     tapJumpToggle = 0;
+    rumble = false;
 }
 BrawlbackControls& BrawlbackControls::operator=(const BrawlbackControls &D ) 
 {
@@ -348,6 +349,7 @@ BrawlbackControls& BrawlbackControls::operator=(const BrawlbackControls &D )
         Y = D.Y;
         X = D.X;
         tapJumpToggle = D.tapJumpToggle;
+        rumble = D.rumble;
     }
     return *this;
 }
@@ -365,5 +367,6 @@ BrawlbackControls::BrawlbackControls(const BrawlbackControls& D)
     Y = D.Y;
     X = D.X;
     tapJumpToggle = D.tapJumpToggle;
+    rumble = D.rumble;
 }
 #endif

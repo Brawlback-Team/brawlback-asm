@@ -88,6 +88,8 @@ namespace Util {
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx);
     void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port);
     void SaveState(bu32 currentFrame);
+
+    extern bool hasSetControls;
 }
 namespace Match {
     extern bu32 allocSizeTracker;
@@ -174,7 +176,7 @@ namespace GMMelee {
     #define STAGE_ID_IDX 27
 
     // Functions
-    void PopulateMatchSettings(int chars[4], int stageID);
+    void PopulateMatchSettings(int chars[4], bool rumble[4], int stageID);
     void ResetMatchChoicesPopulated();
 
     // Hooks
