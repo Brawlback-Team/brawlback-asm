@@ -148,23 +148,66 @@ namespace NetMatchMakingStatus {
 }
 
 namespace Scene {
-    const u32 None = 0x0;
-    const u32 MemoryChange = 0x1;
-    const u32 Idle = 0x2;
-    const u32 InitialChange = 0x3;
-    const u32 SelectCharacter = 0x4;
-    const u32 Unk5 = 0x5;
-    const u32 SelStage = 0x6;
-    const u32 Unk7 = 0x7;
-    const u32 Unk8 = 0x8;
-    const u32 Melee = 0x9;
-    const u32 Unk10 = 0xa;
-    const u32 Unk11 = 0xb;
-    const u32 VsResult = 0xc;
-    const u32 Unk13 = 0xd;
-    const u32 PrizeCheck = 0xe;
-    const u32 Unk15 =	0xf;
-    const u32 MenuMain = 0x10;
+    const bu32 None = 0x0;
+    const bu32 MemoryChange = 0x1;
+    const bu32 Idle = 0x2;
+    const bu32 InitialChange = 0x3;
+    const bu32 SelectCharacter = 0x4;
+    const bu32 Unk5 = 0x5;
+    const bu32 SelStage = 0x6;
+    const bu32 Unk7 = 0x7;
+    const bu32 Unk8 = 0x8;
+    const bu32 Melee = 0x9;
+    const bu32 Unk10 = 0xa;
+    const bu32 Unk11 = 0xb;
+    const bu32 VsResult = 0xc;
+    const bu32 Unk13 = 0xd;
+    const bu32 PrizeCheck = 0xe;
+    const bu32 Unk15 =	0xf;
+    const bu32 MenuMain = 0x10;
+}
+
+namespace NetMenu {
+    // Variables
+    extern bool netMenuMatched;
+    // Functions
+    void ChangeGfSceneField(bu32 scene);
+    void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
+    void ChangeStruct3Scenes(bu8* structure, bu32 scene);
+    void BootToScMelee();
+
+    // Hooks
+    __attribute__((naked)) void setToLoggedIn();
+    __attribute__((naked)) void disableMiiRender();
+    __attribute__((naked)) void disableMatchmakingError();
+    __attribute__((naked)) void connectToAnybodyAsyncHook();
+    __attribute__((naked)) void disableCreateCounterOnCSS();
+    __attribute__((naked)) void turnOffCSSTimer();
+    __attribute__((naked)) void disableCreateCounterOnSSS();
+    __attribute__((naked)) void turnOffSSSTimer();
+    __attribute__((naked)) void disableGetNetworkErrorOnCSS();
+    __attribute__((naked)) void disableGetNetworkErrorOnSSS();
+    __attribute__((naked)) void forceFriendCode();
+    void startMatchingCallback();
+    void setNextAnyOkirakuTop();
+    void setNextAnyOkirakuCaseFive();
+    void netThreadTaskOverride();
+    __attribute__((naked)) void netThreadTaskOverride2();
+    __attribute__((naked)) void startMatchingCallback2();
+}
+
+namespace NetReport {
+    // Variables
+
+    // Functions
+    void netReportHookFunc(char* str);
+
+    // Hooks
+    __attribute__((naked)) void netReportHook();
+    __attribute__((naked)) void netReportHook2();
+    __attribute__((naked)) void netReportHook3();
+    __attribute__((naked)) void netReportHook4();
+    __attribute__((naked)) void netMinReportHook();
 }
 
 extern u8 defaultGmGlobalModeMelee[0x320];

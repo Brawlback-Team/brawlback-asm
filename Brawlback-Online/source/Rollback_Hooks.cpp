@@ -909,6 +909,175 @@ namespace Netplay {
 
 }
 
+namespace NetMenu {
+    bool netMenuMatched = false;
+    __attribute__((naked)) void setToLoggedIn() {
+        asm volatile(
+            "li 4, 3\n\t"
+            "stw 4, -0x4048(13)\n\t"
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xb600\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableMiiRender() {
+        asm volatile(
+            "lis 12, 0x8003\n\t"
+            "ori 12, 12, 0x3b4c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableMatchmakingError() {
+        asm volatile(
+            "lis 12, 0x800c\n\t"
+            "ori 12, 12, 0xcf90\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void connectToAnybodyAsyncHook() {
+        asm volatile(
+            "li 3, 1\n\t"
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0x94a8\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableCreateCounterOnCSS() {
+        asm volatile(
+            "lis 3, 0x8068\n\t"
+            "ori 3, 3, 0x6aec\n\t"
+            "mtctr 3\n\t"
+            "bctr\n\t"
+        );
+    }
+
+    __attribute__((naked)) void turnOffCSSTimer() {
+        asm volatile(
+            "li 0, 0\n\t"
+            "lis 12, 0x8068\n\t"
+            "ori 12, 12, 0x7f70\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableCreateCounterOnSSS() {
+        asm volatile(
+            "lis 3, 0x806b\n\t"
+            "ori 3, 3, 0x1dbc\n\t"
+            "mtctr 3\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void turnOffSSSTimer() {
+        asm volatile(
+            "li 0, 8\n\t"
+            "lis 12, 0x806b\n\t"
+            "ori 12, 12, 0x3f2c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableGetNetworkErrorOnCSS() {
+        asm volatile(
+            "li 3, 0\n\t"
+            "lis 12, 0x8068\n\t"
+            "ori 12, 12, 0x7C6C\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void disableGetNetworkErrorOnSSS() {
+        asm volatile(
+            "li 3, 0\n\t"
+            "lis 12, 0x806b\n\t"
+            "ori 12, 12, 0x3a78\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void forceFriendCode() {
+        asm volatile(
+            "li 0, 1\n\t"
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xb4e8\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void ChangeGfSceneField(bu32 scene)
+    {
+        bu32* scenePtr = ((bu32*)(((bu8*)gfSceneManager::getInstance()) + 0x288));
+        *scenePtr = (bu32)scene;
+        
+        bu32* somePtr = ((bu32*)(((bu8*)gfSceneManager::getInstance()) + 0x278));
+        *somePtr = 0; // this is checked > -1 and if so will check the sceneManager scene for idle, if so, will changeNextScene
+    }
+    void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene)
+    {
+        bu32* scenePtr = (bu32*)(structure + 0x8);
+        *scenePtr = scene;
+
+        bu32* nextScenePtr = (bu32*)(structure + 0xc);
+        *nextScenePtr = nextScene;
+    }
+    void ChangeStruct3Scenes(bu8* structure, bu32 scene)
+    {
+        bu32* scenePtr = (bu32*)(structure + 0x8);
+        *scenePtr = scene;
+    }
+    void BootToScMelee()
+    {
+        OSReport("Booting to scMelee...\n");
+        //setupMelee((void*)0x90ff42e0, 0);
+        ChangeStruct3Scenes((u8*)0x90ff3e40, Scene::MemoryChange, Scene::InitialChange);
+        //setNextSqVsMelee((void*)0x90ff42e0);
+        //setNextSqNetAnyOkiraku((void*)0x90ff3e40);
+        gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
+        ChangeGfSceneField(Scene::Idle);
+        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
+    }
+    void startMatchingCallback() {
+        Utils::SaveRegs();
+        OSReport("Starting matchmaking!\n");
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void startMatchingCallback2() {
+        asm volatile(
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xaffc\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void setNextAnyOkirakuTop() {
+        Utils::SaveRegs();
+        //BootToScMelee();
+        Utils::RestoreRegs();
+    }
+    void setNextAnyOkirakuCaseFive() {
+        Utils::SaveRegs();
+        OSReport("Loaded into online training room\n");
+        Netplay::StartMatching();
+        Utils::RestoreRegs();
+    }
+    void netThreadTaskOverride() {
+        Utils::SaveRegs();
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void netThreadTaskOverride2() {
+        asm volatile(
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xb674\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+}
+
 namespace RollbackHooks {
     void InstallHooks()
     {
@@ -939,5 +1108,31 @@ namespace RollbackHooks {
 
         // GMMelee Namespace
         SyringeCore::syInlineHook(0x806dd03c, reinterpret_cast<void*>(GMMelee::postSetupMelee));
+
+        // NetMenu Namespace
+        SyringeCore::sySimpleHook(0x8014B5F8, reinterpret_cast<void*>(NetMenu::setToLoggedIn));
+        SyringeCore::sySimpleHook(0x80033b48, reinterpret_cast<void*>(NetMenu::disableMiiRender));
+        SyringeCore::sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
+        SyringeCore::sySimpleHook(0x8014b4e4, reinterpret_cast<void*>(NetMenu::forceFriendCode));
+        SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
+        SyringeCore::sySimpleHook(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHook(0x80687f6c, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHook(0x806b1da0, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHook(0x806b3f28, reinterpret_cast<void*>(NetMenu::turnOffSSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHook(0x80687c68, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnCSS), Modules::SORA_MENU_SEL_CHAR);        
+        SyringeCore::sySimpleHook(0x806b3a74, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnSSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syInlineHook(0x8014AFF4, reinterpret_cast<void*>(NetMenu::startMatchingCallback));
+        SyringeCore::sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
+        SyringeCore::syInlineHook(0x806f2358, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop));
+        SyringeCore::syInlineHook(0x806f272c, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuCaseFive));
+        SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
+        SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
+
+        // NetReport Namespace
+        //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
+       // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
+        //SyringeCore::syInlineHook(0x8095f894, reinterpret_cast<void*>(NetReport::netReportHook3));
+        //SyringeCore::syInlineHook(0x80147ec0, reinterpret_cast<void*>(NetReport::netReportHook4));
+        //SyringeCore::syInlineHook(0x800c8f68, reinterpret_cast<void*>(NetReport::netMinReportHook));
     }
 }
