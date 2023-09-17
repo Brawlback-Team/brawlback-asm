@@ -307,33 +307,37 @@ namespace Match {
     void StartSceneMelee()
     {
         Utils::SaveRegs();
-        OSDisableInterrupts();
-        //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
-        #ifdef NETPLAY_IMPL
-        //Netplay::StartMatching(); // now moved to m_modeMelee.cpp
-        Netplay::SetIsInMatch(true);
-        g_mtRandDefault.seed = 0x496ffd00;
-        g_mtRandOther.seed = 0x496ffd00;
-        #else
-        // 'debug' values
-        Netplay::getGameSettings().localPlayerIdx = 0;
-        Netplay::localPlayerIdx = 0;
-        Netplay::getGameSettings().numPlayers = 2;
-        #endif
-        OSEnableInterrupts();
+        if(g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID != 55)
+        {
+            OSDisableInterrupts();
+            //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
+            #ifdef NETPLAY_IMPL
+            g_mtRandDefault.seed = 0x496ffd00;
+            g_mtRandOther.seed = 0x496ffd00;
+            #else
+            // 'debug' values
+            Netplay::getGameSettings().localPlayerIdx = 0;
+            Netplay::localPlayerIdx = 0;
+            Netplay::getGameSettings().numPlayers = 2;
+            #endif
+            OSEnableInterrupts();
+        }
         Utils::RestoreRegs();
     }
     void ExitSceneMelee()
     {
         Utils::SaveRegs();
-        OSDisableInterrupts();
-        OSReport("  ~~~~~~~~~~~~~~~~  Exit Scene Melee  ~~~~~~~~~~~~~~~~  \n");
-        frameCounter = 0;
-        #ifdef NETPLAY_IMPL
-        Netplay::EndMatch();
-        Netplay::SetIsInMatch(false);
-        #endif
-        OSEnableInterrupts();
+        if(Netplay::IsInMatch())
+        {
+            OSDisableInterrupts();
+            OSReport("  ~~~~~~~~~~~~~~~~  Exit Scene Melee  ~~~~~~~~~~~~~~~~  \n");
+            frameCounter = 0;
+            #ifdef NETPLAY_IMPL
+            Netplay::EndMatch();
+            Netplay::SetIsInMatch(false);
+            #endif
+            OSEnableInterrupts();
+        }
         Utils::RestoreRegs();
     }
     void setRandSeed()
@@ -868,7 +872,7 @@ namespace Netplay {
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
         while (!CheckIsMatched()) {}
-
+        Netplay::SetIsInMatch(true);
     }
 
 
@@ -882,21 +886,21 @@ namespace Netplay {
 
         // stall until we get game settings from opponent, then load those in and continue to boot up the match
         //while (cmd_byte != EXICommand::CMD_SETUP_PLAYERS) {
-            EXIHooks::readEXI(read_data, read_size, EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-            cmd_byte = read_data[0];
+        EXIHooks::readEXI(read_data, read_size, EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+        cmd_byte = read_data[0];
 
-            if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
-                GameSettings gameSettingsFromOpponent;
-                memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
-                FixGameSettingsEndianness(gameSettingsFromOpponent);
-                MergeGameSettingsIntoGame(gameSettingsFromOpponent);
-                // TODO: we shoud assign the gameSettings var to the gameSettings from opponent since its merged with ours now.
-                gameSettings.localPlayerPort = gameSettingsFromOpponent.localPlayerPort;
-                matched = true;
-            }
-            else {
-                //OSReport("Reading for setupplayers, didn't get it...\n");
-            }
+        if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
+            GameSettings gameSettingsFromOpponent;
+            memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
+            FixGameSettingsEndianness(gameSettingsFromOpponent);
+            MergeGameSettingsIntoGame(gameSettingsFromOpponent);
+            // TODO: we shoud assign the gameSettings var to the gameSettings from opponent since its merged with ours now.
+            gameSettings.localPlayerPort = gameSettingsFromOpponent.localPlayerPort;
+            matched = true;
+        }
+        else {
+            //OSReport("Reading for setupplayers, didn't get it...\n");
+        }
         //}
         return matched;
     }
@@ -937,7 +941,12 @@ namespace NetMenu {
             "bctr\n\t"
         );
     }
-    __attribute__((naked)) void connectToAnybodyAsyncHook() {
+    void connectToAnybodyAsyncHook() {
+        Utils::SaveRegs();
+        Netplay::StartMatching();
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void connectToAnybodyAsyncHook2() {
         asm volatile(
             "li 3, 1\n\t"
             "lis 12, 0x8014\n\t"
@@ -1061,12 +1070,75 @@ namespace NetMenu {
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
         OSReport("Loaded into online training room\n");
-        Netplay::StartMatching();
         Utils::RestoreRegs();
     }
     void netThreadTaskOverride() {
         Utils::SaveRegs();
         Utils::RestoreRegs();
+    }
+    void BBisCompleteMeleeSettingAllMember() {
+        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
+        asm (
+            "mr 3, %0\n\t" 
+            :
+            : "r"(isFrame150)
+        );
+    }
+    void BBisWifiPreloadCharacter() {
+        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
+        asm (
+            "mr 3, %0\n\t" 
+            :
+            : "r"(isFrame150)
+        );
+    }
+    void BBisCompleteCloseMatchingAllNode() {
+        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
+        asm (
+            "mr 3, %0\n\t" 
+            :
+            : "r"(isFrame150)
+        );
+    }
+    void BBisPlayerAssignReceived() {
+        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
+        asm (
+            "mr 3, %0\n\t" 
+            :
+            : "r"(isFrame150)
+        );
+    }
+    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember2() {
+        asm volatile(
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x44D0\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void BBisWifiPreloadCharacter2() {
+        asm volatile(
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x4670\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode2() {
+        asm volatile(
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x4544\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void BBisPlayerAssignReceived2() {
+        asm volatile(
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x485C\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
     }
     __attribute__((naked)) void netThreadTaskOverride2() {
         asm volatile(
@@ -1075,6 +1147,14 @@ namespace NetMenu {
             "mtctr 12\n\t"
             "bctr\n\t"
         );
+    }
+    __attribute__((naked)) void BBSkipgmInitGlobalMelee() {
+       asm volatile(
+            "lis 12, 0x806f\n\t"
+            "ori 12, 12, 0x2a88\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        ); 
     }
 }
 
@@ -1114,7 +1194,8 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x80033b48, reinterpret_cast<void*>(NetMenu::disableMiiRender));
         SyringeCore::sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
         SyringeCore::sySimpleHook(0x8014b4e4, reinterpret_cast<void*>(NetMenu::forceFriendCode));
-        SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
+        SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
+        SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
         SyringeCore::sySimpleHook(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x80687f6c, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x806b1da0, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_CHAR);
@@ -1125,9 +1206,17 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
         SyringeCore::syInlineHook(0x806f2358, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop));
         SyringeCore::syInlineHook(0x806f272c, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuCaseFive));
-        SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
-        SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
-
+        //SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
+        //SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
+        SyringeCore::syInlineHook(0x809644C8, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember));
+        SyringeCore::sySimpleHook(0x809644CC, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember2));
+        SyringeCore::syInlineHook(0x80964668, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter));
+        SyringeCore::sySimpleHook(0x8096466C, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter2));
+        SyringeCore::syInlineHook(0x8096453C, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode));
+        SyringeCore::sySimpleHook(0x80964540, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode2));
+        SyringeCore::syInlineHook(0x80964854, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived));
+        SyringeCore::sySimpleHook(0x80964858, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived2));
+        SyringeCore::sySimpleHook(0x806f27fc, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee));
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));

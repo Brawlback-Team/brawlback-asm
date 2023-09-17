@@ -180,7 +180,8 @@ namespace NetMenu {
     __attribute__((naked)) void setToLoggedIn();
     __attribute__((naked)) void disableMiiRender();
     __attribute__((naked)) void disableMatchmakingError();
-    __attribute__((naked)) void connectToAnybodyAsyncHook();
+    void connectToAnybodyAsyncHook();
+    __attribute__((naked)) void connectToAnybodyAsyncHook2();
     __attribute__((naked)) void disableCreateCounterOnCSS();
     __attribute__((naked)) void turnOffCSSTimer();
     __attribute__((naked)) void disableCreateCounterOnSSS();
@@ -192,8 +193,17 @@ namespace NetMenu {
     void setNextAnyOkirakuTop();
     void setNextAnyOkirakuCaseFive();
     void netThreadTaskOverride();
+    void BBisCompleteMeleeSettingAllMember();
+    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember2();
+    void BBisWifiPreloadCharacter();
+    __attribute__((naked)) void BBisWifiPreloadCharacter2();
+    void BBisCompleteCloseMatchingAllNode();
+    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode2();
+    void BBisPlayerAssignReceived();
+    __attribute__((naked)) void BBisPlayerAssignReceived2();
     __attribute__((naked)) void netThreadTaskOverride2();
     __attribute__((naked)) void startMatchingCallback2();
+    __attribute__((naked)) void BBSkipgmInitGlobalMelee();
 }
 
 namespace NetReport {
