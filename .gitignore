@@ -1,6 +1,8 @@
 *.rel
 *.map
 *.elf
+*.exe
+*.dll
 
 build/
 .idea/
