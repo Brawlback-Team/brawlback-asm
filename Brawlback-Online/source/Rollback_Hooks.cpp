@@ -294,14 +294,17 @@ namespace Match {
     void StopGameScMeleeHook()
     {
         Utils::SaveRegs();
-        OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
-        if (Netplay::getGameSettings().numPlayers > 1) {
-            #if 0  // toggle for sending end match game stats
-            GameReport report;
-            PopulateGameReport(report);
-            SendGameReport(report);
-            #endif
-        }
+        if(Netplay::IsInMatch())
+        {
+            OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
+            if (Netplay::getGameSettings().numPlayers > 1) {
+                #if 0  // toggle for sending end match game stats
+                GameReport report;
+                PopulateGameReport(report);
+                SendGameReport(report);
+                #endif
+            }
+        }  
         Utils::RestoreRegs();
     }
     void StartSceneMelee()
@@ -312,6 +315,8 @@ namespace Match {
             OSDisableInterrupts();
             //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
             #ifdef NETPLAY_IMPL
+            
+            Netplay::SetIsInMatch(true);
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
             #else
@@ -788,7 +793,7 @@ namespace GMMelee {
         OSReport("postSetupMelee\n");
 
         #ifdef NETPLAY_IMPL
-        Netplay::StartMatching(); // start netplay logic
+        Netplay::StartMatching(NULL); // start netplay logic
         #endif
 
         // falco, wolf, battlefield
@@ -829,6 +834,7 @@ namespace Netplay {
     const bu8 localPlayerIdxInvalid = 200;
     bu8 localPlayerIdx = localPlayerIdxInvalid;
     bool isInMatch = false;
+    bool foundMatch = false;
     bool IsInMatch()
     {
         return isInMatch;
@@ -856,7 +862,7 @@ namespace Netplay {
         }
     }
 
-    void StartMatching()
+    static void* StartMatching(void*)
     {
         OSReport("Filling in game settings from game\n");
         // populate game settings
@@ -872,7 +878,8 @@ namespace Netplay {
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
         while (!CheckIsMatched()) {}
-        Netplay::SetIsInMatch(true);
+        foundMatch = true;
+        return NULL;
     }
 
 
@@ -918,9 +925,17 @@ namespace NetMenu {
     __attribute__((naked)) void setToLoggedIn() {
         asm volatile(
             "li 4, 3\n\t"
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xB5FC\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void setToLoggedIn2() {
+        asm volatile(
             "stw 4, -0x4048(13)\n\t"
             "lis 12, 0x8014\n\t"
-            "ori 12, 12, 0xb600\n\t"
+            "ori 12, 12, 0xB600\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
         );
@@ -936,15 +951,10 @@ namespace NetMenu {
     __attribute__((naked)) void disableMatchmakingError() {
         asm volatile(
             "lis 12, 0x800c\n\t"
-            "ori 12, 12, 0xcf90\n\t"
+            "ori 12, 12, 0xcf94\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
         );
-    }
-    void connectToAnybodyAsyncHook() {
-        Utils::SaveRegs();
-        Netplay::StartMatching();
-        Utils::RestoreRegs();
     }
     __attribute__((naked)) void connectToAnybodyAsyncHook2() {
         asm volatile(
@@ -1010,9 +1020,17 @@ namespace NetMenu {
     }
     __attribute__((naked)) void forceFriendCode() {
         asm volatile(
-            "li 0, 1\n\t"
+            "lwz 0, 0x00F8 (29)\n\t"
             "lis 12, 0x8014\n\t"
-            "ori 12, 12, 0xb4e8\n\t"
+            "ori 12, 12, 0xb4f0\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void forceConnection() {
+        asm volatile(
+            "lis 12, 0x8014\n\t"
+            "ori 12, 12, 0xB434\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
         );
@@ -1067,81 +1085,67 @@ namespace NetMenu {
         //BootToScMelee();
         Utils::RestoreRegs();
     }
+    OSThread thread;
+    char* stack;
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
         OSReport("Loaded into online training room\n");
+        stack = new (Heaps::Network) char[0x4000];
+
+        OSCreateThread(&thread, Netplay::StartMatching, NULL, stack + 0x4000, 0x4000, 31, 0);
+        OSResumeThread(&thread);
         Utils::RestoreRegs();
     }
     void netThreadTaskOverride() {
         Utils::SaveRegs();
         Utils::RestoreRegs();
     }
-    void BBisCompleteMeleeSettingAllMember() {
-        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
-        asm (
+    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember() {
+        asm volatile (
             "mr 3, %0\n\t" 
-            :
-            : "r"(isFrame150)
-        );
-    }
-    void BBisWifiPreloadCharacter() {
-        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
-        asm (
-            "mr 3, %0\n\t" 
-            :
-            : "r"(isFrame150)
-        );
-    }
-    void BBisCompleteCloseMatchingAllNode() {
-        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
-        asm (
-            "mr 3, %0\n\t" 
-            :
-            : "r"(isFrame150)
-        );
-    }
-    void BBisPlayerAssignReceived() {
-        bool isFrame150 = g_GameGlobal->g_GameFrame->persistentFrameCounter > 150;
-        asm (
-            "mr 3, %0\n\t" 
-            :
-            : "r"(isFrame150)
-        );
-    }
-    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember2() {
-        asm volatile(
             "lis 12, 0x8096\n\t"
             "ori 12, 12, 0x44D0\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+            :
+            : "r"(Netplay::foundMatch)
         );
     }
-    __attribute__((naked)) void BBisWifiPreloadCharacter2() {
-        asm volatile(
+    __attribute__((naked)) void BBisWifiPreloadCharacter() {
+        asm volatile (
+            "mr 3, %0\n\t" 
             "lis 12, 0x8096\n\t"
             "ori 12, 12, 0x4670\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+            :
+            : "r"(Netplay::foundMatch)
         );
     }
-    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode2() {
-        asm volatile(
+    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode() {
+        asm volatile (
+            "mr 3, %0\n\t"
             "lis 12, 0x8096\n\t"
             "ori 12, 12, 0x4544\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+            :
+            : "r"(Netplay::foundMatch)
         );
     }
-    __attribute__((naked)) void BBisPlayerAssignReceived2() {
-        asm volatile(
+    __attribute__((naked)) void BBisPlayerAssignReceived() {
+        asm volatile (
+            "mr 3, %0\n\t"
             "lis 12, 0x8096\n\t"
             "ori 12, 12, 0x485C\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+            :
+            : "r"(Netplay::foundMatch)
         );
     }
     __attribute__((naked)) void netThreadTaskOverride2() {
-        asm volatile(
+        asm volatile (
             "lis 12, 0x8014\n\t"
             "ori 12, 12, 0xb674\n\t"
             "mtctr 12\n\t"
@@ -1191,9 +1195,11 @@ namespace RollbackHooks {
 
         // NetMenu Namespace
         SyringeCore::sySimpleHook(0x8014B5F8, reinterpret_cast<void*>(NetMenu::setToLoggedIn));
+        SyringeCore::sySimpleHook(0x8014B5FC, reinterpret_cast<void*>(NetMenu::setToLoggedIn2));
         SyringeCore::sySimpleHook(0x80033b48, reinterpret_cast<void*>(NetMenu::disableMiiRender));
         SyringeCore::sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
-        SyringeCore::sySimpleHook(0x8014b4e4, reinterpret_cast<void*>(NetMenu::forceFriendCode));
+        SyringeCore::sySimpleHook(0x8014b4bc, reinterpret_cast<void*>(NetMenu::forceFriendCode));
+        SyringeCore::sySimpleHook(0x8014b3b8, reinterpret_cast<void*>(NetMenu::forceConnection));
         SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
         SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
         SyringeCore::sySimpleHook(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
@@ -1206,16 +1212,12 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
         SyringeCore::syInlineHook(0x806f2358, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop));
         SyringeCore::syInlineHook(0x806f272c, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuCaseFive));
-        //SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
-        //SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
-        SyringeCore::syInlineHook(0x809644C8, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember));
-        SyringeCore::sySimpleHook(0x809644CC, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember2));
-        SyringeCore::syInlineHook(0x80964668, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter));
-        SyringeCore::sySimpleHook(0x8096466C, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter2));
-        SyringeCore::syInlineHook(0x8096453C, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode));
-        SyringeCore::sySimpleHook(0x80964540, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode2));
-        SyringeCore::syInlineHook(0x80964854, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived));
-        SyringeCore::sySimpleHook(0x80964858, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived2));
+        SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
+        SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
+        SyringeCore::sySimpleHook(0x809644CC, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember));
+        SyringeCore::sySimpleHook(0x8096466C, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter));
+        SyringeCore::sySimpleHook(0x80964540, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode));
+        SyringeCore::sySimpleHook(0x80964858, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived));
         SyringeCore::sySimpleHook(0x806f27fc, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee));
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));

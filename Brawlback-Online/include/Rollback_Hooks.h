@@ -118,9 +118,10 @@ namespace Netplay {
     extern const bu8 localPlayerIdxInvalid;
     extern bu8 localPlayerIdx;
     extern bool isInMatch;
+    extern bool foundMatch;
 
     // Functions
-    void StartMatching();
+    static void* StartMatching(void*);
     bool CheckIsMatched();
     void EndMatch();
 
@@ -178,6 +179,7 @@ namespace NetMenu {
 
     // Hooks
     __attribute__((naked)) void setToLoggedIn();
+    __attribute__((naked)) void setToLoggedIn2();
     __attribute__((naked)) void disableMiiRender();
     __attribute__((naked)) void disableMatchmakingError();
     void connectToAnybodyAsyncHook();
@@ -189,18 +191,15 @@ namespace NetMenu {
     __attribute__((naked)) void disableGetNetworkErrorOnCSS();
     __attribute__((naked)) void disableGetNetworkErrorOnSSS();
     __attribute__((naked)) void forceFriendCode();
+    __attribute__((naked)) void forceConnection();
     void startMatchingCallback();
     void setNextAnyOkirakuTop();
     void setNextAnyOkirakuCaseFive();
     void netThreadTaskOverride();
-    void BBisCompleteMeleeSettingAllMember();
-    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember2();
-    void BBisWifiPreloadCharacter();
-    __attribute__((naked)) void BBisWifiPreloadCharacter2();
-    void BBisCompleteCloseMatchingAllNode();
-    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode2();
-    void BBisPlayerAssignReceived();
-    __attribute__((naked)) void BBisPlayerAssignReceived2();
+    __attribute__((naked)) void BBisCompleteMeleeSettingAllMember();
+    __attribute__((naked)) void BBisWifiPreloadCharacter();
+    __attribute__((naked)) void BBisCompleteCloseMatchingAllNode();
+    __attribute__((naked)) void BBisPlayerAssignReceived();
     __attribute__((naked)) void netThreadTaskOverride2();
     __attribute__((naked)) void startMatchingCallback2();
     __attribute__((naked)) void BBSkipgmInitGlobalMelee();
