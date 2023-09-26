@@ -315,7 +315,6 @@ namespace Match {
             OSDisableInterrupts();
             //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
             #ifdef NETPLAY_IMPL
-            
             Netplay::SetIsInMatch(true);
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
@@ -1160,6 +1159,38 @@ namespace NetMenu {
             "bctr\n\t"
         ); 
     }
+    void BBsetNextAnyOriakuBootScMelee() {
+        Utils::SaveRegs();
+        if(Netplay::foundMatch)
+        {
+            OSReport("postSetupMelee stage: 0x%x p1: 0x%x p2: 0x%x\n", GMMelee::stageChoice, GMMelee::charChoices[0], GMMelee::charChoices[1]);
+
+            memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 0x320);
+
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
+
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
+
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
+
+            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
+            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
+
+            g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
+            g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
+
+            // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
+            // melee[P2_CHAR_ID_IDX+1] = 0;
+            // melee[STAGE_ID_IDX] = stageChoice;
+            g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
+
+            BootToScMelee();
+        }
+        Utils::RestoreRegs();
+    }
 }
 
 namespace RollbackHooks {
@@ -1219,6 +1250,7 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x80964540, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode));
         SyringeCore::sySimpleHook(0x80964858, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived));
         SyringeCore::sySimpleHook(0x806f27fc, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee));
+        SyringeCore::syInlineHook(0x806f2a88, reinterpret_cast<void*>(NetMenu::BBsetNextAnyOriakuBootScMelee));
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));

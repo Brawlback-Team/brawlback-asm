@@ -203,6 +203,7 @@ namespace NetMenu {
     __attribute__((naked)) void netThreadTaskOverride2();
     __attribute__((naked)) void startMatchingCallback2();
     __attribute__((naked)) void BBSkipgmInitGlobalMelee();
+    void BBsetNextAnyOriakuBootScMelee();
 }
 
 namespace NetReport {
