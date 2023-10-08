@@ -203,7 +203,16 @@ namespace NetMenu {
     __attribute__((naked)) void netThreadTaskOverride2();
     __attribute__((naked)) void startMatchingCallback2();
     __attribute__((naked)) void BBSkipgmInitGlobalMelee();
+    __attribute__((naked)) void BBSkipgmInitGlobalMelee2();
     void BBsetNextAnyOriakuBootScMelee();
+    __attribute__((naked)) void BBSkipRandomRulesetChange();
+    void BBSetGameModeBitCorrectly();
+    __attribute__((naked)) void BBSetGameModeBitCorrectly2();
+    void BBSetupCharacters();
+    void BBSetupNetMelee();
+    __attribute__((naked)) void ExitWifiCSSReturnsToDirectOrQuickplayScreen();
+    void SkipDirectlyToCSS();
+    __attribute__((naked)) void SkipDirectlyToCSS2();
 }
 
 namespace NetReport {
@@ -225,11 +234,14 @@ namespace GMMelee {
     // Variables
     extern bool isMatchChoicesPopulated;
     extern int charChoices[MAX_NUM_PLAYERS];
+    extern int fileIndexChoices[MAX_NUM_PLAYERS];
+    extern bool rumbleChoices[MAX_NUM_PLAYERS];
+    extern int costumeChoices[MAX_NUM_PLAYERS];
     extern int stageChoice;
     #define STAGE_ID_IDX 27
 
     // Functions
-    void PopulateMatchSettings(int chars[4], bool rumble[4], int stageID);
+    void PopulateMatchSettings(int chars[4], int costumes[4], int fileIndices[4], bool rumble[4], int stageID);
     void ResetMatchChoicesPopulated();
 
     // Hooks

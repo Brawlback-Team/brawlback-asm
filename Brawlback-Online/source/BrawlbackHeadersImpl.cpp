@@ -197,6 +197,7 @@ PlayerSettings::PlayerSettings(const PlayerSettings &D)
 {
     charID = D.charID;
     charColor = D.charColor;
+    colorFileIndex = D.colorFileIndex;
     playerType = D.playerType;
     controllerPort = D.controllerPort;
     for(int i = 0; i < NAMETAG_SIZE; i++)
@@ -216,6 +217,7 @@ PlayerSettings& PlayerSettings::operator=(const PlayerSettings &D ) {
     if( this != &D ) {
         charID = D.charID;
         charColor = D.charColor;
+        colorFileIndex = D.colorFileIndex;
         playerType = D.playerType;
         controllerPort = D.controllerPort;
         for(int i = 0; i < NAMETAG_SIZE; i++)

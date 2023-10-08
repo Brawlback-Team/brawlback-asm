@@ -4,6 +4,7 @@
 #include <gf/gf_heap_manager.h>
 #include <modules.h>
 #include "ip/ip_pad_config.h"
+#include "if/if_mngr.h"
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -12,9 +13,47 @@ bu32 frameCounter = 0;
 bool shouldTrackAllocs = false;
 bool doDumpList = false;
 bool isRollback = false;
-
+void setupMelee(void* unk, bu32 stageID);
 bu32 getCurrentFrame() {
     return frameCounter;
+}
+
+void FillInMeleeObj() {
+     if (GMMelee::isMatchChoicesPopulated) {
+        OSReport("Filling in stuff!\n");
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID = static_cast<s8>(GMMelee::costumeChoices[0]);
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_costumeID = static_cast<s8>(GMMelee::costumeChoices[1]);
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_colorFileIdx = static_cast<s8>(GMMelee::fileIndexChoices[0]);
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_colorFileIdx = static_cast<s8>(GMMelee::fileIndexChoices[1]);
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerId = 0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerId = 1;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
+
+        g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
+        g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
+
+        // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
+        // melee[P2_CHAR_ID_IDX+1] = 0;
+        // melee[STAGE_ID_IDX] = stageChoice;
+        g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
+    }
 }
 
 bool gameHasStarted() {
@@ -54,6 +93,10 @@ void fillOutGameSettings(GameSettings& settings) {
     playerSettings[1].charID = p2_id;
     playerSettings[0].rumble = g_GameGlobal->m_record1->m_menuData.rumble[0];
     playerSettings[1].rumble = g_GameGlobal->m_record1->m_menuData.rumble[1];
+    playerSettings[0].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID;
+    playerSettings[1].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_costumeID;
+    playerSettings[0].colorFileIndex = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_colorFileIdx;
+    playerSettings[1].colorFileIndex = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_colorFileIdx;
 
     for (int i = 0; i < settings.numPlayers; i++) {
         settings.playerSettings[i] = playerSettings[i];
@@ -75,12 +118,20 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 
     bu8 p1_char = settings.playerSettings[0].charID;
     bu8 p2_char = settings.playerSettings[1].charID;
+
+    bu8 p1_costume = settings.playerSettings[0].charColor;
+    bu8 p2_costume = settings.playerSettings[1].charColor;
+
+    bu8 p1_file = settings.playerSettings[0].colorFileIndex;
+    bu8 p2_file = settings.playerSettings[1].colorFileIndex;
     //OSReport("P1 char: %d  P2 char: %d\n", p1_char, p2_char);
     //OSReport("Stage id: %d\n", settings.stageID);
 
     int chars[MAX_NUM_PLAYERS] = {p1_char, p2_char, -1, -1};
+    int costumes[MAX_NUM_PLAYERS] = {p1_costume, p2_costume, -1, -1};
+    int fileIndices[MAX_NUM_PLAYERS] = {p1_file, p2_file, -1, -1};
     bool rumble[MAX_NUM_PLAYERS] = {settings.playerSettings[0].rumble, settings.playerSettings[1].rumble, true, true};
-    GMMelee::PopulateMatchSettings(chars, rumble, settings.stageID );
+    GMMelee::PopulateMatchSettings(chars, costumes, fileIndices, rumble, settings.stageID );
 }
 
 namespace Util {
@@ -268,7 +319,9 @@ namespace Util {
         EXIPacket::CreateAndSend(EXICommand::CMD_CAPTURE_SAVESTATE, &currentFrame, sizeof(currentFrame));
     }
 }
-
+extern u8 ftManagerGameRule;
+extern u8 ftManagerStaminaMode;
+extern u8 ftManagerField68;
 namespace Match {
     const char* relevantHeaps = "System WiiPad IteamResource InfoResource CommonResource CopyFB Physics ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 Fighter1Instance Fighter2Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode OverlayCommon Tmp OverlayStage ItemExtraResource FighterKirbyResource2 FighterKirbyResource3";
     void PopulateGameReport(GameReport& report)
@@ -316,6 +369,9 @@ namespace Match {
             //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
             #ifdef NETPLAY_IMPL
             Netplay::SetIsInMatch(true);
+            ftManagerField68 = 0x0;
+            ftManagerGameRule = 0x1;
+            ftManagerStaminaMode = 0x0;
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
             #else
@@ -769,61 +825,34 @@ u8 defaultGmGlobalModeMelee[0x320] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0
 namespace GMMelee {
     bool isMatchChoicesPopulated = false;
     int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
+    int costumeChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
+    int fileIndexChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     bool rumbleChoices[MAX_NUM_PLAYERS] = {true, true, true, true};
     int stageChoice = -1;
-    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], int stageID)
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int costumes[MAX_NUM_PLAYERS], int fileIndices[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], int stageID)
     {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
-            rumbleChoices[i] = rumble[i]; 
+            rumbleChoices[i] = rumble[i];
+            costumeChoices[i] = costumes[i];
+            fileIndexChoices[i] = fileIndices[i];
         }
         stageChoice = stageID;
         isMatchChoicesPopulated = true;
+        OSReport("Merged!\n");
     }
     // called on match end
     void ResetMatchChoicesPopulated()
     {
         isMatchChoicesPopulated = false;
+        OSReport("Turned off!\n");
     }
 
     void postSetupMelee() {
         Utils::SaveRegs();
         OSDisableInterrupts();
         OSReport("postSetupMelee\n");
-
-        #ifdef NETPLAY_IMPL
-        Netplay::StartMatching(NULL); // start netplay logic
-        #endif
-
-        // falco, wolf, battlefield
-        //PopulateMatchSettings( {0x15, 0x29, -1, -1}, 0x1 );
-
-        if (isMatchChoicesPopulated) {
-            OSReport("postSetupMelee stage: 0x%x p1: 0x%x p2: 0x%x\n", stageChoice, charChoices[0], charChoices[1]);
-
-            memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 0x320);
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(charChoices[0]);
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(charChoices[1]);
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
-
-            g_GameGlobal->m_record1->m_menuData.rumble[0] = rumbleChoices[0];
-            g_GameGlobal->m_record1->m_menuData.rumble[1] = rumbleChoices[1];
-
-            // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
-            // melee[P2_CHAR_ID_IDX+1] = 0;
-            // melee[STAGE_ID_IDX] = stageChoice;
-            g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
-        }
-        OSEnableInterrupts();
+        FillInMeleeObj();
         Utils::RestoreRegs();
     }
 }
@@ -1058,10 +1087,7 @@ namespace NetMenu {
     void BootToScMelee()
     {
         OSReport("Booting to scMelee...\n");
-        //setupMelee((void*)0x90ff42e0, 0);
         ChangeStruct3Scenes((u8*)0x90ff3e40, Scene::MemoryChange, Scene::InitialChange);
-        //setNextSqVsMelee((void*)0x90ff42e0);
-        //setNextSqNetAnyOkiraku((void*)0x90ff3e40);
         gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
         gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
@@ -1159,37 +1185,76 @@ namespace NetMenu {
             "bctr\n\t"
         ); 
     }
+    __attribute__((naked)) void BBSkipgmInitGlobalMelee2() {
+       asm volatile(
+            "lis 12, 0x806f\n\t"
+            "ori 12, 12, 0x254c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        ); 
+    }
+    __attribute__((naked)) void BBSkipRandomRulesetChange() {
+        asm volatile(
+            "lis 12, 0x806f\n\t"
+            "ori 12, 12, 0x23f0\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
     void BBsetNextAnyOriakuBootScMelee() {
         Utils::SaveRegs();
         if(Netplay::foundMatch)
         {
-            OSReport("postSetupMelee stage: 0x%x p1: 0x%x p2: 0x%x\n", GMMelee::stageChoice, GMMelee::charChoices[0], GMMelee::charChoices[1]);
-
-            memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 0x320);
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
-
-            g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
-            g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
-
-            g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
-            g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
-
-            // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
-            // melee[P2_CHAR_ID_IDX+1] = 0;
-            // melee[STAGE_ID_IDX] = stageChoice;
-            g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
-
             BootToScMelee();
         }
         Utils::RestoreRegs();
+    }
+    void BBSetGameModeBitCorrectly() 
+    {
+        Utils::SaveRegs();
+        g_GameGlobal->m_modeMelee->m_meleeInitData._0x0[1] = g_GameGlobal->m_setRule->gameRule << 5;
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void BBSetGameModeBitCorrectly2() 
+    {
+        asm volatile(
+            "lis 12, 0x806F\n\t"
+            "ori 12, 12, 0x2A94\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void BBSetupNetMelee() {
+        Utils::SaveRegs();
+        setupMelee((void*)0x90ff42e0, 0x1);
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void ExitWifiCSSReturnsToDirectOrQuickplayScreen() 
+    {
+        asm volatile (
+            "li 5, 31\n\t"
+            "lis 12, 0x806f\n\t"
+            "ori 12, 12, 0x2c64\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void SkipDirectlyToCSS() 
+    {
+        Utils::SaveRegs();
+        gfSceneManager::getInstance()->setNextSequence(gfSceneManager::getInstance(), "sqNetAnyOkiraku", 0);
+        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
+        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void SkipDirectlyToCSS2()
+    {
+        asm volatile (
+            "lis 12, 0x8119\n\t"
+            "ori 12, 12, 0x1fdc\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
     }
 }
 
@@ -1231,7 +1296,7 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
         SyringeCore::sySimpleHook(0x8014b4bc, reinterpret_cast<void*>(NetMenu::forceFriendCode));
         SyringeCore::sySimpleHook(0x8014b3b8, reinterpret_cast<void*>(NetMenu::forceConnection));
-        SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
+        //SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
         SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
         SyringeCore::sySimpleHook(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x80687f6c, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
@@ -1250,7 +1315,16 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x80964540, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode));
         SyringeCore::sySimpleHook(0x80964858, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived));
         SyringeCore::sySimpleHook(0x806f27fc, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee));
+        SyringeCore::sySimpleHook(0x806f2548, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee2));
         SyringeCore::syInlineHook(0x806f2a88, reinterpret_cast<void*>(NetMenu::BBsetNextAnyOriakuBootScMelee));
+        SyringeCore::sySimpleHook(0x806f23c0, reinterpret_cast<void*>(NetMenu::BBSkipRandomRulesetChange));
+        SyringeCore::syInlineHook(0x806F2A8C, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly));
+        SyringeCore::sySimpleHook(0x806f2a90, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly2));
+        SyringeCore::syInlineHook(0x806f27f8, reinterpret_cast<void*>(NetMenu::BBSetupNetMelee));
+        SyringeCore::sySimpleHook(0x806f2c60, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen));
+        //SyringeCore::syInlineHook(0x81191d44, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), Modules::SORA_MENU_MAIN);
+        //SyringeCore::sySimpleHook(0x81191d48, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS2), Modules::SORA_MENU_MAIN);
+
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
