@@ -88,13 +88,12 @@ namespace Util {
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx);
     void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port);
     void SaveState(bu32 currentFrame);
-
-    extern bool hasSetControls;
 }
 namespace Match {
     extern bu32 allocSizeTracker;
     extern char allocHeapName[30];
-
+    extern gmSetRule rules;
+    
     void PopulateGameReport(GameReport& report);
     void SendGameReport(GameReport& report);
     void StopGameScMeleeHook();
@@ -119,7 +118,7 @@ namespace Netplay {
     extern bu8 localPlayerIdx;
     extern bool isInMatch;
     extern bool foundMatch;
-
+    extern bool isInTrainingRoom;
     // Functions
     static void* StartMatching(void*);
     bool CheckIsMatched();
@@ -170,7 +169,8 @@ namespace Scene {
 
 namespace NetMenu {
     // Variables
-    extern bool netMenuMatched;
+    extern bool skipToCSS;
+    extern bool setRules;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
@@ -211,8 +211,11 @@ namespace NetMenu {
     void BBSetupCharacters();
     void BBSetupNetMelee();
     __attribute__((naked)) void ExitWifiCSSReturnsToDirectOrQuickplayScreen();
+    void ExitWifiCSSReturnsToDirectOrQuickplayScreen2();;
     void SkipDirectlyToCSS();
-    __attribute__((naked)) void SkipDirectlyToCSS2();
+    void SkipDirectlyToTrainingRoom();
+    void GetRulesFromCSSBoot();
+    void SetRulesFromCSSBoot();
 }
 
 namespace NetReport {

@@ -232,4 +232,11 @@ namespace Utils {
     {
         Array.push(value);
     }
+
+    __attribute__((naked)) void ReturnImmediately() 
+    {
+        asm volatile(
+            "blr\n\t"
+        );
+    }
 } // namespace utils

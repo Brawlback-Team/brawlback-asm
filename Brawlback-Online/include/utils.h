@@ -33,6 +33,8 @@ namespace Utils {
     void AddValueToByteArray(int value, Vector<bu8> &Array);
     void AddValueToByteArray(short value, Vector<bu8> &Array);
     void AddValueToByteArray(char value, Vector<bu8> &Array);
+
+    __attribute__((naked)) void ReturnImmediately();
 } // namespace utils
 
 template<typename T>

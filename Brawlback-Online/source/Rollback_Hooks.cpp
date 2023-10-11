@@ -14,6 +14,7 @@ bool shouldTrackAllocs = false;
 bool doDumpList = false;
 bool isRollback = false;
 void setupMelee(void* unk, bu32 stageID);
+void render(void* unk);
 bu32 getCurrentFrame() {
     return frameCounter;
 }
@@ -324,6 +325,7 @@ extern u8 ftManagerStaminaMode;
 extern u8 ftManagerField68;
 namespace Match {
     const char* relevantHeaps = "System WiiPad IteamResource InfoResource CommonResource CopyFB Physics ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 Fighter1Instance Fighter2Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode OverlayCommon Tmp OverlayStage ItemExtraResource FighterKirbyResource2 FighterKirbyResource3";
+    gmSetRule rules = {};
     void PopulateGameReport(GameReport& report)
     {
         /*
@@ -863,6 +865,7 @@ namespace Netplay {
     bu8 localPlayerIdx = localPlayerIdxInvalid;
     bool isInMatch = false;
     bool foundMatch = false;
+    bool isInTrainingRoom = false;
     bool IsInMatch()
     {
         return isInMatch;
@@ -905,8 +908,16 @@ namespace Netplay {
         // Temporary. Atm, this just stalls main thread while we do our mm/connecting
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
-        while (!CheckIsMatched()) {}
-        foundMatch = true;
+        do 
+        {
+            foundMatch = CheckIsMatched();
+        }
+        while (!foundMatch && isInTrainingRoom);
+        if(!isInTrainingRoom)
+        {
+            OSReport("Canceling Matchmaking...\n");
+            EXIPacket::CreateAndSend(EXICommand::CMD_CANCEL_MATCHMAKING);
+        }
         return NULL;
     }
 
@@ -949,7 +960,8 @@ namespace Netplay {
 }
 
 namespace NetMenu {
-    bool netMenuMatched = false;
+    bool skipToCSS = false;
+    bool setRules = false;
     __attribute__((naked)) void setToLoggedIn() {
         asm volatile(
             "li 4, 3\n\t"
@@ -1229,6 +1241,12 @@ namespace NetMenu {
         setupMelee((void*)0x90ff42e0, 0x1);
         Utils::RestoreRegs();
     }
+    void ExitWifiCSSReturnsToDirectOrQuickplayScreen2()
+    {
+        Utils::SaveRegs();
+        Netplay::isInTrainingRoom = false;
+        Utils::RestoreRegs();
+    }
     __attribute__((naked)) void ExitWifiCSSReturnsToDirectOrQuickplayScreen() 
     {
         asm volatile (
@@ -1241,19 +1259,50 @@ namespace NetMenu {
     }
     void SkipDirectlyToCSS() 
     {
-        Utils::SaveRegs();
-        gfSceneManager::getInstance()->setNextSequence(gfSceneManager::getInstance(), "sqNetAnyOkiraku", 0);
-        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
-        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
-        Utils::RestoreRegs();
+        gfSceneManager::getInstance()->unk1 = 0x1e;
+        gfSceneManager::getInstance()->processStep = 0x2;
+        render((void*)0x805b50a8);
     }
-    __attribute__((naked)) void SkipDirectlyToCSS2()
+    void SkipDirectlyToTrainingRoom()
     {
+        Utils::SaveRegs();
+        if((*(int*)0x90ff3e48) == 2)
+        {
+            Netplay::isInTrainingRoom = false;
+            if(gfSceneManager::getInstance()->unk1 == 1)
+            {
+                Netplay::isInTrainingRoom = true;
+                (*(int*)0x90ff3e48) = 4;
+            }
+        }
+        Utils::RestoreRegs();
         asm volatile (
-            "lis 12, 0x8119\n\t"
-            "ori 12, 12, 0x1fdc\n\t"
-            "mtctr 12\n\t"
-            "bctr\n\t"
+            "lis 25, 0x8070\n\t"
+        );
+    }
+    void GetRulesFromCSSBoot() 
+    {
+        Utils::SaveRegs();
+        if(!setRules)
+        {
+            memmove(&Match::rules, g_GameGlobal->m_setRule, 0x88);
+            setRules = true;
+        }
+        Utils::RestoreRegs();
+        asm volatile (
+            "lwz 6, 0x0028 (31)\n\t"
+        );
+    }
+    void SetRulesFromCSSBoot() 
+    {
+        Utils::SaveRegs();
+        if(setRules)
+        {
+            memmove(g_GameGlobal->m_setRule, &Match::rules, 0x88);
+        }
+        Utils::RestoreRegs();
+        asm volatile (
+            "lbz 0, 0x0040 (4)\n\t"
         );
     }
 }
@@ -1322,9 +1371,14 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x806f2a90, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly2));
         SyringeCore::syInlineHook(0x806f27f8, reinterpret_cast<void*>(NetMenu::BBSetupNetMelee));
         SyringeCore::sySimpleHook(0x806f2c60, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen));
-        //SyringeCore::syInlineHook(0x81191d44, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), Modules::SORA_MENU_MAIN);
-        //SyringeCore::sySimpleHook(0x81191d48, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS2), Modules::SORA_MENU_MAIN);
-
+        SyringeCore::syInlineHook(0x806F2C5C, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen2));
+        SyringeCore::syReplaceFunc(0x81191d44, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), NULL, Modules::SORA_MENU_MAIN);
+        SyringeCore::syInlineHook(0x806f233c, reinterpret_cast<void*>(NetMenu::SkipDirectlyToTrainingRoom));
+        SyringeCore::syInlineHook(0x806830d8, reinterpret_cast<void*>(NetMenu::GetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syInlineHook(0x8068300c, reinterpret_cast<void*>(NetMenu::SetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syReplaceFunc(0x800cc540, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        SyringeCore::syReplaceFunc(0x801466ac, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        SyringeCore::syReplaceFunc(0x800ccec4, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
