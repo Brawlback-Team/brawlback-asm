@@ -297,6 +297,7 @@ namespace Util {
         gamePad.isNotConnected = 0x0;
         gamePad._buttons = pad._buttons;
         gamePad.buttons = pad.buttons;
+        gamePad.releasedButtons = pad.releasedButtons;
         // int* addr  = (int*) &gamePad;
         // *(addr+0x14+0x2) = pad.buttons;
         gamePad.holdButtons = pad.holdButtons;
