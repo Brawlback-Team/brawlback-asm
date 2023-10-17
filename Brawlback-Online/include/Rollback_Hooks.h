@@ -63,12 +63,14 @@ namespace FrameAdvance {
     void GetInputsForFrame(bu32 frame, FrameData* inputs);
     void ProcessGameSimulationFrame(FrameData* inputs);
     void setFrameAdvanceFromEmu();
-    void getGamePadStatusInjection(gfPadSystem* padSystem, bu32 padStatus);
+    void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad);
 
     // Hooks
-    void updateLowHook();
+    void getGamePadStatusHook();
+    void getSysPadStatusHook();
     void handleFrameAdvanceHook();
     void updateIpSwitchPreProcess();
+    void turnOnAllAppropriatePorts();
 }
 
 // TODO: put this in the submodule and pack it
@@ -171,6 +173,8 @@ namespace NetMenu {
     // Variables
     extern bool skipToCSS;
     extern bool setRules;
+    extern bool onQuickplayMenus;
+    extern int register4;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
@@ -204,6 +208,9 @@ namespace NetMenu {
     __attribute__((naked)) void startMatchingCallback2();
     __attribute__((naked)) void BBSkipgmInitGlobalMelee();
     __attribute__((naked)) void BBSkipgmInitGlobalMelee2();
+    void RemoveDisconnectPanel();
+    __attribute__((naked)) void RemoveDisconnectPanel2();
+    void RemoveDisconnectPanel3();
     void BBsetNextAnyOriakuBootScMelee();
     __attribute__((naked)) void BBSkipRandomRulesetChange();
     void BBSetGameModeBitCorrectly();

@@ -1,8 +1,7 @@
-#if __cplusplus == 199711L
 #include <stddef.h>
 #include <StaticAssert.h>
 #include <ExiStructures.h>
-#include <gf/gf_pad_status.h>
+#if __cplusplus == 199711L
 FrameData::FrameData()
 {
     randomSeed = 0;
@@ -251,7 +250,7 @@ GameSettings::GameSettings(const GameSettings &D)
     randomSeed = D.randomSeed;
     for(int i = 0; i < MAX_NUM_PLAYERS; i++)
     {
-        playerSettings[i] = PlayerSettings(D.playerSettings[i]);
+        playerSettings[i] = D.playerSettings[i];
     }
 }
 GameSettings& GameSettings::operator=(const GameSettings &D ) { 
@@ -263,60 +262,8 @@ GameSettings& GameSettings::operator=(const GameSettings &D ) {
         randomSeed = D.randomSeed;
         for(int i = 0; i < MAX_NUM_PLAYERS; i++)
         {
-            playerSettings[i] = PlayerSettings(D.playerSettings[i]);
+            playerSettings[i] = D.playerSettings[i];
         }
-    }
-    return *this;
-}
-
-gfPadStatus::gfPadStatus() {
-    _buttons = 0;
-    buttons = 0;
-    holdButtons = 0;
-    rapidFireButtons = 0;
-    releasedButtons = 0;
-    newPressedButtons = 0;
-    stickX = 0;
-    stickY = 0;
-    cStickX = 0;
-    cStickY = 0;
-    LAnalogue = 0;
-    RAnalogue = 0;
-    isNotConnected = 0;
-    type = controllerType::GAMECUBE;
-}
-gfPadStatus::gfPadStatus(const gfPadStatus& D) {
-    _buttons = D._buttons;
-    buttons = D.buttons;
-    holdButtons = D.holdButtons;
-    rapidFireButtons = D.rapidFireButtons;
-    releasedButtons = D.releasedButtons;
-    newPressedButtons = D.newPressedButtons;
-    stickX = D.stickX;
-    stickY = D.stickY;
-    cStickX = D.cStickX;
-    cStickY = D.cStickY;
-    LAnalogue = D.LAnalogue;
-    RAnalogue = D.RAnalogue;
-    isNotConnected = D.isNotConnected;
-    type = D.type;
-}
-gfPadStatus& gfPadStatus::operator=(const gfPadStatus &D ) {
-    if( this != &D ) {
-        _buttons = D._buttons;
-        buttons = D.buttons;
-        holdButtons = D.holdButtons;
-        rapidFireButtons = D.rapidFireButtons;
-        releasedButtons = D.releasedButtons;
-        newPressedButtons = D.newPressedButtons;
-        stickX = D.stickX;
-        stickY = D.stickY;
-        cStickX = D.cStickX;
-        cStickY = D.cStickY;
-        LAnalogue = D.LAnalogue;
-        RAnalogue = D.RAnalogue;
-        isNotConnected = D.isNotConnected;
-        type = D.type;
     }
     return *this;
 }
@@ -334,7 +281,6 @@ BrawlbackControls::BrawlbackControls()
     Y = 0;
     X = 0;
     tapJumpToggle = 0;
-    rumble = false;
 }
 BrawlbackControls& BrawlbackControls::operator=(const BrawlbackControls &D ) 
 {
@@ -351,7 +297,6 @@ BrawlbackControls& BrawlbackControls::operator=(const BrawlbackControls &D )
         Y = D.Y;
         X = D.X;
         tapJumpToggle = D.tapJumpToggle;
-        rumble = D.rumble;
     }
     return *this;
 }
@@ -369,6 +314,5 @@ BrawlbackControls::BrawlbackControls(const BrawlbackControls& D)
     Y = D.Y;
     X = D.X;
     tapJumpToggle = D.tapJumpToggle;
-    rumble = D.rumble;
 }
 #endif
