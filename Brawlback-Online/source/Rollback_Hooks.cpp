@@ -24,6 +24,8 @@ void FillInMeleeObj() {
      if (GMMelee::isMatchChoicesPopulated) {
         OSReport("Filling in stuff!\n");
 
+        memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 800);
+
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
         g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
 
@@ -47,6 +49,18 @@ void FillInMeleeObj() {
 
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
         g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerId = 0x0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerId = 0x1;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerNo = 0x0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerNo = 0x0;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_cpuType = 0x0;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_cpuType = 0x0;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_cpuRank = 0x64;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_cpuRank = 0x64;
 
         g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
         g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
