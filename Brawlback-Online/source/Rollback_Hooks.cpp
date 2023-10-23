@@ -575,6 +575,12 @@ namespace FrameAdvance {
         
         GetInputsForFrame(gameLogicFrame, &currentFrameData);
         
+        for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
+        {
+            gfPadStatus& status = g_PadSystem.gcPads[i];
+            getGamePadStatusInjection(status, i, true);
+        }
+        
         // save state on each simulated frame (this includes resim frames)
         Util::SaveState(gameLogicFrame);
 
@@ -604,11 +610,6 @@ namespace FrameAdvance {
         if(Netplay::IsInMatch())
         {
             FrameLogic::WriteInputsForFrame();
-            for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
-            {
-                gfPadStatus* status = reinterpret_cast<gfPadStatus*>(padStatus + 0x40 * i); 
-                getGamePadStatusInjection(*status, i, true);
-            }
         }
         Utils::RestoreRegs();
         asm volatile(
@@ -689,6 +690,7 @@ namespace FrameAdvance {
 
         // }
         PlayerFrameData& frameData = currentFrameData.playerFrameDatas[port];
+        OSReport("PLAYERFRAMEDATA FRAME: %d\nREAL FRAME: %d\n", frameData.frame, getCurrentFrame());
         BrawlbackPad& pad = isGamePad ? frameData.pad : frameData.sysPad;
         Util::InjectBrawlbackPadToPadStatus(status, pad, port);
         // if(ddst->newPressedButtons == 0x1000){
