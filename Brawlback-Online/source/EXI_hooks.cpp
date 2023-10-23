@@ -3,7 +3,7 @@
 #include <OS/OSError.h>
 #include "utils.h"
 namespace EXIHooks {
-    void writeEXI(void* data, u32 size, EXIChannel channel, u32 device, EXIFreq frequency) {
+    void writeEXI(void* data, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency) {
         //need to make new buffer to ensure data is aligned to cache block
         void* alignedData = MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, size, 32);
         memmove(alignedData, data, size);
@@ -16,7 +16,7 @@ namespace EXIHooks {
         MemExpHooks::freeExp(alignedData);
     }
 
-    void readEXI(void* destination, u32 size, EXIChannel channel, u32 device, EXIFreq frequency) {
+    void readEXI(void* destination, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency) {
         void* alignedDestination = MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, size, 32);
 
         setupEXIDevice(channel, device, frequency);
@@ -29,7 +29,7 @@ namespace EXIHooks {
 
         MemExpHooks::freeExp(alignedDestination);
     }
-    void setupEXIDevice(EXIChannel channel, u32 device, EXIFreq frequency) {
+    void setupEXIDevice(EXIChannel channel, unsigned int device, EXIFreq frequency) {
         attachEXIDevice(channel);
         lockEXIDevice(channel, device);
         selectEXIDevice(channel, device, frequency);
@@ -49,7 +49,7 @@ namespace EXIHooks {
         return EXIDetach(channel);
     }
 
-    bool lockEXIDevice(EXIChannel channel, u32 device, EXICallback callback) {
+    bool lockEXIDevice(EXIChannel channel, unsigned int device, EXICallback callback) {
         return EXILock(channel, device, callback);
     }
 
@@ -57,7 +57,7 @@ namespace EXIHooks {
         return EXIUnlock(channel);
     }
 
-    bool selectEXIDevice(EXIChannel channel, u32 device, EXIFreq frequency) {
+    bool selectEXIDevice(EXIChannel channel, unsigned int device, EXIFreq frequency) {
         return EXISelect(channel, device, frequency);
     }
 

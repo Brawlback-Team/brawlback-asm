@@ -49,15 +49,15 @@ namespace EXICommand
 
 class EXIPacket {
 public:
-    EXIPacket(u8 EXICmd, void* source, u32 size);
+    EXIPacket(u8 EXICmd, void* source, unsigned int size);
     EXIPacket(u8 EXICmd);
     EXIPacket();
     ~EXIPacket();
     bool Send();
-    static void CreateAndSend(u8 EXICmd, void* source = (u8*)0x0, u32 size = 0);
+    static void CreateAndSend(unsigned char EXICmd, void* source = NULL, unsigned int size = 0);
     u8 getCmd();
 private:
     u8* source;
-    u32 size;
+    unsigned int size;
     u8 cmd;
 };

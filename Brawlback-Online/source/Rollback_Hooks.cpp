@@ -3,6 +3,7 @@
 #include <EXI/EXIBios.h>
 #include <gf/gf_heap_manager.h>
 #include <gf/gf_pad_status.h>
+#include <gf/gf_task.h>
 #include <modules.h>
 #include "ip/ip_pad_config.h"
 #include "if/if_mngr.h"
@@ -50,20 +51,11 @@ void FillInMeleeObj() {
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
         g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerId = 0x0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerId = 0x1;
-
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerNo = 0x0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerNo = 0x0;
-
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_cpuType = 0x0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_cpuType = 0x0;
-
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_cpuRank = 0x64;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_cpuRank = 0x64;
-
         g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
         g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
+
+        Util::BrawlbackControlsToGameControls(GMMelee::controlsChoices[0], ipPadConfig::getInstance()->controls[0]);
+        Util::BrawlbackControlsToGameControls(GMMelee::controlsChoices[1], ipPadConfig::getInstance()->controls[1]);
 
         // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
         // melee[P2_CHAR_ID_IDX+1] = 0;
@@ -109,6 +101,8 @@ void fillOutGameSettings(GameSettings& settings) {
     playerSettings[1].charID = p2_id;
     playerSettings[0].rumble = g_GameGlobal->m_record1->m_menuData.rumble[0];
     playerSettings[1].rumble = g_GameGlobal->m_record1->m_menuData.rumble[1];
+    playerSettings[0].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[0]);
+    playerSettings[1].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[1]);
     playerSettings[0].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID;
     playerSettings[1].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_costumeID;
     playerSettings[0].colorFileIndex = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_colorFileIdx;
@@ -130,7 +124,7 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     //GM_GLOBAL_MODE_MELEE->stageID = 2;
 
     Netplay::localPlayerIdx = settings.localPlayerIdx;
-    //OSReport("Local player index is %d\n", Netplay::localPlayerIdx);
+    OSReport("Local player index is %d\n", Netplay::localPlayerIdx);
 
     bu8 p1_char = settings.playerSettings[0].charID;
     bu8 p2_char = settings.playerSettings[1].charID;
@@ -147,7 +141,8 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     int costumes[MAX_NUM_PLAYERS] = {p1_costume, p2_costume, -1, -1};
     int fileIndices[MAX_NUM_PLAYERS] = {p1_file, p2_file, -1, -1};
     bool rumble[MAX_NUM_PLAYERS] = {settings.playerSettings[0].rumble, settings.playerSettings[1].rumble, true, true};
-    GMMelee::PopulateMatchSettings(chars, costumes, fileIndices, rumble, settings.stageID );
+    BrawlbackControls controls[MAX_NUM_PLAYERS] = {settings.playerSettings[0].controls, settings.playerSettings[1].controls, BrawlbackControls{}, BrawlbackControls{}};
+    GMMelee::PopulateMatchSettings(chars, costumes, fileIndices, rumble, controls, settings.stageID);
 }
 
 namespace Util {
@@ -245,6 +240,8 @@ namespace Util {
         ret.newPressedButtons = pad.newPressedButtons;
         ret.LAnalogue = pad.LAnalogue;
         ret.RAnalogue = pad.RAnalogue;
+        ret.LTrigger = pad.LTrigger;
+        ret.RTrigger = pad.RTrigger;
         ret.cStickX = pad.cStickX;
         ret.cStickY = pad.cStickY;
         ret.stickX = pad.stickX;
@@ -291,7 +288,6 @@ namespace Util {
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }*/
-        pfd.controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[port]);
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
@@ -315,6 +311,8 @@ namespace Util {
         gamePad.newPressedButtons = pad.newPressedButtons;
         gamePad.LAnalogue = pad.LAnalogue;
         gamePad.RAnalogue = pad.RAnalogue;
+        gamePad.LTrigger = pad.LTrigger;
+        gamePad.RTrigger = pad.RTrigger;
         gamePad.cStickX = pad.cStickX;
         gamePad.cStickY = pad.cStickY;
         gamePad.stickX = pad.stickX;
@@ -454,7 +452,7 @@ namespace Match {
     }
     void ProcessGameAllocation(u8* allocated_addr, bu32 size, char* heap_name)
     {
-        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != (char*)0x0 && !isRollback) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != (char*)0x0) {
             //OSReport("ALLOC: size = 0x%08x  allocated addr = 0x%08x\n", size, allocated_addr);
             SavestateMemRegionInfo memRegion;
             memRegion.address = reinterpret_cast<bu32>(allocated_addr); // might be bad cast... 64 bit ptr to 32 bit int
@@ -467,7 +465,7 @@ namespace Match {
     }
     void ProcessGameFree(u8* address, char* heap_name)
     {
-        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != (char*)0x0 && !isRollback) {
+        if (shouldTrackAllocs && strstr(relevantHeaps, heap_name) != (char*)0x0) {
             //OSReport("FREE: addr = 0x%08x\n", address);
             SavestateMemRegionInfo memRegion;
             memmove(memRegion.nameBuffer, heap_name, strlen(heap_name));
@@ -574,11 +572,11 @@ namespace FrameAdvance {
     {
         bu32 gameLogicFrame = getCurrentFrame();
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
-
+        
+        GetInputsForFrame(gameLogicFrame, &currentFrameData);
+        
         // save state on each simulated frame (this includes resim frames)
         Util::SaveState(gameLogicFrame);
-
-        GetInputsForFrame(gameLogicFrame, inputs);
 
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
 
@@ -589,14 +587,38 @@ namespace FrameAdvance {
     {
         Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
+
             ProcessGameSimulationFrame(&currentFrameData);
         }
         Utils::RestoreRegs();
     }
+    
+    void updateLowHook() 
+    {
+        Utils::SaveRegs();
+        bu32 padStatus;
+        asm volatile(
+            "mr %0, 26\n\t"
+            : "=r"(padStatus)
+        );
+        if(Netplay::IsInMatch())
+        {
+            FrameLogic::WriteInputsForFrame();
+            for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
+            {
+                gfPadStatus* status = reinterpret_cast<gfPadStatus*>(padStatus + 0x40 * i); 
+                getGamePadStatusInjection(*status, i, true);
+            }
+        }
+        Utils::RestoreRegs();
+        asm volatile(
+            "lwz 4, -0x4390 (13)\n\t"
+        );
+    }
     void getGamePadStatusHook()
     {
         Utils::SaveRegs();
-        int port;
+        unsigned int port;
         gfPadStatus* status;
         asm volatile(
             "mr %0, 4\n\t"
@@ -605,14 +627,17 @@ namespace FrameAdvance {
         );
         if(Netplay::IsInMatch())
         {
-            getGamePadStatusInjection(*status, port, true);
+            if(port < Netplay::getGameSettings().numPlayers)
+            {
+                getGamePadStatusInjection(*status, port, true);
+            }
         }
         Utils::RestoreRegs();
     }
     void getSysPadStatusHook()
     {
         Utils::SaveRegs();
-        int port;
+        unsigned int port;
         gfPadStatus* status;
         asm volatile(
             "mr %0, 4\n\t"
@@ -621,26 +646,12 @@ namespace FrameAdvance {
         );
         if(Netplay::IsInMatch())
         {
-            getGamePadStatusInjection(*status, port, false);
-        }
-        Utils::RestoreRegs();
-    }
-    void updateControls()
-    {
-        Utils::SaveRegs();
-        if (Netplay::IsInMatch()) 
-        {
-            for(int i  = 0; i < Netplay::getGameSettings().numPlayers; i++)
+            if(port < Netplay::getGameSettings().numPlayers) 
             {
-                PlayerFrameData& frameData = currentFrameData.playerFrameDatas[i];
-                BrawlbackControls& controls = frameData.controls;
-                Util::BrawlbackControlsToGameControls(controls, ipPadConfig::getInstance()->controls[i]);
+                getGamePadStatusInjection(*status, port, false);
             }
         }
         Utils::RestoreRegs();
-        asm volatile (
-            "li 3, 1\n\t"
-        );
     }
     void turnOnAllAppropriatePorts()
     {
@@ -716,24 +727,29 @@ namespace FrameAdvance {
 }
 
 namespace FrameLogic {
-    void WriteInputsForFrame(bu32 currentFrame)
+    u32 shouldSkipGfTaskNextInstr = 0x8002DC7C;
+    gfTask* task;
+    u32 task_type;
+    PlayerFrameData playerFrame = PlayerFrameData();
+    void WriteInputsForFrame()
     {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
-            PlayerFrameData playerFrame = PlayerFrameData();
-            playerFrame.frame = currentFrame;
             playerFrame.playerIdx = localPlayerIdx;
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             // sending inputs + current game frame
-            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
         }
         else {
             OSReport("Invalid player index! Can't send inputs to emulator!\n");
         }
     }
-    void FrameDataLogic(bu32 currentFrame)
+    void FrameDataLogic()
     {
-        WriteInputsForFrame(currentFrame);
+        if(Netplay::localPlayerIdx != Netplay::localPlayerIdxInvalid)
+        {
+            playerFrame.frame = getCurrentFrame();
+            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
+        }
     }
     void SendFrameCounterPointerLoc()
     {
@@ -741,10 +757,10 @@ namespace FrameLogic {
         EXIPacket::CreateAndSend(EXICommand::CMD_SEND_FRAMECOUNTERLOC, &frameCounterLocation, sizeof(bu32));
     }
     const char* nonResimTasks = "ecMgr EffectManager";
-    bool ShouldSkipGfTaskProcess(bu32* gfTask, bu32 task_type)
+    bool ShouldSkipGfTaskProcess(gfTask* task, bu32 task_type)
     {
         if (isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
-            char* taskName = (char*)(*gfTask); // 0x0 offset of gfTask* is the task name
+            char* taskName = task->m_taskName; // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
             return strstr(nonResimTasks, taskName) != (char*)0x0;
         }
@@ -765,7 +781,7 @@ namespace FrameLogic {
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
-        if (Netplay::IsInMatch()) {
+        if (Netplay::IsInMatch() && getCurrentFrame() > 0) {
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
         Utils::RestoreRegs();
@@ -784,13 +800,13 @@ namespace FrameLogic {
         if (Netplay::IsInMatch()) {
             // reset flag to be used later
             // just resimulated/stalled/skipped/whatever, reset to normal
-            FrameAdvance::ResetFrameAdvance();
             // lol
+            FrameAdvance::ResetFrameAdvance();
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
             OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", currentFrame);
             #ifdef NETPLAY_IMPL
-                FrameLogic::FrameDataLogic(currentFrame);
+                FrameDataLogic();
                 if(!shouldTrackAllocs) 
                 {
                     gfHeapManager::dumpAll();
@@ -814,29 +830,45 @@ namespace FrameLogic {
         Utils::SaveRegs();
         Utils::RestoreRegs();
     }
+    
     void gfTaskProcessHook()
     {
         Utils::SaveRegs();
-        bu32* gfTask;
-        bu32 task_type;
-        asm (
+        asm volatile (
             "mr %0, 3\n\t"
             "mr %1, 4\n\t"
-            : "=r"(gfTask), "=r"(task_type)
+            : "=r"(task), "=r"(task_type)
         );
-        if(ShouldSkipGfTaskProcess(gfTask, task_type))
+        if(ShouldSkipGfTaskProcess(task, task_type))
         {
-            Utils::RestoreRegs();
-            asm volatile (
-                "blr\n\t"
-            );
+            shouldSkipGfTaskNextInstr = 0x8002dd28;
         }
-        else {
-            Utils::RestoreRegs();
-            asm volatile (
-                "cmpwi 4, 0x8\n\t"
-            );
+        else 
+        {
+            if(task_type >= 8)
+            {
+                shouldSkipGfTaskNextInstr = 0x8002dd1c;
+            }
+            else 
+            {
+                shouldSkipGfTaskNextInstr = 0x8002dc7c;
+            }
         }
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void gfTaskProcessHook2()
+    {
+        asm volatile(
+            "mr 12, %0\n\t"
+            "mtctr 12\n\t"
+            "mr 12, %1\n\t"
+            "mr 3, 12\n\t"
+            "mr 12, %2\n\t"
+            "mr 4, 12\n\t"
+            "bctr\n\t"
+            :
+            : "r"(shouldSkipGfTaskNextInstr), "r"(task), "r"(task_type)
+        );
     }
 }
 u8 defaultGmGlobalModeMelee[0x320] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2a, 0x81, 0x8, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x78, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x70, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0xff, 0xff, 0xff, 0x7, 0x57, 0xff, 0xf1, 0xff, 0x87, 0xf1, 0xff, 0x0, 0x3, 0xf0, 0x2f, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x28, 0x1d, 0x2, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x29, 0x0, 0x1, 0x0, 0x4, 0x0, 0x0, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
@@ -846,14 +878,16 @@ namespace GMMelee {
     int costumeChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     int fileIndexChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     bool rumbleChoices[MAX_NUM_PLAYERS] = {true, true, true, true};
+    BrawlbackControls controlsChoices[MAX_NUM_PLAYERS] = {BrawlbackControls{}, BrawlbackControls{}, BrawlbackControls{}, BrawlbackControls{}};
     int stageChoice = -1;
-    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int costumes[MAX_NUM_PLAYERS], int fileIndices[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], int stageID)
+    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], int costumes[MAX_NUM_PLAYERS], int fileIndices[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], BrawlbackControls controls[MAX_NUM_PLAYERS], int stageID)
     {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
             rumbleChoices[i] = rumble[i];
             costumeChoices[i] = costumes[i];
             fileIndexChoices[i] = fileIndices[i];
+            controlsChoices[i] = controls[i]; 
         }
         stageChoice = stageID;
         isMatchChoicesPopulated = true;
@@ -1285,7 +1319,7 @@ namespace NetMenu {
     void SkipDirectlyToTrainingRoom()
     {
         Utils::SaveRegs();
-        u32 scene;
+        unsigned int scene;
         asm volatile (
             "mr %0, 3\n\t"
             : "=r"(scene)
@@ -1389,14 +1423,15 @@ namespace RollbackHooks {
 
         // FrameAdvance Namespace
         SyringeCore::syInlineHook(0x8004aa2c, reinterpret_cast<void*>(FrameAdvance::updateIpSwitchPreProcess));
-        SyringeCore::syInlineHook(0x8002AE40, reinterpret_cast<void*>(FrameAdvance::getGamePadStatusHook));
-        SyringeCore::syInlineHook(0x8002b038, reinterpret_cast<void*>(FrameAdvance::getSysPadStatusHook));
+        SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
+        //SyringeCore::syInlineHook(0x8002AE40, reinterpret_cast<void*>(FrameAdvance::getGamePadStatusHook));
+        //SyringeCore::syInlineHook(0x8002b038, reinterpret_cast<void*>(FrameAdvance::getSysPadStatusHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
-        SyringeCore::syInlineHook(0x80048bf8, reinterpret_cast<void*>(FrameAdvance::updateControls));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
 
         // FrameLogic Namespace
-        SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
+        //SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
+        //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
         //SyringeCore::syHookFunction(0x800174fc, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));

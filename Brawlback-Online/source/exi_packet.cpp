@@ -6,7 +6,7 @@ u8 EXIPacket::getCmd() { return this->cmd; }
 EXIPacket::EXIPacket() {
     u8 EXICmd = EXICommand::CMD_UNKNOWN;
     // enough for the EXICmd byte + size of the packet
-    u32 new_size = sizeof(EXICmd);
+    unsigned int new_size = sizeof(EXICmd);
 
     u8* new_packet = (u8*)MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, new_size, 32);
     if (!new_packet) {
@@ -23,7 +23,7 @@ EXIPacket::EXIPacket() {
     this->cmd = EXICmd; 
 }
 EXIPacket::EXIPacket(u8 EXICmd) { 
-    u32 new_size = sizeof(EXICmd);
+    unsigned int new_size = sizeof(EXICmd);
 
     u8* new_packet = (u8*)MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, new_size, 32);
     if (!new_packet) {
@@ -40,11 +40,11 @@ EXIPacket::EXIPacket(u8 EXICmd) {
     this->cmd = EXICmd;
 }
 
-EXIPacket::EXIPacket(u8 EXICmd, void* source, u32 size) {
+EXIPacket::EXIPacket(u8 EXICmd, void* source, unsigned int size) {
     if (!source) size = 0; if (size <= 0) source = NULL; //sanity checks
 
     // enough for the EXICmd byte + size of the packet
-    u32 new_size = sizeof(EXICmd) + size;
+    unsigned int new_size = sizeof(EXICmd) + size;
 
     u8* new_packet = (u8*)MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, new_size, 32);
     if (!new_packet) {
@@ -87,14 +87,14 @@ bool EXIPacket::Send() {
     return success;
 }
 
-void EXIPacket::CreateAndSend(u8 EXICmd, void* source, u32 size) {
+void EXIPacket::CreateAndSend(unsigned char EXICmd, void* source, unsigned int size) {
     // enough for the EXICmd byte + size of the packet
-    u32 new_size = sizeof(EXICmd) + size;
-    u8* new_packet = (u8*)MemExpHooks::mallocExp(new_size);
+    unsigned int new_size = sizeof(EXICmd) + size;
+    unsigned char* new_packet = (unsigned char*)MemExpHooks::mallocExp(new_size);
 
     // copy EXICmd byte into packet
     memmove(new_packet, &EXICmd, sizeof(EXICmd));
-    if (source != (u8*)0x0) {
+    if (source != (unsigned char*)0x0) {
         // copy actual packet into our buffer
         memmove(new_packet + sizeof(EXICmd), source, size);
     }

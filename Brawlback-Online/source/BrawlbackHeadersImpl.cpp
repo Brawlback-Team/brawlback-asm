@@ -34,7 +34,6 @@ PlayerFrameData::PlayerFrameData()
     randomSeed = 0;
     frame = 0;
     playerIdx = 0;
-    controls = BrawlbackControls();
     pad = BrawlbackPad();
     sysPad = BrawlbackPad();
     syncData = SyncData();
@@ -44,7 +43,6 @@ PlayerFrameData::PlayerFrameData(const PlayerFrameData &D)
     randomSeed = D.randomSeed;
     frame = D.frame;
     pad = D.pad;
-    controls = D.controls;
     sysPad = D.sysPad;
     syncData = D.syncData;
     playerIdx = D.playerIdx;
@@ -53,7 +51,6 @@ PlayerFrameData& PlayerFrameData::operator=(const PlayerFrameData &D ) {
     if( this != &D ) {
         randomSeed = D.randomSeed;
         frame = D.frame;
-        controls = D.controls;
         pad = D.pad;
         sysPad = D.sysPad;
         syncData = D.syncData;
@@ -72,6 +69,8 @@ BrawlbackPad::BrawlbackPad()
     newPressedButtons = 0;
     LAnalogue = 0;
     RAnalogue = 0;
+    LTrigger = 0;
+    RTrigger = 0;
     stickX = 0;
     stickY = 0;
     cStickX = 0;
@@ -87,6 +86,8 @@ BrawlbackPad& BrawlbackPad::operator=(const BrawlbackPad &D ) {
         newPressedButtons = D.newPressedButtons;
         LAnalogue = D.LAnalogue;
         RAnalogue = D.RAnalogue;
+        LTrigger = D.LTrigger;
+        RTrigger = D.RTrigger;
         stickX = D.stickX;
         stickY = D.stickY;
         cStickX = D.cStickX;
@@ -104,6 +105,8 @@ BrawlbackPad::BrawlbackPad(const BrawlbackPad& D)
     newPressedButtons = D.newPressedButtons;
     LAnalogue = D.LAnalogue;
     RAnalogue = D.RAnalogue;
+    LTrigger = D.LTrigger;
+    RTrigger = D.RTrigger;
     stickX = D.stickX;
     stickY = D.stickY;
     cStickX = D.cStickX;
@@ -199,6 +202,8 @@ PlayerSettings::PlayerSettings(const PlayerSettings &D)
     colorFileIndex = D.colorFileIndex;
     playerType = D.playerType;
     controllerPort = D.controllerPort;
+    rumble = D.rumble;
+    controls = D.controls;
     for(int i = 0; i < NAMETAG_SIZE; i++)
     {
         nametag[i] = D.nametag[i];
@@ -219,6 +224,8 @@ PlayerSettings& PlayerSettings::operator=(const PlayerSettings &D ) {
         colorFileIndex = D.colorFileIndex;
         playerType = D.playerType;
         controllerPort = D.controllerPort;
+        rumble = D.rumble;
+        controls = D.controls;
         for(int i = 0; i < NAMETAG_SIZE; i++)
         {
             nametag[i] = D.nametag[i];

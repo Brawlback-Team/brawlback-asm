@@ -3,7 +3,7 @@
 
 namespace MemExpHooks {
     MEMHeapHandle mainHeap;
-    void initializeMemory(void* heapAddress, u32 heapSize) {
+    void initializeMemory(void* heapAddress, unsigned int heapSize) {
         mainHeap = MEMCreateExpHeapEx(heapAddress, heapSize, 0);
     }
     void* mallocExp(size_t size) {
@@ -12,7 +12,7 @@ namespace MemExpHooks {
     void freeExp(void* ptr) {
         MEMFreeToExpHeap(mainHeap, ptr);
     }
-    u32 getFreeSize(MEMHeapHandle heap, int alignment) {
+    unsigned int getFreeSize(MEMHeapHandle heap, int alignment) {
         return MEMGetAllocatableSizeForExpHeapEx(heap, alignment);
     }
 }

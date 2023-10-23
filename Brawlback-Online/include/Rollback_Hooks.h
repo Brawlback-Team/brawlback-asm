@@ -3,6 +3,7 @@
 #include <OS/OSInterrupt.h>
 #include <OS/OSError.h>
 #include <gf/gf_frame.h>
+#include <gf/gf_task.h>
 #include <gf/gf_pad_system.h>
 //#include <ft/ft_manager.h>
 #include <gm/gm_global.h>
@@ -13,6 +14,7 @@
 #include <mt/mt_rand.h>
 #include <OS/OSTime.h>
 #include <ExiStructures.h>
+#include <ip/controls.h>
 //#include <ft/ft_manager.h>
 
 #include "EXI_hooks.h"
@@ -35,11 +37,16 @@ extern bool doDumpList;
 extern bool isRollback;
 
 namespace FrameLogic {
+    // Variables
+    extern u32 shouldSkipGfTaskNextInstr;
+    extern gfTask* task;
+    extern u32 task_type;
+    extern PlayerFrameData playerFrame;
     // Functions
-    void WriteInputsForFrame(bu32 currentFrame);
-    void FrameDataLogic(bu32 currentFrame);
+    void WriteInputsForFrame();
+    void FrameDataLogic();
     void SendFrameCounterPointerLoc();
-    bool ShouldSkipGfTaskProcess(bu32* gfTask, bu32 task_type);
+    bool ShouldSkipGfTaskProcess(gfTask* task, bu32 task_type);
 
     // Hooks
     void initFrameCounter();
@@ -49,6 +56,7 @@ namespace FrameLogic {
     void endFrame();
     void endMainLoop();
     void gfTaskProcessHook();
+    __attribute__((naked)) void gfTaskProcessHook2();
 }
 namespace FrameAdvance {
     // Variables
@@ -66,6 +74,7 @@ namespace FrameAdvance {
     void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad);
 
     // Hooks
+    void updateLowHook();
     void getGamePadStatusHook();
     void getSysPadStatusHook();
     void handleFrameAdvanceHook();
@@ -87,6 +96,8 @@ namespace Util {
     void SyncLog(const BrawlbackPad& pad, bu8 playerIdx);
     void FixFrameDataEndianness(FrameData* fd);
     BrawlbackPad GamePadToBrawlbackPad(const gfPadStatus& pad);
+    void BrawlbackControlsToGameControls(const BrawlbackControls& brawlbackControls, Controls& controls);
+    BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls);
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx);
     void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port);
     void SaveState(bu32 currentFrame);
@@ -247,11 +258,12 @@ namespace GMMelee {
     extern int fileIndexChoices[MAX_NUM_PLAYERS];
     extern bool rumbleChoices[MAX_NUM_PLAYERS];
     extern int costumeChoices[MAX_NUM_PLAYERS];
+    extern  BrawlbackControls controlsChoices[MAX_NUM_PLAYERS];
     extern int stageChoice;
     #define STAGE_ID_IDX 27
 
     // Functions
-    void PopulateMatchSettings(int chars[4], int costumes[4], int fileIndices[4], bool rumble[4], int stageID);
+    void PopulateMatchSettings(int chars[4], int costumes[4], int fileIndices[4], bool rumble[4], BrawlbackControls controls[4], int stageID);
     void ResetMatchChoicesPopulated();
 
     // Hooks
