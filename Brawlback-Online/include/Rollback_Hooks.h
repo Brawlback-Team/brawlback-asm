@@ -42,6 +42,7 @@ namespace FrameLogic {
     extern gfTask* task;
     extern u32 task_type;
     extern PlayerFrameData playerFrame;
+    extern gfPadStatus lastLocalInputs;
     // Functions
     void WriteInputsForFrame();
     void FrameDataLogic();
@@ -62,7 +63,8 @@ namespace FrameAdvance {
     // Variables
     extern bu32 framesToAdvance;
     extern FrameData currentFrameData;
-    
+    extern u32 shouldSkipPadAlarmInstr;
+    extern bool checkPad;
     // Functions
     bu32 getFramesToAdvance();
     void TriggerFastForwardState(bu8 numFramesToFF);
@@ -74,11 +76,9 @@ namespace FrameAdvance {
     void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad);
 
     // Hooks
+    void fixPadInconsistency();
     void updateLowHook();
-    void getGamePadStatusHook();
-    void getSysPadStatusHook();
     void handleFrameAdvanceHook();
-    void updateIpSwitchPreProcess();
     void turnOnAllAppropriatePorts();
 }
 

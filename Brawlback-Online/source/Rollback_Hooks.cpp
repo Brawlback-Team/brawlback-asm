@@ -17,6 +17,7 @@ bool doDumpList = false;
 bool isRollback = false;
 void setupMelee(void* unk, bu32 stageID);
 void render(void* unk);
+int getCounter();
 bu32 getCurrentFrame() {
     return frameCounter;
 }
@@ -533,6 +534,8 @@ namespace Match {
 namespace FrameAdvance {
     bu32 framesToAdvance = 1;
     FrameData currentFrameData = FrameData();
+    u32 shouldSkipPadAlarmInstr = 0x80028B30;
+    bool checkPad = true;
     bu32 getFramesToAdvance()
     {
         return framesToAdvance;
@@ -588,17 +591,14 @@ namespace FrameAdvance {
 
         //Util::printFrameData(*inputs);
     }
-
-    void updateIpSwitchPreProcess()
-    {
+    void fixPadInconsistency() {
         Utils::SaveRegs();
-        if (Netplay::IsInMatch()) {
-
-            ProcessGameSimulationFrame(&currentFrameData);
+        if(!Netplay::IsInMatch())
+        {
+            g_PadSystem.updateLow();
         }
         Utils::RestoreRegs();
     }
-    
     void updateLowHook() 
     {
         Utils::SaveRegs();
@@ -609,50 +609,20 @@ namespace FrameAdvance {
         );
         if(Netplay::IsInMatch())
         {
+            if(!shouldTrackAllocs) 
+            {
+                gfHeapManager::dumpAll();
+                FrameLogic::SendFrameCounterPointerLoc();
+                shouldTrackAllocs = true;
+            }
+            OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
             FrameLogic::WriteInputsForFrame();
+            ProcessGameSimulationFrame(&currentFrameData);
         }
         Utils::RestoreRegs();
         asm volatile(
             "lwz 4, -0x4390 (13)\n\t"
         );
-    }
-    void getGamePadStatusHook()
-    {
-        Utils::SaveRegs();
-        unsigned int port;
-        gfPadStatus* status;
-        asm volatile(
-            "mr %0, 4\n\t"
-            "mr %1, 5\n\t"
-            : "=r"(port), "=r"(status)
-        );
-        if(Netplay::IsInMatch())
-        {
-            if(port < Netplay::getGameSettings().numPlayers)
-            {
-                getGamePadStatusInjection(*status, port, true);
-            }
-        }
-        Utils::RestoreRegs();
-    }
-    void getSysPadStatusHook()
-    {
-        Utils::SaveRegs();
-        unsigned int port;
-        gfPadStatus* status;
-        asm volatile(
-            "mr %0, 4\n\t"
-            "mr %1, 5\n\t"
-            : "=r"(port), "=r"(status)
-        );
-        if(Netplay::IsInMatch())
-        {
-            if(port < Netplay::getGameSettings().numPlayers) 
-            {
-                getGamePadStatusInjection(*status, port, false);
-            }
-        }
-        Utils::RestoreRegs();
     }
     void turnOnAllAppropriatePorts()
     {
@@ -733,13 +703,15 @@ namespace FrameLogic {
     gfTask* task;
     u32 task_type;
     PlayerFrameData playerFrame = PlayerFrameData();
+    gfPadStatus lastLocalInputs = gfPadStatus();
     void WriteInputsForFrame()
     {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
             playerFrame.playerIdx = localPlayerIdx;
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
-            // sending inputs + current game frame
+            FrameAdvance::ResetFrameAdvance();
+            FrameDataLogic();
         }
         else {
             OSReport("Invalid player index! Can't send inputs to emulator!\n");
@@ -747,11 +719,8 @@ namespace FrameLogic {
     }
     void FrameDataLogic()
     {
-        if(Netplay::localPlayerIdx != Netplay::localPlayerIdxInvalid)
-        {
-            playerFrame.frame = getCurrentFrame();
-            EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
-        }
+        playerFrame.frame = getCurrentFrame();
+        EXIPacket::CreateAndSend(EXICommand::CMD_ONLINE_INPUTS, &playerFrame, sizeof(PlayerFrameData));
     }
     void SendFrameCounterPointerLoc()
     {
@@ -783,7 +752,8 @@ namespace FrameLogic {
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
-        if (Netplay::IsInMatch() && getCurrentFrame() > 0) {
+        if (Netplay::IsInMatch()) {
+            g_PadSystem.updateLow();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
         Utils::RestoreRegs();
@@ -803,18 +773,8 @@ namespace FrameLogic {
             // reset flag to be used later
             // just resimulated/stalled/skipped/whatever, reset to normal
             // lol
-            FrameAdvance::ResetFrameAdvance();
             g_mtRandDefault.seed = 0x496ffd00;
             g_mtRandOther.seed = 0x496ffd00;
-            OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", currentFrame);
-            #ifdef NETPLAY_IMPL
-                FrameDataLogic();
-                if(!shouldTrackAllocs) 
-                {
-                    gfHeapManager::dumpAll();
-                    shouldTrackAllocs = true;
-                }
-            #endif
         }
 
         Utils::RestoreRegs();
@@ -1424,10 +1384,8 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
 
         // FrameAdvance Namespace
-        SyringeCore::syInlineHook(0x8004aa2c, reinterpret_cast<void*>(FrameAdvance::updateIpSwitchPreProcess));
+        SyringeCore::syInlineHook(0x8002ba80, reinterpret_cast<void*>(FrameAdvance::fixPadInconsistency));
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
-        //SyringeCore::syInlineHook(0x8002AE40, reinterpret_cast<void*>(FrameAdvance::getGamePadStatusHook));
-        //SyringeCore::syInlineHook(0x8002b038, reinterpret_cast<void*>(FrameAdvance::getSysPadStatusHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
 
@@ -1487,7 +1445,7 @@ namespace RollbackHooks {
         SyringeCore::syReplaceFunc(0x800ccec4, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         SyringeCore::syInlineHook(0x80687334, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x80687338, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
-        
+        SyringeCore::syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
