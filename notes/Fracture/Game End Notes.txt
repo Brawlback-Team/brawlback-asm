@@ -1,6 +1,0 @@
-muHowToPlayTask? + 0xC0 has flag to tell
-Sets it to 2 at 806d59e0 in processDefault
-
-
-process[scMelee] checks muHowToPlayTask + 0xC0 at 806d4778
-if equal to 2, sets gfSceneManager + 0x288, which causes exit[scMelee] to be called

@@ -1,7 +1,0 @@
-###############################################
-[Legacy TE] Extra null pointer catch [Fracture]
-###############################################
-.RESET
-op cmplwi r0, 0x30 @ $8018CFC4
-op blt- 0x34	   @ $8018CFC8
-
