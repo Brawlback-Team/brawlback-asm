@@ -1,0 +1,111 @@
+############################################################################
+# vBrawl RSBE01.txt    						   #
+#                        						   #
+# Requires GCTRealMate and the source folder provided to assemble the GCT! #
+#									   #
+# GCTconvert codes are compatible, if you want to add your own codes, go   #
+# into Source/Extra/More.asm to add additional codes!			   #
+# If you wish to keep your new codes organized, you can also summon        #
+# separate text files by using .include Source/<filename> within more.asm, #
+# or simply add them to there, directly. To disable one, simply place an   #
+# exclamation point in front of the name of that code! Enjoy Project+!!	   #
+# 									   #
+# NOTE: This file is very close to its limit! Adding codes to BOOST.txt is #
+# recommended to not have the build fail to load on console!		   #
+#									   #
+
+############################################################################
+
+#############################################################################
+######################          Backend Codes          ######################
+#############################################################################
+
+#############################################################################
+Unlock Everything [WiiMaster]
+#############################################################################
+* 42000000 90000000
+* 0417B640 FFFFFFFF
+* 0417B644 FFFFFFFF
+* 42000000 90000000
+* 0417B658 FFFFFFFF
+* 42000000 90000000
+* 0817BE80 80638063
+* 21100004 00000000
+* 42000000 90000000
+* 0817C398 80638063
+* 215D0004 00000000
+* 42000000 90000000
+* 0817CB68 02020202
+* 201F0004 00000000
+* E0000000 80008000
+
+#############################################################################
+Remove New! Icons Over Unlocked Characters [WhiteTPoison]
+#############################################################################
+HOOK @ $80690180
+{
+  li r3, 1
+}
+
+#############################################################################
+Disable Challenger Approaches [ds22]
+#############################################################################
+* 046F5D58 930F0008
+
+#############################################################################
+AXNextFrame -> VBI Hook Switch After Strap Screen v1.1 [Magus, Sammi-Husky]
+#############################################################################
+* 20200984 4BE00F24
+* 20497ED0 00000001
+CODE @ $80001198
+{
+	addi r6, r7, 0x4C
+	mr r3, r7
+	addi r4, r7, 0x34
+	addi r5, r7, 0x38
+}
+address $80023D5C @ $80002778
+op b -0x1E8184    @ $801E9A2C
+op blr	 	  @ $80200984
+
+PULSE
+{
+	lis r3,0x8020
+	ori r3,r3,0x0984
+	icbi r0,r3
+	lis r3,0x801E
+	ori r3,r3,0x9A2C
+	icbi r0,r3
+	isync
+	blr
+}
+
+* E2000002 00000000
+
+.include Source/vBrawl/FilePatchCode.asm
+
+##################################################
+[Legacy TE] Boot Directly to CSS v4  [PyotrLuzhin]
+##################################################
+CODE @ $806DD5F8
+{
+	addi r4, r21, 0x1B54; li r5, 0
+}
+HOOK @ $8002D3A0
+{
+  mr r4, r27
+  lis r5, 0x8042;	ori r5, r5, 0xA40
+  cmpw r4, r5;		bne- %END%
+  li r5, 0x3
+  stb r5, 0x2A5(r28);	stb r5, 0x2B1(r28)
+  li r30, 0x0
+}
+op b 0x10 @ $80078E14
+
+#############################################
+[Project+] Skip strap screen [PyotrLuzhin]
+#############################################
+* 046CADE8 48000298
+
+.include Source/LoadFiles.asm          # Load C++ codes
+#.include Source/Project+/MultiGCT.asm		# MAKE SURE THIS IS AT THE VERY BOTTOM OF THIS CODESET!!!

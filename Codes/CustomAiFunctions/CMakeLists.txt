@@ -1,0 +1,1 @@
+add_code(CUSTOM_AI_FUNCTIONS CustomAiFunctions.cpp)
