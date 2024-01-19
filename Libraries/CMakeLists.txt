@@ -1,5 +1,0 @@
-add_subdirectory("Brawl")
-add_subdirectory("Wii")
-add_subdirectory("Containers")
-add_subdirectory("Graphics")
-add_subdirectory("etl")

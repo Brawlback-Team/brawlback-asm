@@ -1,0 +1,20 @@
+80629A6D: ftManagerStaminaMode
+80629A6A: ftManagerGameRule
+80629A68: ftManagerField68
+805A00E0: g_GameGlobal
+803f602c:memmove
+801e104c:OSCancelThread
+80018de4:setGX__FP8gfCamera
+801f12fc:GXSetPointSize
+801f12ac:GXSetLineWidth
+801f12fc:GXSetPointSize
+801f12ac:GXSetLineWidth
+80069f2c:Print__FP7MessageCUs
+8006b660:setObjZcompare__FP7Messageib
+80281bbc:memcpy
+805e4c4c:__RTTI__7gfScene
+805e67e4:__RTTI__7scMelee
+80050424:gmSetRuleToGlobalModeMelee__FP17gmGlobalModeMelee
+806dce94:setupMelee__FPvUi
+800e19ec:updateStockCoin__8IfPlayerFP8IfPlayerUi
+80024e20:render__FPv

@@ -1,73 +1,45 @@
-
-name: Brawlback Kit
+name: Brawlback Syriinge
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "syriinge" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "syriinge" ]
 
 jobs:
   build:
     name: ubuntu-latest
     runs-on: ubuntu-latest
-    container: 
-      image: devkitpro/devkitppc:latest
-      options: --user root
-    strategy:
-        fail-fast: false
-        matrix:
-          build_type: [Netcode, Replays]
-          include:
-            - build_type: Netcode
-              toolchain: CMake/PPCToolchain.cmake
-              sd_contents: BRAWLBACK
-            - build_type: Replays
-              toolchain: CMake/PPCToolchain.cmake
-              sd_contents: SLIPPIREPLAYS
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
       with:
-        submodules: 'true'
-        
-    - name: 'Fetch Git Tags'
-      shell: bash
-      if: success()
+        submodules: 'recursive'
+    - name: Cache toolchains
+      id: cache-toolchains
+      uses: actions/cache@v3
+      with:
+        path: tools/
+        key: toolchains-${{ runner.os }}-${{ hashFiles('bbk.py') }}
+    - name: Set up for build
       run: |
-            git fetch --prune --unshallow
-            echo "GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-            echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-            echo "CURR_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
-            
-    - name: Install Dependencies
-      run: |
-           sudo apt-get update
-           sudo apt-get install gcc -y
-           wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.sh
-           sudo chmod +x cmake-3.25.2-linux-x86_64.sh
-           ./cmake-3.25.2-linux-x86_64.sh --skip-license --include-subdir
-           
-    
-    - name: Configure CMake
-      run: |
-           export DEVKITPPC=/opt/devkitpro/devkitPPC
-           ./cmake-3.25.2-linux-x86_64/bin/cmake -B build/ -S . -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain }} -D${{ matrix.sd_contents }}=1
-           
+        # install python deps; set up toolchains
+        python3 -m pip install --user -r tools/requirements.txt
+        python3 bbk.py setup
     - name: Build
-      run: ./cmake-3.25.2-linux-x86_64/bin/cmake --build build/
-      
+      run: make
     - name: "Package"
       if: success()
       working-directory: ${{ github.workspace }}
       run: |
-           mkdir artifact
-           FILE_NAME=${{ env.CURR_DATE }}-${{ env.GIT_HASH }}-${{ matrix.build_type }}.zip
+           mkdir SDCard artifact
+           mv sy_core.rel Brawlback-Online.rel ./SDCard
+           FILE_NAME=Brawlback-Online.zip
            zip -r "${FILE_NAME}" "./SDCard"
            mv "${FILE_NAME}" ./artifact/
-           
     - name: "Publish"
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.build_type }}
+        name: "Brawlback-Online"
         path: "./artifact/"

@@ -1,9 +1,8 @@
-[submodule "Libraries/etl"]
-	path = Libraries/etl
-	url = https://github.com/ETLCPP/etl
-[submodule "Libraries/container"]
-	path = Libraries/container
-	url = https://github.com/boostorg/container.git
-[submodule "Libraries/brawlback-common"]
-	path = Libraries/brawlback-common
-	url = https://github.com/Brawlback-Team/brawlback-common.git
+[submodule "lib/BrawlHeaders"]
+	path = lib/BrawlHeaders
+	url = https://github.com/JaredWhiteOne/BrawlHeaders
+	branch = main
+[submodule "lib/brawlback-common"]
+	path = lib/brawlback-common
+	url = https://github.com/Brawlback-Team/brawlback-common
+	branch = unstable/syringe-refactor
