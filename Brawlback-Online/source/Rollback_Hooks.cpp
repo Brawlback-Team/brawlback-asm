@@ -1136,11 +1136,10 @@ namespace NetMenu {
         Utils::RestoreRegs();
     }
     OSThread thread;
-    char* stack;
+    char stack[0x4000];
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
         OSReport("Loaded into online training room\n");
-        stack = new (Heaps::Network) char[0x4000];
 
         OSCreateThread(&thread, Netplay::StartMatching, NULL, stack + 0x4000, 0x4000, 31, 0);
         OSResumeThread(&thread);
