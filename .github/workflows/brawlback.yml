@@ -1,10 +1,10 @@
-name: Brawlback Syriinge
+name: Brawlback Syriinge Online Plugin
 
 on:
   push:
-    branches: [ "syriinge" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "syriinge" ]
+    branches: [ "master" ]
 
 jobs:
   build:
