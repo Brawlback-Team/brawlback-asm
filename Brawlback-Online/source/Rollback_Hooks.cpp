@@ -11,6 +11,9 @@
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
+
+extern "C" void __cxa_pure_virtual() { while (1); }
+
 bu32 frameCounter = 0;
 bool shouldTrackAllocs = false;
 bool doDumpList = false;
@@ -186,7 +189,6 @@ namespace Util {
         printInputs(pad);
         OSReport("[/Sync]\n");
     }
-
     void FixFrameDataEndianness(FrameData* fd) {
         Utils::swapByteOrder(fd->randomSeed);
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
@@ -209,7 +211,6 @@ namespace Util {
             Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
         }
     }
-
     BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls)
     {
         BrawlbackControls ret = BrawlbackControls();
@@ -756,12 +757,14 @@ namespace FrameLogic {
             g_PadSystem.updateLow();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
+        NetMenu::MatchmakingText();
         Utils::RestoreRegs();
     }
     void beginFrame()
     {
         Utils::SaveRegs();
         bu32 currentFrame = getCurrentFrame();
+        
         //Util::printGameInputs(PAD_SYSTEM->pads[0]);
         //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
 
@@ -905,10 +908,12 @@ namespace Netplay {
             }
         }
     }
-
+    
     static void* StartMatching(void*)
     {
         OSReport("Filling in game settings from game\n");
+        NetMenu::text = "Finding Opponent";
+        NetMenu::showText = true;
         // populate game settings
         fillOutGameSettings(gameSettings);
 
@@ -928,6 +933,7 @@ namespace Netplay {
         while (!foundMatch && isInTrainingRoom);
         if(!isInTrainingRoom)
         {
+            NetMenu::text = "Canceling Matchmaking";
             OSReport("Canceling Matchmaking...\n");
             EXIPacket::CreateAndSend(EXICommand::CMD_CANCEL_MATCHMAKING);
         }
@@ -949,6 +955,7 @@ namespace Netplay {
         cmd_byte = read_data[0];
 
         if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
+            NetMenu::text = "Found Opponent";
             GameSettings gameSettingsFromOpponent;
             memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
             FixGameSettingsEndianness(gameSettingsFromOpponent);
@@ -975,6 +982,8 @@ namespace NetMenu {
     bool skipToCSS = false;
     bool setRules = false;
     bool onQuickplayMenus = false;
+    char* text;
+    bool showText;
     __attribute__((naked)) void setToLoggedIn() {
         asm volatile(
             "li 4, 3\n\t"
@@ -1116,6 +1125,7 @@ namespace NetMenu {
         gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
         gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
+        NetMenu::showText = false;
     }
     void startMatchingCallback() {
         Utils::SaveRegs();
@@ -1229,6 +1239,7 @@ namespace NetMenu {
         Utils::SaveRegs();
         if(Netplay::foundMatch)
         {
+            NetMenu::text = "Starting Game";
             BootToScMelee();
         }
         Utils::RestoreRegs();
@@ -1333,6 +1344,26 @@ namespace NetMenu {
         asm volatile (
             "lbz 0, 0x0040 (4)\n\t"
         );
+    }
+    void MatchmakingText() 
+    {
+        if(showText) {
+            TextPrinter::setup();
+            TextPrinter::start2D();
+            TextPrinter::message.fontScaleY = 0.75;
+            TextPrinter::message.fontScaleX = 0.75;
+            TextPrinter::lineHeight = 20 * TextPrinter::message.fontScaleY;
+            TextPrinter::message.xPos = 20;
+            TextPrinter::message.yPos = 69;
+            TextPrinter::printLine(text);
+            GXColor selectedColor = GXColor();
+            selectedColor.r = 0xFF;
+            selectedColor.g = 0xAA;
+            selectedColor.b = 0xAA;
+            selectedColor.a = 0xDD;
+            TextPrinter::setTextColor(selectedColor);
+            TextPrinter::padToWidth(16);
+        }
     }
     int register4 = 0;
     void RemoveDisconnectPanel() 

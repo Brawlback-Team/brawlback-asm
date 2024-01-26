@@ -201,7 +201,6 @@ namespace TextPrinter {
 
         //clear 2D flag
         is2D = false;
-        startBoundingBox();
 
         //setDefaultEnv uses some values from the message buffer
         //We don't need these values to print, but ignoring it will causes crashes
@@ -321,7 +320,7 @@ namespace TextPrinter {
         }
 
         int multiplier = (is2D) ? 1 : -1;
-        Drawable::Rect* r = new Drawable::Rect{
+        Drawable::Rect* r = new(Heaps::Network) Drawable::Rect{
                 0,
                 1,
                 color,
@@ -342,4 +341,14 @@ namespace TextPrinter {
         message.textColor.color3 = color;
         message.textColor.color4 = color;
     }
+
+    Message message;
+    float lineHeight = 20;
+    float maxWidth;
+    float lineStart;
+    float startY;
+    float lastPadLocation;
+    bool is2D = false;
+    bool renderPre = false;
+    u32 bboxIdx = 0;
 }

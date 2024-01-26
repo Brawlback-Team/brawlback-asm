@@ -21,6 +21,8 @@
 #include "utils.h"
 #include "exi_packet.h"
 
+#include "ms/message.h"
+#include "Text_Printer.h"
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -186,12 +188,14 @@ namespace NetMenu {
     extern bool setRules;
     extern bool onQuickplayMenus;
     extern int register4;
+    extern char* text;
+    extern bool showText;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene);
     void BootToScMelee();
-
+    void MatchmakingText();
     // Hooks
     __attribute__((naked)) void setToLoggedIn();
     __attribute__((naked)) void setToLoggedIn2();

@@ -218,13 +218,13 @@ namespace TextPrinter {
     void startNormal();
     void setup();
 
-    Message message;
-    float lineHeight = 20;
-    float maxWidth;
-    float lineStart;
-    float startY;
-    float lastPadLocation;
-    bool is2D = false;
-    bool renderPre = false;
-    u32 bboxIdx = 0;
+    extern Message message;
+    extern float lineHeight;
+    extern float maxWidth;
+    extern float lineStart;
+    extern float startY;
+    extern float lastPadLocation;
+    extern bool is2D;
+    extern bool renderPre;
+    extern u32 bboxIdx;
 }
