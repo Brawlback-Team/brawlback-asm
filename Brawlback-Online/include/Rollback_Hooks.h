@@ -12,6 +12,7 @@
 #include <gf/gf_scene.h>
 #include <sc/sc_melee.h>
 #include <mt/mt_rand.h>
+#include "mu/mu_msg.h"
 #include <OS/OSTime.h>
 #include <ExiStructures.h>
 #include <ip/controls.h>
@@ -188,8 +189,7 @@ namespace NetMenu {
     extern bool setRules;
     extern bool onQuickplayMenus;
     extern int register4;
-    extern char* text;
-    extern bool showText;
+    extern MuMsg* message;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
@@ -238,6 +238,7 @@ namespace NetMenu {
     void SkipDirectlyToTrainingRoom();
     void GetRulesFromCSSBoot();
     void SetRulesFromCSSBoot();
+    void ReplaceTrainingRoomText();
 }
 
 namespace NetReport {

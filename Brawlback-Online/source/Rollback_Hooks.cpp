@@ -681,7 +681,10 @@ namespace FrameAdvance {
     }
     void handleFrameAdvanceHook() {
         Utils::SaveRegs();
-        setFrameAdvanceFromEmu();
+        if(Netplay::IsInMatch()) 
+        {
+            setFrameAdvanceFromEmu();
+        }
         asm volatile("cmplw 19, %0\n\t"
             :
             : "r" (framesToAdvance)
@@ -753,11 +756,10 @@ namespace FrameLogic {
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
+        g_PadSystem.updateLow();
         if (Netplay::IsInMatch()) {
-            g_PadSystem.updateLow();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
-        NetMenu::MatchmakingText();
         Utils::RestoreRegs();
     }
     void beginFrame()
@@ -912,28 +914,18 @@ namespace Netplay {
     static void* StartMatching(void*)
     {
         OSReport("Filling in game settings from game\n");
-        NetMenu::text = "Finding Opponent";
-        NetMenu::showText = true;
-        // populate game settings
-        fillOutGameSettings(gameSettings);
-
-        // send our populated game settings to the emu
-        EXIPacket::CreateAndSend(EXICommand::CMD_START_MATCH, &gameSettings, sizeof(GameSettings));
-
-        // start emu netplay thread so it can start trying to find an opponent
-        EXIPacket::CreateAndSend(EXICommand::CMD_FIND_OPPONENT);
 
         // Temporary. Atm, this just stalls main thread while we do our mm/connecting
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
-        do 
+        while (!foundMatch && isInTrainingRoom)
         {
             foundMatch = CheckIsMatched();
         }
-        while (!foundMatch && isInTrainingRoom);
+         
         if(!isInTrainingRoom)
         {
-            NetMenu::text = "Canceling Matchmaking";
+            NetMenu::message->printf(0, "Canceling Search");
             OSReport("Canceling Matchmaking...\n");
             EXIPacket::CreateAndSend(EXICommand::CMD_CANCEL_MATCHMAKING);
         }
@@ -955,7 +947,7 @@ namespace Netplay {
         cmd_byte = read_data[0];
 
         if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
-            NetMenu::text = "Found Opponent";
+            NetMenu::message->printf(0, "Found Opponent");
             GameSettings gameSettingsFromOpponent;
             memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
             FixGameSettingsEndianness(gameSettingsFromOpponent);
@@ -982,8 +974,6 @@ namespace NetMenu {
     bool skipToCSS = false;
     bool setRules = false;
     bool onQuickplayMenus = false;
-    char* text;
-    bool showText;
     __attribute__((naked)) void setToLoggedIn() {
         asm volatile(
             "li 4, 3\n\t"
@@ -1125,7 +1115,6 @@ namespace NetMenu {
         gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
         gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
-        NetMenu::showText = false;
     }
     void startMatchingCallback() {
         Utils::SaveRegs();
@@ -1150,6 +1139,15 @@ namespace NetMenu {
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
         OSReport("Loaded into online training room\n");
+        
+        // populate game settings
+        fillOutGameSettings(Netplay::gameSettings);
+
+        // send our populated game settings to the emu
+        EXIPacket::CreateAndSend(EXICommand::CMD_START_MATCH, &Netplay::gameSettings, sizeof(GameSettings));
+
+        // start emu netplay thread so it can start trying to find an opponent
+        EXIPacket::CreateAndSend(EXICommand::CMD_FIND_OPPONENT);
 
         OSCreateThread(&thread, Netplay::StartMatching, NULL, stack + 0x4000, 0x4000, 31, 0);
         OSResumeThread(&thread);
@@ -1239,7 +1237,7 @@ namespace NetMenu {
         Utils::SaveRegs();
         if(Netplay::foundMatch)
         {
-            NetMenu::text = "Starting Game";
+            message->printf(0, "Loading Match");
             BootToScMelee();
         }
         Utils::RestoreRegs();
@@ -1345,26 +1343,6 @@ namespace NetMenu {
             "lbz 0, 0x0040 (4)\n\t"
         );
     }
-    void MatchmakingText() 
-    {
-        if(showText) {
-            TextPrinter::setup();
-            TextPrinter::start2D();
-            TextPrinter::message.fontScaleY = 0.75;
-            TextPrinter::message.fontScaleX = 0.75;
-            TextPrinter::lineHeight = 20 * TextPrinter::message.fontScaleY;
-            TextPrinter::message.xPos = 20;
-            TextPrinter::message.yPos = 69;
-            TextPrinter::printLine(text);
-            GXColor selectedColor = GXColor();
-            selectedColor.r = 0xFF;
-            selectedColor.g = 0xAA;
-            selectedColor.b = 0xAA;
-            selectedColor.a = 0xDD;
-            TextPrinter::setTextColor(selectedColor);
-            TextPrinter::padToWidth(16);
-        }
-    }
     int register4 = 0;
     void RemoveDisconnectPanel() 
     {
@@ -1398,6 +1376,22 @@ namespace NetMenu {
             : "r"(register4)
         );
     }
+    MuMsg* message;
+    void ReplaceTrainingRoomText() 
+    {
+        Utils::SaveRegs();
+        asm volatile(
+            "mr %0, 3\n\t"
+            : "=r"(message)
+        );
+        Utils::RestoreRegs();
+    }
+    void ReplaceTrainingRoomText2() 
+    {
+        Utils::SaveRegs();
+        message->printf(0, "Finding Opponent");
+        Utils::RestoreRegs();
+    }
 }
 
 namespace RollbackHooks {
@@ -1414,7 +1408,6 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
 
         // FrameAdvance Namespace
-        SyringeCore::syInlineHook(0x8002ba80, reinterpret_cast<void*>(FrameAdvance::fixPadInconsistency));
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
@@ -1476,6 +1469,8 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80687334, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x80687338, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        SyringeCore::syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
+        SyringeCore::syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));

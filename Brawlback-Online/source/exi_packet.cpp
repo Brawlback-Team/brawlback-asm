@@ -94,7 +94,7 @@ void EXIPacket::CreateAndSend(unsigned char EXICmd, void* source, unsigned int s
 
     // copy EXICmd byte into packet
     memmove(new_packet, &EXICmd, sizeof(EXICmd));
-    if (source != (unsigned char*)0x0) {
+    if (source != NULL) {
         // copy actual packet into our buffer
         memmove(new_packet + sizeof(EXICmd), source, size);
     }
