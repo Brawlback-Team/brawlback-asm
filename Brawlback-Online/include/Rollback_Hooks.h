@@ -23,7 +23,6 @@
 #include "exi_packet.h"
 
 #include "ms/message.h"
-#include "Text_Printer.h"
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL

@@ -774,10 +774,7 @@ namespace FrameLogic {
             "lwz %0, 0x0944(30)\n\t"
             : "=r"(flag)
         );
-        if(flag == -3)
-        {
-            fixStaleInputs = true;
-        }
+        fixStaleInputs = flag == -3;
         Utils::RestoreRegs();
         asm volatile(
             "cmpwi 3, 0\n\t"
