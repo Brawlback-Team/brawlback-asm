@@ -12,6 +12,7 @@
 #include <gf/gf_scene.h>
 #include <sc/sc_melee.h>
 #include <mt/mt_rand.h>
+#include "mu/mu_msg.h"
 #include <OS/OSTime.h>
 #include <ExiStructures.h>
 #include <ip/controls.h>
@@ -21,6 +22,8 @@
 #include "utils.h"
 #include "exi_packet.h"
 
+#include "ms/message.h"
+#include "Text_Printer.h"
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -42,8 +45,11 @@ namespace FrameLogic {
     extern gfTask* task;
     extern u32 task_type;
     extern PlayerFrameData playerFrame;
-    extern gfPadStatus lastLocalInputs;
+    extern gfPadStatus lastLocalInputs[4];
+    extern bool fixStaleInputs;
     // Functions
+    void ReduceStickNoise();
+    void FixStaleInputs();
     void WriteInputsForFrame();
     void FrameDataLogic();
     void SendFrameCounterPointerLoc();
@@ -58,6 +64,7 @@ namespace FrameLogic {
     void endMainLoop();
     void gfTaskProcessHook();
     __attribute__((naked)) void gfTaskProcessHook2();
+    void setFixStaleInputsTrue();
 }
 namespace FrameAdvance {
     // Variables
@@ -186,12 +193,13 @@ namespace NetMenu {
     extern bool setRules;
     extern bool onQuickplayMenus;
     extern int register4;
+    extern MuMsg* message;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene);
     void BootToScMelee();
-
+    void MatchmakingText();
     // Hooks
     __attribute__((naked)) void setToLoggedIn();
     __attribute__((naked)) void setToLoggedIn2();
@@ -234,6 +242,7 @@ namespace NetMenu {
     void SkipDirectlyToTrainingRoom();
     void GetRulesFromCSSBoot();
     void SetRulesFromCSSBoot();
+    void ReplaceTrainingRoomText();
 }
 
 namespace NetReport {

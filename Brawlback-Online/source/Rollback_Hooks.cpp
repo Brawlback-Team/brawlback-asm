@@ -7,10 +7,16 @@
 #include <modules.h>
 #include "ip/ip_pad_config.h"
 #include "if/if_mngr.h"
+#include "ft/ft_manager.h"
+#include "sc/sc_melee.h"
+
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
+
+extern "C" void __cxa_pure_virtual() { while (1); }
+
 bu32 frameCounter = 0;
 bool shouldTrackAllocs = false;
 bool doDumpList = false;
@@ -66,10 +72,9 @@ void FillInMeleeObj() {
 }
 
 bool gameHasStarted() {
-    scMelee* melee = dynamic_cast<scMelee*>(gfSceneManager::getInstance()->searchScene("scMelee"));
-    if(melee)
+    if(&g_scMelee != NULL)
     {
-        return melee->m_operatorReadyGo->isEnd() != 0;
+        return g_scMelee.m_operatorReadyGo->isEnd() != 0;
     }
     else
     {
@@ -186,7 +191,6 @@ namespace Util {
         printInputs(pad);
         OSReport("[/Sync]\n");
     }
-
     void FixFrameDataEndianness(FrameData* fd) {
         Utils::swapByteOrder(fd->randomSeed);
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
@@ -209,7 +213,6 @@ namespace Util {
             Utils::swapByteOrder(fd->playerFrameDatas[i].sysPad.newPressedButtons);
         }
     }
-
     BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls)
     {
         BrawlbackControls ret = BrawlbackControls();
@@ -275,7 +278,7 @@ namespace Util {
     }
     
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx) {
-        /*if(gameHasStarted())
+        if(gameHasStarted())
         {
             ftManager* fighterManager = g_ftManager;
             Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
@@ -288,7 +291,7 @@ namespace Util {
 
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
-        }*/
+        }
         pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
         pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
     }
@@ -680,7 +683,10 @@ namespace FrameAdvance {
     }
     void handleFrameAdvanceHook() {
         Utils::SaveRegs();
-        setFrameAdvanceFromEmu();
+        if(Netplay::IsInMatch()) 
+        {
+            setFrameAdvanceFromEmu();
+        }
         asm volatile("cmplw 19, %0\n\t"
             :
             : "r" (framesToAdvance)
@@ -703,12 +709,35 @@ namespace FrameLogic {
     gfTask* task;
     u32 task_type;
     PlayerFrameData playerFrame = PlayerFrameData();
-    gfPadStatus lastLocalInputs = gfPadStatus();
+    gfPadStatus lastLocalInputs[4];
+    bool fixStaleInputs = true;
+    void ReduceStickNoise()
+    {
+        if(g_PadSystem.gcPads->stickX > -2 && g_PadSystem.gcPads->stickX < 2)
+        {
+            g_PadSystem.gcPads->stickX = 0;
+        }
+        if(g_PadSystem.gcPads->stickY > -2 && g_PadSystem.gcPads->stickY < 2)
+        {
+            g_PadSystem.gcPads->stickY = 0;
+        }
+    }
+    void FixStaleInputs() 
+    {
+        if(fixStaleInputs)
+        {
+            memmove(g_PadSystem.gcPads, lastLocalInputs, sizeof(gfPadStatus) * 4);
+        }
+        memmove(lastLocalInputs, g_PadSystem.gcPads, sizeof(gfPadStatus) * 4);
+        fixStaleInputs = false;
+    }
     void WriteInputsForFrame()
     {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
             playerFrame.playerIdx = localPlayerIdx;
+            ReduceStickNoise();
+            FixStaleInputs();
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             FrameAdvance::ResetFrameAdvance();
             FrameDataLogic();
@@ -737,6 +766,23 @@ namespace FrameLogic {
         }
         return false;
     }
+    void setFixStaleInputsTrue()
+    {
+        Utils::SaveRegs();
+        bs32 flag;
+        asm volatile(
+            "lwz %0, 0x0944(30)\n\t"
+            : "=r"(flag)
+        );
+        if(flag == -3)
+        {
+            fixStaleInputs = true;
+        }
+        Utils::RestoreRegs();
+        asm volatile(
+            "cmpwi 3, 0\n\t"
+        );
+    }
     void initFrameCounter()
     {
         Utils::SaveRegs();
@@ -752,8 +798,8 @@ namespace FrameLogic {
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
+        g_PadSystem.updateLow();
         if (Netplay::IsInMatch()) {
-            g_PadSystem.updateLow();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
         Utils::RestoreRegs();
@@ -762,6 +808,7 @@ namespace FrameLogic {
     {
         Utils::SaveRegs();
         bu32 currentFrame = getCurrentFrame();
+        
         //Util::printGameInputs(PAD_SYSTEM->pads[0]);
         //Util::printGameInputs(PAD_SYSTEM->sysPads[0]);
 
@@ -905,29 +952,22 @@ namespace Netplay {
             }
         }
     }
-
+    
     static void* StartMatching(void*)
     {
         OSReport("Filling in game settings from game\n");
-        // populate game settings
-        fillOutGameSettings(gameSettings);
-
-        // send our populated game settings to the emu
-        EXIPacket::CreateAndSend(EXICommand::CMD_START_MATCH, &gameSettings, sizeof(GameSettings));
-
-        // start emu netplay thread so it can start trying to find an opponent
-        EXIPacket::CreateAndSend(EXICommand::CMD_FIND_OPPONENT);
 
         // Temporary. Atm, this just stalls main thread while we do our mm/connecting
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
-        do 
+        while (!foundMatch && isInTrainingRoom)
         {
             foundMatch = CheckIsMatched();
         }
-        while (!foundMatch && isInTrainingRoom);
+         
         if(!isInTrainingRoom)
         {
+            NetMenu::message->printf(0, "Canceling Search");
             OSReport("Canceling Matchmaking...\n");
             EXIPacket::CreateAndSend(EXICommand::CMD_CANCEL_MATCHMAKING);
         }
@@ -949,6 +989,7 @@ namespace Netplay {
         cmd_byte = read_data[0];
 
         if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
+            NetMenu::message->printf(0, "Found Opponent");
             GameSettings gameSettingsFromOpponent;
             memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
             FixGameSettingsEndianness(gameSettingsFromOpponent);
@@ -1140,6 +1181,15 @@ namespace NetMenu {
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
         OSReport("Loaded into online training room\n");
+        
+        // populate game settings
+        fillOutGameSettings(Netplay::gameSettings);
+
+        // send our populated game settings to the emu
+        EXIPacket::CreateAndSend(EXICommand::CMD_START_MATCH, &Netplay::gameSettings, sizeof(GameSettings));
+
+        // start emu netplay thread so it can start trying to find an opponent
+        EXIPacket::CreateAndSend(EXICommand::CMD_FIND_OPPONENT);
 
         OSCreateThread(&thread, Netplay::StartMatching, NULL, stack + 0x4000, 0x4000, 31, 0);
         OSResumeThread(&thread);
@@ -1229,6 +1279,7 @@ namespace NetMenu {
         Utils::SaveRegs();
         if(Netplay::foundMatch)
         {
+            message->printf(0, "Loading Match");
             BootToScMelee();
         }
         Utils::RestoreRegs();
@@ -1367,6 +1418,22 @@ namespace NetMenu {
             : "r"(register4)
         );
     }
+    MuMsg* message;
+    void ReplaceTrainingRoomText() 
+    {
+        Utils::SaveRegs();
+        asm volatile(
+            "mr %0, 3\n\t"
+            : "=r"(message)
+        );
+        Utils::RestoreRegs();
+    }
+    void ReplaceTrainingRoomText2() 
+    {
+        Utils::SaveRegs();
+        message->printf(0, "Finding Opponent");
+        Utils::RestoreRegs();
+    }
 }
 
 namespace RollbackHooks {
@@ -1383,7 +1450,6 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
 
         // FrameAdvance Namespace
-        SyringeCore::syInlineHook(0x8002ba80, reinterpret_cast<void*>(FrameAdvance::fixPadInconsistency));
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
@@ -1397,6 +1463,7 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80017760, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
         SyringeCore::syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
         SyringeCore::syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
+        SyringeCore::syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));
 
         // GMMelee Namespace
         SyringeCore::syInlineHook(0x806dd03c, reinterpret_cast<void*>(GMMelee::postSetupMelee));
@@ -1445,6 +1512,8 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80687334, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::sySimpleHook(0x80687338, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        SyringeCore::syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
+        SyringeCore::syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
         // NetReport Namespace
         //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
