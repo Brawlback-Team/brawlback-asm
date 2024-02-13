@@ -334,7 +334,7 @@ extern u8 ftManagerGameRule;
 extern u8 ftManagerStaminaMode;
 extern u8 ftManagerField68;
 namespace Match {
-    const char* relevantHeaps = "System WiiPad IteamResource InfoResource CommonResource CopyFB Physics ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 Fighter1Instance Fighter2Instance FighterTechqniq InfoInstance InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode OverlayCommon Tmp OverlayStage ItemExtraResource FighterKirbyResource2 FighterKirbyResource3";
+    const char* relevantHeaps = "CopyFB OverlayCommon MenuInstance WiiPad IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 FighterEffect OverlayFighter1 OverlayFighter2";
     gmSetRule rules = {};
     void PopulateGameReport(GameReport& report)
     {
@@ -579,15 +579,15 @@ namespace FrameAdvance {
         bu32 gameLogicFrame = getCurrentFrame();
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
         
-        GetInputsForFrame(gameLogicFrame, &currentFrameData);
+        GetInputsForFrame(gameLogicFrame, inputs);
         
+        setFrameAdvanceFromEmu();
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
         {
             gfPadStatus& status = g_PadSystem.gcPads[i];
             getGamePadStatusInjection(status, i, true);
         }
-        
-        // save state on each simulated frame (this includes resim frames)
+    // save state on each simulated frame (this includes resim frames)
         Util::SaveState(gameLogicFrame);
 
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
@@ -605,11 +605,6 @@ namespace FrameAdvance {
     void updateLowHook() 
     {
         Utils::SaveRegs();
-        bu32 padStatus;
-        asm volatile(
-            "mr %0, 26\n\t"
-            : "=r"(padStatus)
-        );
         if(Netplay::IsInMatch())
         {
             if(!shouldTrackAllocs) 
@@ -620,12 +615,8 @@ namespace FrameAdvance {
             }
             OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
             FrameLogic::WriteInputsForFrame();
-            ProcessGameSimulationFrame(&currentFrameData);
         }
         Utils::RestoreRegs();
-        asm volatile(
-            "lwz 4, -0x4390 (13)\n\t"
-        );
     }
     void turnOnAllAppropriatePorts()
     {
@@ -638,6 +629,15 @@ namespace FrameAdvance {
             }
         }
         Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void moveUpdateSystem()
+    {
+        asm volatile(
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x71d0\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
     }
     void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad)
     {
@@ -683,11 +683,12 @@ namespace FrameAdvance {
     }
     void handleFrameAdvanceHook() {
         Utils::SaveRegs();
-        if(Netplay::IsInMatch()) 
+        if(Netplay::IsInMatch())
         {
             setFrameAdvanceFromEmu();
         }
-        asm volatile("cmplw 19, %0\n\t"
+        asm volatile(
+            "cmplw 19, %0\n\t"
             :
             : "r" (framesToAdvance)
         );
@@ -739,7 +740,6 @@ namespace FrameLogic {
             ReduceStickNoise();
             FixStaleInputs();
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
-            FrameAdvance::ResetFrameAdvance();
             FrameDataLogic();
         }
         else {
@@ -795,11 +795,67 @@ namespace FrameLogic {
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
-        g_PadSystem.updateLow();
         if (Netplay::IsInMatch()) {
+            if(!shouldTrackAllocs) 
+            {
+                gfHeapManager::dumpAll();
+                FrameLogic::SendFrameCounterPointerLoc();
+                shouldTrackAllocs = true;
+            }
+            OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
+            FrameLogic::WriteInputsForFrame();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
         Utils::RestoreRegs();
+    }
+    void beginningOfFrameLoop()
+    {
+        Utils::SaveRegs();
+        if(Netplay::IsInMatch())
+        {
+            FrameAdvance::ProcessGameSimulationFrame(&FrameAdvance::currentFrameData);
+        }
+        g_PadSystem.updateSystem();
+        Utils::RestoreRegs(); 
+    }
+    __attribute__((naked)) void beginningOfFrameLoop2()
+    {
+        asm volatile(
+            "mr 4, %0\n\t"
+            "cmplwi 4, 0\n\t"
+            "beq break2\n\t"
+            "mr	3, 23\n\t"
+            "mr	4, 19\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x7358\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break2:\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x73ac\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r" (FrameAdvance::framesToAdvance)
+        );
+    }
+    __attribute__((naked)) void isBreakGameProcLoopHook()
+    {
+        asm volatile(
+            "mr 0, %0\n\t"
+            "cmpwi 0, 1\n\t"
+            "beq break\n\t"
+            "li	0, 0\n\t"
+            "lis 12, 0x8004\n\t"
+            "ori 12, 12, 0xadd8\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break:\n\t"
+            "li 3, 0\n\t"
+            "blr\n\t"
+            :
+            : "r"((bu32)Netplay::isInMatch)
+        );
     }
     void beginFrame()
     {
@@ -1432,7 +1488,6 @@ namespace NetMenu {
         Utils::RestoreRegs();
     }
 }
-
 namespace RollbackHooks {
     void InstallHooks()
     {
@@ -1447,17 +1502,22 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
 
         // FrameAdvance Namespace
-        SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
+        //SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
+        SyringeCore::sySimpleHook(0x800171cc, reinterpret_cast<void*>(FrameAdvance::moveUpdateSystem));
 
         // FrameLogic Namespace
         //SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
         //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
         //SyringeCore::syHookFunction(0x800174fc, reinterpret_cast<void*>(FrameLogic::endMainLoop));
+        
         SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
-        SyringeCore::syInlineHook(0x80017760, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
+        SyringeCore::syInlineHook(0x80017350, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop));
+        SyringeCore::sySimpleHook(0x80017354, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop2));
+        SyringeCore::sySimpleHook(0x8004add0, reinterpret_cast<void*>(FrameLogic::isBreakGameProcLoopHook));
+        SyringeCore::syInlineHook(0x800173a0, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
         SyringeCore::syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
         SyringeCore::syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
         SyringeCore::syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));

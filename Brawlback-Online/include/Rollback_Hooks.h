@@ -58,6 +58,9 @@ namespace FrameLogic {
     void initFrameCounter();
     void updateFrameCounter();
     void beginningOfMainGameLoop();
+    void beginningOfFrameLoop();
+    __attribute__((naked)) void beginningOfFrameLoop2();
+    __attribute__((naked)) void isBreakGameProcLoopHook();
     void beginFrame();
     void endFrame();
     void endMainLoop();
@@ -86,6 +89,7 @@ namespace FrameAdvance {
     void updateLowHook();
     void handleFrameAdvanceHook();
     void turnOnAllAppropriatePorts();
+    __attribute__((naked)) void moveUpdateSystem();
 }
 
 // TODO: put this in the submodule and pack it
