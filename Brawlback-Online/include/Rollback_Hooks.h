@@ -44,12 +44,12 @@ namespace FrameLogic {
     extern gfTask* task;
     extern u32 task_type;
     extern PlayerFrameData playerFrame;
-    extern gfPadStatus lastLocalInputs[4];
+    extern gfPadStatus lastLocalInput;
     extern gfPadStatus inputBuffer;
     extern bool fixStaleInputs;
     extern bool shouldSkipTask;
     // Functions
-    void ReduceStickNoise(bu8 port);
+    void ReduceStickNoise();
     void FixStaleInputs();
     void WriteInputsForFrame();
     void FrameDataLogic();

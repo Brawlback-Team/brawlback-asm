@@ -592,6 +592,20 @@ namespace FrameAdvance {
             getGamePadStatusInjection(status, i, true);
         }
         bu32 queue = (0x805ba480);
+        bu16 queue_param2 = *(bu16*)(queue + 2);
+        bu16 queue_param1 = *(bu16*)(queue);
+        if(queue_param2 > 0)
+        {
+            queue_param2--;
+        }
+        else 
+        {
+            queue_param2 = 3;
+        }
+        if(queue_param1 != queue_param2 + 1 & 3)
+        {
+            memmove((void*)(queue + 2), &queue_param2, sizeof(bu16));
+        }
         push_gfPadStatusQueue((void*)queue, (&g_PadSystem + 0x40));
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
 
@@ -610,7 +624,6 @@ namespace FrameAdvance {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
-            FrameLogic::FixStaleInputs();
             FrameLogic::inputBuffer = g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort];
             Util::InjectBrawlbackPadToPadStatus(&g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
         }
@@ -708,28 +721,28 @@ namespace FrameLogic {
     gfTask* task;
     u32 task_type;
     PlayerFrameData playerFrame = PlayerFrameData();
-    gfPadStatus lastLocalInputs[4];
+    gfPadStatus lastLocalInputs;
     gfPadStatus inputBuffer;
     bool fixStaleInputs = true;
     bool shouldSkipTask = false;
-    void ReduceStickNoise(bu8 port)
+    void ReduceStickNoise()
     {
         if(inputBuffer.stickX > -2 && inputBuffer.stickX < 2)
         {
-            g_PadSystem.gcPads->stickX = 0;
+            inputBuffer.stickX = 0;
         }
         if(inputBuffer.stickY > -2 && inputBuffer.stickY < 2)
         {
-            g_PadSystem.gcPads->stickY = 0;
+            inputBuffer.stickY = 0;
         }
     }
     void FixStaleInputs() 
     {
         if(fixStaleInputs)
         {
-            memmove(g_PadSystem.gcPads, lastLocalInputs, sizeof(lastLocalInputs));
+            memmove(&inputBuffer, &lastLocalInputs, sizeof(lastLocalInputs));
         }
-        memmove(lastLocalInputs, g_PadSystem.gcPads, sizeof(g_PadSystem.gcPads));
+        memmove(&lastLocalInputs, &inputBuffer, sizeof(inputBuffer));
         fixStaleInputs = false;
     }
     void WriteInputsForFrame()
@@ -737,7 +750,8 @@ namespace FrameLogic {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
             playerFrame.playerIdx = localPlayerIdx;
-            ReduceStickNoise(Netplay::getGameSettings().localPlayerPort);
+            ReduceStickNoise();
+            FixStaleInputs();
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             FrameDataLogic();
         }
