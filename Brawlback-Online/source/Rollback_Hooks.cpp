@@ -24,6 +24,8 @@ bool isRollback = false;
 void setupMelee(void* unk, bu32 stageID);
 void render(void* unk);
 int getCounter();
+bool pop_gfPadStatusQueue(void* unk, void* pad);
+void push_gfPadStatusQueue(void* unk, void* pads);
 bu32 getCurrentFrame() {
     return frameCounter;
 }
@@ -154,19 +156,19 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 namespace Util {
     bool hasSetControls = false;
     void printInputs(const BrawlbackPad& pad) {
-        OSReport(" -- Pad --\n");
+        OSReport(" -- BB Pad --\n");
         OSReport("StickX: %hhu ", pad.stickX);
         OSReport("StickY: %hhu ", pad.stickY);
         OSReport("CStickX: %hhu ", pad.cStickX);
         OSReport("CStickY: %hhu\n", pad.cStickY);
         OSReport("Buttons: ");
         OSReport("Buttons: 0x%x", pad.buttons);
-        OSReport("holdButtons: 0x%x", pad.holdButtons);
-        //OSReport(" ---------\n");
+        OSReport("holdButtons: 0x%x\n", pad.holdButtons);
+        OSReport(" ---------\n");
     }
 
     void printGameInputs(const gfPadStatus& pad) {
-        OSReport(" -- Pad --\n");
+        OSReport(" -- Game Pad --\n");
         OSReport(" LAnalogue: %u    RAnalogue %u\n", pad.LAnalogue, pad.RAnalogue);
         OSReport("StickX: %hhu ", pad.stickX);
         OSReport("StickY: %hhu ", pad.stickY);
@@ -176,11 +178,11 @@ namespace Util {
         OSReport("B1: 0x%x ", pad.buttons);
         OSReport("B2: 0x%x ", pad._buttons);
         OSReport("B3: 0x%x \n", pad.newPressedButtons);
-        //OSReport(" ---------\n");
+        OSReport(" ---------\n");
     }
 
     void printFrameData(const FrameData& fd) {
-        for (int i = 1; i < MAX_NUM_PLAYERS; i++) {
+        for (int i = 0; i < Netplay::getGameSettings().numPlayers; i++) {
             OSReport("Frame %u pIdx %u\n", fd.playerFrameDatas[i].frame, (unsigned int)fd.playerFrameDatas[i].playerIdx);
             printInputs(fd.playerFrameDatas[i].pad);
         }
@@ -292,10 +294,10 @@ namespace Util {
             pfd.syncData.percent = (float)ftowner->getDamage();
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }
-        pfd.pad = Util::GamePadToBrawlbackPad(g_PadSystem.gcPads[port]);
-        pfd.sysPad = Util::GamePadToBrawlbackPad(g_PadSystem.gcSysPads[port]);
+        pfd.pad = Util::GamePadToBrawlbackPad(FrameLogic::inputBuffer);
+        pfd.sysPad = Util::GamePadToBrawlbackPad(FrameLogic::inputBuffer);
     }
-    void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port) {
+    void InjectBrawlbackPadToPadStatus(gfPadStatus* gamePad, const BrawlbackPad& pad, int port) {
 
         // TODO: do this once on match start or whatever, so we don't need to access this so often and lose cpu cycles
         //bool isNotConnected = Netplay::getGameSettings().playerSettings[port].playerType == PlayerType::PLAYERTYPE_NONE;
@@ -303,24 +305,24 @@ namespace Util {
         // bu8 charId = GM_GLOBAL_MODE_MELEE->playerData[port].charId;
         // GM_GLOBAL_MODE_MELEE->playerData[port].playerType = isNotConnected ? 03 : 0 ; // Set to Human
 
-        gamePad.type = 0x0;
-        gamePad.isNotConnected = 0x0;
-        gamePad._buttons = pad._buttons;
-        gamePad.buttons = pad.buttons;
-        gamePad.releasedButtons = pad.releasedButtons;
+        gamePad->type = 0x0;
+        gamePad->isNotConnected = 0x0;
+        gamePad->_buttons = pad._buttons;
+        gamePad->buttons = pad.buttons;
+        gamePad->releasedButtons = pad.releasedButtons;
         // int* addr  = (int*) &gamePad;
         // *(addr+0x14+0x2) = pad.buttons;
-        gamePad.holdButtons = pad.holdButtons;
-        gamePad.rapidFireButtons = pad.rapidFireButtons;
-        gamePad.newPressedButtons = pad.newPressedButtons;
-        gamePad.LAnalogue = pad.LAnalogue;
-        gamePad.RAnalogue = pad.RAnalogue;
-        gamePad.LTrigger = pad.LTrigger;
-        gamePad.RTrigger = pad.RTrigger;
-        gamePad.cStickX = pad.cStickX;
-        gamePad.cStickY = pad.cStickY;
-        gamePad.stickX = pad.stickX;
-        gamePad.stickY = pad.stickY;
+        gamePad->holdButtons = pad.holdButtons;
+        gamePad->rapidFireButtons = pad.rapidFireButtons;
+        gamePad->newPressedButtons = pad.newPressedButtons;
+        gamePad->LAnalogue = pad.LAnalogue;
+        gamePad->RAnalogue = pad.RAnalogue;
+        gamePad->LTrigger = pad.LTrigger;
+        gamePad->RTrigger = pad.RTrigger;
+        gamePad->cStickX = pad.cStickX;
+        gamePad->cStickY = pad.cStickY;
+        gamePad->stickX = pad.stickX;
+        gamePad->stickY = pad.stickY;
         // OSReport("Buttons: 0x%x\n", pad.buttons);
         // OSReport("Buttons: 0x%x\n", pad.newPressedButtons);
 
@@ -334,7 +336,7 @@ extern u8 ftManagerGameRule;
 extern u8 ftManagerStaminaMode;
 extern u8 ftManagerField68;
 namespace Match {
-    const char* relevantHeaps = "CopyFB OverlayCommon MenuInstance WiiPad IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 FighterEffect OverlayFighter1 OverlayFighter2";
+    const char* relevantHeaps = "MenuInstance WiiPad IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 FighterEffect OverlayFighter1 OverlayFighter2";
     gmSetRule rules = {};
     void PopulateGameReport(GameReport& report)
     {
@@ -578,18 +580,19 @@ namespace FrameAdvance {
     {
         bu32 gameLogicFrame = getCurrentFrame();
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
-        
+        // save state on each simulated frame (this includes resim frames)
+        Util::SaveState(gameLogicFrame);
+
         GetInputsForFrame(gameLogicFrame, inputs);
         
         setFrameAdvanceFromEmu();
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
         {
-            gfPadStatus& status = g_PadSystem.gcPads[i];
+            gfPadStatus* status = &g_PadSystem.gcPads[i];
             getGamePadStatusInjection(status, i, true);
         }
-    // save state on each simulated frame (this includes resim frames)
-        Util::SaveState(gameLogicFrame);
-
+        bu32 queue = (0x805ba480);
+        push_gfPadStatusQueue((void*)queue, (&g_PadSystem + 0x40));
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
 
         //Util::printFrameData(*inputs);
@@ -607,14 +610,9 @@ namespace FrameAdvance {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
-            if(!shouldTrackAllocs) 
-            {
-                gfHeapManager::dumpAll();
-                FrameLogic::SendFrameCounterPointerLoc();
-                shouldTrackAllocs = true;
-            }
-            OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
-            FrameLogic::WriteInputsForFrame();
+            FrameLogic::FixStaleInputs();
+            FrameLogic::inputBuffer = g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort];
+            Util::InjectBrawlbackPadToPadStatus(&g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
         }
         Utils::RestoreRegs();
     }
@@ -639,7 +637,7 @@ namespace FrameAdvance {
             "bctr\n\t"
         );
     }
-    void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad)
+    void getGamePadStatusInjection(gfPadStatus* status, int port, bool isGamePad)
     {
         // OSReport("PAD %i 0x%x\n", 0, &PAD_SYSTEM->sysPads[0]);
         // OSReport("PAD %i 0x%x\n", 1, &PAD_SYSTEM->sysPads[1]);
@@ -711,14 +709,16 @@ namespace FrameLogic {
     u32 task_type;
     PlayerFrameData playerFrame = PlayerFrameData();
     gfPadStatus lastLocalInputs[4];
+    gfPadStatus inputBuffer;
     bool fixStaleInputs = true;
-    void ReduceStickNoise()
+    bool shouldSkipTask = false;
+    void ReduceStickNoise(bu8 port)
     {
-        if(g_PadSystem.gcPads->stickX > -2 && g_PadSystem.gcPads->stickX < 2)
+        if(inputBuffer.stickX > -2 && inputBuffer.stickX < 2)
         {
             g_PadSystem.gcPads->stickX = 0;
         }
-        if(g_PadSystem.gcPads->stickY > -2 && g_PadSystem.gcPads->stickY < 2)
+        if(inputBuffer.stickY > -2 && inputBuffer.stickY < 2)
         {
             g_PadSystem.gcPads->stickY = 0;
         }
@@ -727,9 +727,9 @@ namespace FrameLogic {
     {
         if(fixStaleInputs)
         {
-            memmove(g_PadSystem.gcPads, lastLocalInputs, sizeof(gfPadStatus) * 4);
+            memmove(g_PadSystem.gcPads, lastLocalInputs, sizeof(lastLocalInputs));
         }
-        memmove(lastLocalInputs, g_PadSystem.gcPads, sizeof(gfPadStatus) * 4);
+        memmove(lastLocalInputs, g_PadSystem.gcPads, sizeof(g_PadSystem.gcPads));
         fixStaleInputs = false;
     }
     void WriteInputsForFrame()
@@ -737,8 +737,7 @@ namespace FrameLogic {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
             playerFrame.playerIdx = localPlayerIdx;
-            ReduceStickNoise();
-            FixStaleInputs();
+            ReduceStickNoise(Netplay::getGameSettings().localPlayerPort);
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             FrameDataLogic();
         }
@@ -803,6 +802,7 @@ namespace FrameLogic {
                 shouldTrackAllocs = true;
             }
             OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
+            FrameAdvance::ResetFrameAdvance();
             FrameLogic::WriteInputsForFrame();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
         }
@@ -903,33 +903,40 @@ namespace FrameLogic {
         );
         if(ShouldSkipGfTaskProcess(task, task_type))
         {
-            shouldSkipGfTaskNextInstr = 0x8002dd28;
+            shouldSkipTask = true;
         }
         else 
         {
-            if(task_type >= 8)
-            {
-                shouldSkipGfTaskNextInstr = 0x8002dd1c;
-            }
-            else 
-            {
-                shouldSkipGfTaskNextInstr = 0x8002dc7c;
-            }
+            shouldSkipTask = false;
         }
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void gfTaskProcessHook2()
     {
         asm volatile(
-            "mr 12, %0\n\t"
+            "mr 12, 3\n\t"
+            "mr 5, %0\n\t"
+            "cmpwi 3, 5\n\t"
+            "beq NO_SKIP\n\t"
+            "lis 12, 0x8002\n\t"
+            "ori 12, 12, 0xdd28\n\t"
             "mtctr 12\n\t"
-            "mr 12, %1\n\t"
+            "bctr\n\t"
+            "NO_SKIP:\n\t"
+            "cmpwi 4, 0x8\n\t"
             "mr 3, 12\n\t"
-            "mr 12, %2\n\t"
-            "mr 4, 12\n\t"
+            "bge END_OF_LOOP\n\t"
+            "lis 12, 0x8002\n\t"
+            "ori 12, 12, 0xdc7c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "END_OF_LOOP:\n\t"
+            "lis 12, 0x8002\n\t"
+            "ori 12, 12, 0xdd1c\n\t"
+            "mtctr 12\n\t"
             "bctr\n\t"
             :
-            : "r"(shouldSkipGfTaskNextInstr), "r"(task), "r"(task_type)
+            : "r"(shouldSkipTask)
         );
     }
 }
@@ -1502,7 +1509,7 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
 
         // FrameAdvance Namespace
-        //SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
+        SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
         SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
         SyringeCore::sySimpleHook(0x800171cc, reinterpret_cast<void*>(FrameAdvance::moveUpdateSystem));

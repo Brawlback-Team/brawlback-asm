@@ -45,9 +45,11 @@ namespace FrameLogic {
     extern u32 task_type;
     extern PlayerFrameData playerFrame;
     extern gfPadStatus lastLocalInputs[4];
+    extern gfPadStatus inputBuffer;
     extern bool fixStaleInputs;
+    extern bool shouldSkipTask;
     // Functions
-    void ReduceStickNoise();
+    void ReduceStickNoise(bu8 port);
     void FixStaleInputs();
     void WriteInputsForFrame();
     void FrameDataLogic();
@@ -82,7 +84,7 @@ namespace FrameAdvance {
     void GetInputsForFrame(bu32 frame, FrameData* inputs);
     void ProcessGameSimulationFrame(FrameData* inputs);
     void setFrameAdvanceFromEmu();
-    void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad);
+    void getGamePadStatusInjection(gfPadStatus* status, int port, bool isGamePad);
 
     // Hooks
     void fixPadInconsistency();
@@ -109,7 +111,7 @@ namespace Util {
     void BrawlbackControlsToGameControls(const BrawlbackControls& brawlbackControls, Controls& controls);
     BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls);
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx);
-    void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port);
+    void InjectBrawlbackPadToPadStatus(gfPadStatus* gamePad, const BrawlbackPad& pad, int port);
     void SaveState(bu32 currentFrame);
 }
 namespace Match {
