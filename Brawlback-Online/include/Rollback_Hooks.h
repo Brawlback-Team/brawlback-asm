@@ -12,6 +12,7 @@
 #include <gf/gf_scene.h>
 #include <sc/sc_melee.h>
 #include <mt/mt_rand.h>
+#include "mu/mu_msg.h"
 #include <OS/OSTime.h>
 #include <ExiStructures.h>
 #include <ip/controls.h>
@@ -21,6 +22,7 @@
 #include "utils.h"
 #include "exi_packet.h"
 
+#include "ms/message.h"
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -42,8 +44,13 @@ namespace FrameLogic {
     extern gfTask* task;
     extern u32 task_type;
     extern PlayerFrameData playerFrame;
-    extern gfPadStatus lastLocalInputs;
+    extern gfPadStatus lastLocalInput;
+    extern gfPadStatus inputBuffer;
+    extern bool fixStaleInputs;
+    extern bool shouldSkipTask;
     // Functions
+    void ReduceStickNoise();
+    void FixStaleInputs();
     void WriteInputsForFrame();
     void FrameDataLogic();
     void SendFrameCounterPointerLoc();
@@ -53,11 +60,15 @@ namespace FrameLogic {
     void initFrameCounter();
     void updateFrameCounter();
     void beginningOfMainGameLoop();
+    void beginningOfFrameLoop();
+    __attribute__((naked)) void beginningOfFrameLoop2();
+    __attribute__((naked)) void isBreakGameProcLoopHook();
     void beginFrame();
     void endFrame();
     void endMainLoop();
     void gfTaskProcessHook();
     __attribute__((naked)) void gfTaskProcessHook2();
+    void setFixStaleInputsTrue();
 }
 namespace FrameAdvance {
     // Variables
@@ -73,13 +84,14 @@ namespace FrameAdvance {
     void GetInputsForFrame(bu32 frame, FrameData* inputs);
     void ProcessGameSimulationFrame(FrameData* inputs);
     void setFrameAdvanceFromEmu();
-    void getGamePadStatusInjection(gfPadStatus& status, int port, bool isGamePad);
+    void getGamePadStatusInjection(gfPadStatus* status, int port, bool isGamePad);
 
     // Hooks
     void fixPadInconsistency();
     void updateLowHook();
     void handleFrameAdvanceHook();
     void turnOnAllAppropriatePorts();
+    __attribute__((naked)) void moveUpdateSystem();
 }
 
 // TODO: put this in the submodule and pack it
@@ -99,7 +111,7 @@ namespace Util {
     void BrawlbackControlsToGameControls(const BrawlbackControls& brawlbackControls, Controls& controls);
     BrawlbackControls GameControlsToBrawlbackControls(const Controls& controls);
     void PopulatePlayerFrameData(PlayerFrameData& pfd, bu8 port, bu8 pIdx);
-    void InjectBrawlbackPadToPadStatus(gfPadStatus& gamePad, const BrawlbackPad& pad, int port);
+    void InjectBrawlbackPadToPadStatus(gfPadStatus* gamePad, const BrawlbackPad& pad, int port);
     void SaveState(bu32 currentFrame);
 }
 namespace Match {
@@ -186,12 +198,13 @@ namespace NetMenu {
     extern bool setRules;
     extern bool onQuickplayMenus;
     extern int register4;
+    extern MuMsg* message;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene);
     void BootToScMelee();
-
+    void MatchmakingText();
     // Hooks
     __attribute__((naked)) void setToLoggedIn();
     __attribute__((naked)) void setToLoggedIn2();
@@ -234,6 +247,7 @@ namespace NetMenu {
     void SkipDirectlyToTrainingRoom();
     void GetRulesFromCSSBoot();
     void SetRulesFromCSSBoot();
+    void ReplaceTrainingRoomText();
 }
 
 namespace NetReport {

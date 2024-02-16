@@ -18,3 +18,5 @@
 806dce94:setupMelee__FPvUi
 800e19ec:updateStockCoin__8IfPlayerFP8IfPlayerUi
 80024e20:render__FPv
+8002b7f4:push_gfPadStatusQueue__FPvPv
+8002b920:pop_gfPadStatusQueue__FPvPv
