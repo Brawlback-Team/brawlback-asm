@@ -20,3 +20,4 @@
 80024e20:render__FPv
 8002b7f4:push_gfPadStatusQueue__FPvPv
 8002b920:pop_gfPadStatusQueue__FPvPv
+800260b4:dump_gfMemoryPool__FPv

@@ -40,14 +40,14 @@ extern bool isRollback;
 
 namespace FrameLogic {
     // Variables
-    extern u32 shouldSkipGfTaskNextInstr;
     extern gfTask* task;
-    extern u32 task_type;
+    extern bu32 task_type;
     extern PlayerFrameData playerFrame;
     extern gfPadStatus lastLocalInput;
     extern gfPadStatus inputBuffer;
     extern bool fixStaleInputs;
     extern bool shouldSkipTask;
+    extern bu32 r3_value;
     // Functions
     void ReduceStickNoise();
     void FixStaleInputs();

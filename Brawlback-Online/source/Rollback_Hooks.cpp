@@ -26,6 +26,7 @@ void render(void* unk);
 int getCounter();
 bool pop_gfPadStatusQueue(void* unk, void* pad);
 void push_gfPadStatusQueue(void* unk, void* pads);
+void dump_gfMemoryPool(void* heap);
 bu32 getCurrentFrame() {
     return frameCounter;
 }
@@ -336,7 +337,7 @@ extern u8 ftManagerGameRule;
 extern u8 ftManagerStaminaMode;
 extern u8 ftManagerField68;
 namespace Match {
-    const char* relevantHeaps = "MenuInstance WiiPad IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq InfoExtraResource GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 FighterEffect OverlayFighter1 OverlayFighter2";
+    const char* relevantHeaps = "Effect InfoInstance StageInstance Tmp WiiPad MenuInstance IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 OverlayFighter1 OverlayFighter2";
     gmSetRule rules = {};
     void PopulateGameReport(GameReport& report)
     {
@@ -582,9 +583,7 @@ namespace FrameAdvance {
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
         // save state on each simulated frame (this includes resim frames)
         Util::SaveState(gameLogicFrame);
-
         GetInputsForFrame(gameLogicFrame, inputs);
-        
         setFrameAdvanceFromEmu();
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
         {
@@ -717,14 +716,14 @@ namespace FrameAdvance {
 }
 
 namespace FrameLogic {
-    u32 shouldSkipGfTaskNextInstr = 0x8002DC7C;
     gfTask* task;
-    u32 task_type;
+    bu32 task_type;
     PlayerFrameData playerFrame = PlayerFrameData();
     gfPadStatus lastLocalInputs;
     gfPadStatus inputBuffer;
     bool fixStaleInputs = true;
     bool shouldSkipTask = false;
+    bu32 r3_value;
     void ReduceStickNoise()
     {
         if(inputBuffer.stickX > -2 && inputBuffer.stickX < 2)
@@ -769,7 +768,7 @@ namespace FrameLogic {
         bu32 frameCounterLocation = reinterpret_cast<bu32>(&frameCounter);
         EXIPacket::CreateAndSend(EXICommand::CMD_SEND_FRAMECOUNTERLOC, &frameCounterLocation, sizeof(bu32));
     }
-    const char* nonResimTasks = "ecMgr EffectManager";
+    const char* nonResimTasks = "ecMgr EffectScreen EffectManager";
     bool ShouldSkipGfTaskProcess(gfTask* task, bu32 task_type)
     {
         if (isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
@@ -904,6 +903,10 @@ namespace FrameLogic {
     void endMainLoop()
     {
         Utils::SaveRegs();
+        if(Netplay::IsInMatch())
+        {
+            EXIPacket::CreateAndSend(EXICommand::CMD_ADD_DEALLOCS);
+        }
         Utils::RestoreRegs();
     }
     
@@ -915,30 +918,22 @@ namespace FrameLogic {
             "mr %1, 4\n\t"
             : "=r"(task), "=r"(task_type)
         );
-        if(ShouldSkipGfTaskProcess(task, task_type))
-        {
-            shouldSkipTask = true;
-        }
-        else 
-        {
-            shouldSkipTask = false;
-        }
+        shouldSkipTask = ShouldSkipGfTaskProcess(task, task_type);
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void gfTaskProcessHook2()
     {
         asm volatile(
-            "mr 12, 3\n\t"
-            "mr 5, %0\n\t"
-            "cmpwi 3, 5\n\t"
+            "cmpwi %0, 0\n\t"
+            "mr 3, %1\n\t"
+            "mr 4, %2\n\t"
             "beq NO_SKIP\n\t"
             "lis 12, 0x8002\n\t"
-            "ori 12, 12, 0xdd28\n\t"
+            "ori 12, 12, 0xe618\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
             "NO_SKIP:\n\t"
             "cmpwi 4, 0x8\n\t"
-            "mr 3, 12\n\t"
             "bge END_OF_LOOP\n\t"
             "lis 12, 0x8002\n\t"
             "ori 12, 12, 0xdc7c\n\t"
@@ -950,7 +945,7 @@ namespace FrameLogic {
             "mtctr 12\n\t"
             "bctr\n\t"
             :
-            : "r"(shouldSkipTask)
+            : "r"(shouldSkipTask), "r"(task), "r"(task_type)
         );
     }
 }
@@ -1521,7 +1516,6 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x80025c6c, reinterpret_cast<void*>(Match::alloc_gfMemoryPool_hook));
         SyringeCore::syInlineHook(0x80025ec4, reinterpret_cast<void*>(Match::allocGfMemoryPoolEndHook));
         SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
-
         // FrameAdvance Namespace
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
@@ -1531,7 +1525,7 @@ namespace RollbackHooks {
         // FrameLogic Namespace
         //SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
         //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
-        //SyringeCore::syHookFunction(0x800174fc, reinterpret_cast<void*>(FrameLogic::endMainLoop));
+        SyringeCore::syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         
         SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));

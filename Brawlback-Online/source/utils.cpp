@@ -100,7 +100,47 @@ namespace Utils {
             "blr\n\t"
         );
     }
-
+    void printRegs()
+    {
+        SaveRegs();
+        bu32 reg3;
+        bu32 reg4;
+        bu32 reg5;
+        bu32 reg6;
+        bu32 reg7;
+        bu32 reg8;
+        bu32 reg9;
+        bu32 reg10;
+        bu32 reg11;
+        bu32 reg12;
+        bu32 reg13;
+        asm volatile(
+            "mr %0, 3\n\t"
+            "mr %1, 4\n\t"
+            "mr %2, 5\n\t"
+            "mr %3, 6\n\t"
+            "mr %4, 7\n\t"
+            "mr %5, 8\n\t"
+            "mr %6, 9\n\t"
+            "mr %7, 10\n\t"
+            "mr %8, 11\n\t"
+            "mr %9, 12\n\t"
+            "mr %10, 13\n\t"
+            : "=r"(reg3), "=r"(reg4), "=r"(reg5), "=r"(reg6), "=r"(reg7), "=r"(reg8), "=r"(reg9), "=r"(reg10), "=r"(reg11), "=r"(reg12), "=r"(reg13)
+        );
+        OSReport("REG 3: 0x%x\n", reg3);
+        OSReport("REG 4: 0x%x\n", reg4);
+        OSReport("REG 5: 0x%x\n", reg5);
+        OSReport("REG 6: 0x%x\n", reg6);
+        OSReport("REG 7: 0x%x\n", reg7);
+        OSReport("REG 8: 0x%x\n", reg8);
+        OSReport("REG 9: 0x%x\n", reg9);
+        OSReport("REG 10: 0x%x\n", reg10);
+        OSReport("REG 11: 0x%x\n", reg11);
+        OSReport("REG 12: 0x%x\n", reg12);
+        OSReport("REG 13: 0x%x\n", reg13);
+        RestoreRegs();
+    }
     Vector<bu8> uint16ToVector(bu16 num)
     {
         bu8 byte0 = num >> 8;
