@@ -15,6 +15,7 @@ namespace Utils {
 
     __attribute__((naked)) void SaveRegs();
     __attribute__((naked)) void RestoreRegs();
+    void printRegs();
 
     Vector<bu8> uint16ToVector(bu16 num);
     Vector<bu8> uint32ToVector(bu32 num);
