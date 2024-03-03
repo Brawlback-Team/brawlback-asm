@@ -903,10 +903,6 @@ namespace FrameLogic {
     void endMainLoop()
     {
         Utils::SaveRegs();
-        if(Netplay::IsInMatch())
-        {
-            EXIPacket::CreateAndSend(EXICommand::CMD_ADD_DEALLOCS);
-        }
         Utils::RestoreRegs();
     }
     
@@ -1525,7 +1521,7 @@ namespace RollbackHooks {
         // FrameLogic Namespace
         //SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
         //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
-        SyringeCore::syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
+        //SyringeCore::syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         
         SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
