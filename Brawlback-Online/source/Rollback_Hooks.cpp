@@ -28,13 +28,14 @@ bool pop_gfPadStatusQueue(void* unk, void* pad);
 void push_gfPadStatusQueue(void* unk, void* pads);
 void dump_gfMemoryPool(void* heap);
 bu32 getCurrentFrame() {
-    return frameCounter;
+    return g_GameFrame.persistentFrameCounter;
 }
 
 void FillInMeleeObj() {
      if (GMMelee::isMatchChoicesPopulated) {
+        OSDisableInterrupts();
         OSReport("Filling in stuff!\n");
-
+        OSEnableInterrupts();
         memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 800);
 
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
@@ -133,8 +134,9 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     //GM_GLOBAL_MODE_MELEE->stageID = 2;
 
     Netplay::localPlayerIdx = settings.localPlayerIdx;
+    OSDisableInterrupts();
     OSReport("Local player index is %d\n", Netplay::localPlayerIdx);
-
+    OSEnableInterrupts();
     bu8 p1_char = settings.playerSettings[0].charID;
     bu8 p2_char = settings.playerSettings[1].charID;
 
@@ -157,6 +159,7 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
 namespace Util {
     bool hasSetControls = false;
     void printInputs(const BrawlbackPad& pad) {
+        OSDisableInterrupts();
         OSReport(" -- BB Pad --\n");
         OSReport("StickX: %hhu ", pad.stickX);
         OSReport("StickY: %hhu ", pad.stickY);
@@ -166,9 +169,11 @@ namespace Util {
         OSReport("Buttons: 0x%x", pad.buttons);
         OSReport("holdButtons: 0x%x\n", pad.holdButtons);
         OSReport(" ---------\n");
+        OSEnableInterrupts();
     }
 
     void printGameInputs(const gfPadStatus& pad) {
+        OSDisableInterrupts();
         OSReport(" -- Game Pad --\n");
         OSReport(" LAnalogue: %u    RAnalogue %u\n", pad.LAnalogue, pad.RAnalogue);
         OSReport("StickX: %hhu ", pad.stickX);
@@ -180,19 +185,24 @@ namespace Util {
         OSReport("B2: 0x%x ", pad._buttons);
         OSReport("B3: 0x%x \n", pad.newPressedButtons);
         OSReport(" ---------\n");
+        OSEnableInterrupts();
     }
 
     void printFrameData(const FrameData& fd) {
         for (int i = 0; i < Netplay::getGameSettings().numPlayers; i++) {
+            OSDisableInterrupts();
             OSReport("Frame %u pIdx %u\n", fd.playerFrameDatas[i].frame, (unsigned int)fd.playerFrameDatas[i].playerIdx);
+            OSEnableInterrupts();
             printInputs(fd.playerFrameDatas[i].pad);
         }
     }
 
     void SyncLog(const BrawlbackPad& pad, bu8 playerIdx) {
+        OSDisableInterrupts();
         OSReport("[Sync] Injecting inputs for player %u on frame %u\n", (unsigned int)playerIdx, getCurrentFrame());
         printInputs(pad);
         OSReport("[/Sync]\n");
+        OSEnableInterrupts();
     }
     void FixFrameDataEndianness(FrameData* fd) {
         Utils::swapByteOrder(fd->randomSeed);
@@ -364,7 +374,9 @@ namespace Match {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
+            OSDisableInterrupts();
             OSReport("Game report in stopGameScMeleeBeginningHook hook\n");
+            OSEnableInterrupts();
             if (Netplay::getGameSettings().numPlayers > 1) {
                 #if 0  // toggle for sending end match game stats
                 GameReport report;
@@ -575,14 +587,11 @@ namespace FrameAdvance {
         EXIHooks::readEXI(inputs, sizeof(FrameData), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
         Util::FixFrameDataEndianness(inputs);
     }
-
     // should be called on every simulation frame
     void ProcessGameSimulationFrame(FrameData* inputs)
     {
         bu32 gameLogicFrame = getCurrentFrame();
         //OSReport("ProcessGameSimulationFrame %u \n", gameLogicFrame);
-        // save state on each simulated frame (this includes resim frames)
-        Util::SaveState(gameLogicFrame);
         GetInputsForFrame(gameLogicFrame, inputs);
         setFrameAdvanceFromEmu();
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
@@ -673,7 +682,9 @@ namespace FrameAdvance {
 
         // }
         PlayerFrameData& frameData = currentFrameData.playerFrameDatas[port];
+        OSDisableInterrupts();
         OSReport("PLAYERFRAMEDATA FRAME: %d\nREAL FRAME: %d\n", frameData.frame, getCurrentFrame());
+        OSEnableInterrupts();
         BrawlbackPad& pad = isGamePad ? frameData.pad : frameData.sysPad;
         Util::InjectBrawlbackPadToPadStatus(status, pad, port);
         // if(ddst->newPressedButtons == 0x1000){
@@ -766,6 +777,7 @@ namespace FrameLogic {
     void SendFrameCounterPointerLoc()
     {
         bu32 frameCounterLocation = reinterpret_cast<bu32>(&frameCounter);
+        OSReport("FRAME DATA LOC: 0x%x\n", frameCounterLocation);
         EXIPacket::CreateAndSend(EXICommand::CMD_SEND_FRAMECOUNTERLOC, &frameCounterLocation, sizeof(bu32));
     }
     const char* nonResimTasks = "ecMgr EffectScreen EffectManager";
@@ -801,20 +813,14 @@ namespace FrameLogic {
     void updateFrameCounter()
     {
         Utils::SaveRegs();
-        frameCounter++;
+        frameCounter = g_GameFrame.persistentFrameCounter;
         Utils::RestoreRegs();
     }
     void beginningOfMainGameLoop()
     {
         Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
-            if(!shouldTrackAllocs) 
-            {
-                gfHeapManager::dumpAll();
-                FrameLogic::SendFrameCounterPointerLoc();
-                shouldTrackAllocs = true;
-            }
-            OSReport("~~~~~~~~~~~~~~~~ FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
+            OSReport("~~~~~~~~~~~~~~~~ MAIN GAME LOOP FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
             FrameAdvance::ResetFrameAdvance();
             FrameLogic::WriteInputsForFrame();
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_START);
@@ -826,6 +832,9 @@ namespace FrameLogic {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
+            OSDisableInterrupts();
+            OSReport("~~~~~~~~~~~~~~~~ MAIN SIMULATION LOOP FRAME %d ~~~~~~~~~~~~~~~~\n", getCurrentFrame());
+            OSEnableInterrupts();
             FrameAdvance::ProcessGameSimulationFrame(&FrameAdvance::currentFrameData);
         }
         g_PadSystem.updateSystem();
@@ -834,8 +843,7 @@ namespace FrameLogic {
     __attribute__((naked)) void beginningOfFrameLoop2()
     {
         asm volatile(
-            "mr 4, %0\n\t"
-            "cmplwi 4, 0\n\t"
+            "cmplwi %0, 0\n\t"
             "beq break2\n\t"
             "mr	3, 23\n\t"
             "mr	4, 19\n\t"
@@ -852,6 +860,100 @@ namespace FrameLogic {
             : "r" (FrameAdvance::framesToAdvance)
         );
     }
+    /*
+    __attribute__((naked)) void beginningOfFrameLoop3()
+    {
+        asm volatile(
+            "cmpw %0, %1\n\t"
+            "beq break3\n\t"
+            "cmplwi %0, 1\n\t"
+            "bgt break4\n\t"
+            "break3:\n\t"
+            "lwz 5, 0x00EC (3)\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x763c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break4:\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x776c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r" (FrameAdvance::framesToAdvance), "r" (FrameAdvance::beforeFramesToAdvance)
+        );
+    }
+    __attribute__((naked)) void beginningOfFrameLoop4()
+    {
+        asm volatile(
+            "cmpw %0, %1\n\t"
+            "beq break5\n\t"
+            "cmplwi %0, 1\n\t"
+            "bgt break6\n\t"
+            "break5:\n\t"
+            "lis 3, 0x8049\n\t"
+            "li	4, 1\n\t"
+            "li	0, 4\n\t"
+            "lis 12, 0x8003\n\t"
+            "ori 12, 12, 0x328c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break6:\n\t"
+            "lis 3, 0x9018\n\t"
+            "ori 3, 3, 0x1300\n\t"
+            "lis 12, 0x8003\n\t"
+            "ori 12, 12, 0x334c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r" (FrameAdvance::framesToAdvance), "r" (FrameAdvance::beforeFramesToAdvance)
+        );
+    }
+    __attribute__((naked)) void beginningOfFrameLoop5()
+    {
+        asm volatile(
+            "cmpw %0, %1\n\t"
+            "beq break7\n\t"
+            "cmplwi %0, 1\n\t"
+            "bgt break8\n\t"
+            "break7:\n\t"
+            "lwz 3, 0x00D4(30)\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x7774\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break8:\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x77a4\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r" (FrameAdvance::framesToAdvance), "r" (FrameAdvance::beforeFramesToAdvance)
+        );
+    }
+    __attribute__((naked)) void beginningOfFrameLoop6()
+    {
+        asm volatile(
+            "cmpw %0, %1\n\t"
+            "beq break9\n\t"
+            "cmplwi %0, 1\n\t"
+            "bgt break10\n\t"
+            "break9:\n\t"
+            "mr	20, 3\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x7364\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "break10:\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x739c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r" (FrameAdvance::framesToAdvance), "r" (FrameAdvance::beforeFramesToAdvance)
+        );
+    }
+    */
     __attribute__((naked)) void isBreakGameProcLoopHook()
     {
         asm volatile(
@@ -896,6 +998,7 @@ namespace FrameLogic {
     {
         Utils::SaveRegs();
         if (Netplay::IsInMatch()) {
+            Util::SaveState(getCurrentFrame());
             EXIPacket::CreateAndSend(EXICommand::CMD_TIMER_END);
         }
         Utils::RestoreRegs();
@@ -965,13 +1068,17 @@ namespace GMMelee {
         }
         stageChoice = stageID;
         isMatchChoicesPopulated = true;
+        OSDisableInterrupts();
         OSReport("Merged!\n");
+        OSEnableInterrupts();
     }
     // called on match end
     void ResetMatchChoicesPopulated()
     {
         isMatchChoicesPopulated = false;
+        OSDisableInterrupts();
         OSReport("Turned off!\n");
+        OSEnableInterrupts();
     }
 
     void postSetupMelee() {
@@ -1020,8 +1127,9 @@ namespace Netplay {
     
     static void* StartMatching(void*)
     {
+        OSDisableInterrupts();
         OSReport("Filling in game settings from game\n");
-
+        OSEnableInterrupts();
         // Temporary. Atm, this just stalls main thread while we do our mm/connecting
         // in the future, when netmenu stuff is implemented, the organization of StartMatching and CheckIsMatched
         // will make more sense
@@ -1033,7 +1141,9 @@ namespace Netplay {
         if(!isInTrainingRoom)
         {
             NetMenu::message->printf(0, "Canceling Search");
+            OSDisableInterrupts();
             OSReport("Canceling Matchmaking...\n");
+            OSEnableInterrupts();
             EXIPacket::CreateAndSend(EXICommand::CMD_CANCEL_MATCHMAKING);
         }
         return NULL;
@@ -1217,7 +1327,9 @@ namespace NetMenu {
     }
     void BootToScMelee()
     {
+        OSDisableInterrupts();
         OSReport("Booting to scMelee...\n");
+        OSEnableInterrupts();
         ChangeStruct3Scenes((u8*)0x90ff3e40, Scene::MemoryChange, Scene::InitialChange);
         gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
@@ -1225,7 +1337,9 @@ namespace NetMenu {
     }
     void startMatchingCallback() {
         Utils::SaveRegs();
+        OSDisableInterrupts();
         OSReport("Starting matchmaking!\n");
+        OSEnableInterrupts();
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void startMatchingCallback2() {
@@ -1245,8 +1359,9 @@ namespace NetMenu {
     char stack[0x4000];
     void setNextAnyOkirakuCaseFive() {
         Utils::SaveRegs();
+        OSDisableInterrupts();
         OSReport("Loaded into online training room\n");
-        
+        OSEnableInterrupts();
         // populate game settings
         fillOutGameSettings(Netplay::gameSettings);
 
@@ -1508,10 +1623,10 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x806d176c, reinterpret_cast<void*>(Match::StartSceneMelee));
         SyringeCore::syInlineHook(0x806d4844, reinterpret_cast<void*>(Match::ExitSceneMelee));
         SyringeCore::syInlineHook(0x8003fac4, reinterpret_cast<void*>(Match::setRandSeed));
-        SyringeCore::syInlineHook(0x80026258, reinterpret_cast<void*>(Match::dump_gfMemoryPool_hook));
-        SyringeCore::syInlineHook(0x80025c6c, reinterpret_cast<void*>(Match::alloc_gfMemoryPool_hook));
-        SyringeCore::syInlineHook(0x80025ec4, reinterpret_cast<void*>(Match::allocGfMemoryPoolEndHook));
-        SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
+        //SyringeCore::syInlineHook(0x80026258, reinterpret_cast<void*>(Match::dump_gfMemoryPool_hook));
+        //SyringeCore::syInlineHook(0x80025c6c, reinterpret_cast<void*>(Match::alloc_gfMemoryPool_hook));
+        //SyringeCore::syInlineHook(0x80025ec4, reinterpret_cast<void*>(Match::allocGfMemoryPoolEndHook));
+        //SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
         // FrameAdvance Namespace
         SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
         SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
@@ -1523,13 +1638,17 @@ namespace RollbackHooks {
         //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
         //SyringeCore::syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         
-        SyringeCore::syInlineHook(0x801473a0, reinterpret_cast<void*>(FrameLogic::endFrame));
+        SyringeCore::syInlineHook(0x8001739c, reinterpret_cast<void*>(FrameLogic::endFrame));
         SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
         SyringeCore::syInlineHook(0x80017350, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop));
         SyringeCore::sySimpleHook(0x80017354, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop2));
+        //SyringeCore::sySimpleHook(0x80017638, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop3));
+        //SyringeCore::sySimpleHook(0x80033288, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop4));
+        //SyringeCore::sySimpleHook(0x80017770, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop5));
+        //SyringeCore::sySimpleHook(0x80017360, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop6));
         SyringeCore::sySimpleHook(0x8004add0, reinterpret_cast<void*>(FrameLogic::isBreakGameProcLoopHook));
-        SyringeCore::syInlineHook(0x800173a0, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
-        SyringeCore::syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
+        //SyringeCore::syInlineHook(0x80017638, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
+        //SyringeCore::syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
         SyringeCore::syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
         SyringeCore::syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));
 

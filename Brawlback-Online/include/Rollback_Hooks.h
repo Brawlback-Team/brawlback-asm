@@ -62,7 +62,13 @@ namespace FrameLogic {
     void beginningOfMainGameLoop();
     void beginningOfFrameLoop();
     __attribute__((naked)) void beginningOfFrameLoop2();
+    __attribute__((naked)) void beginningOfFrameLoop3();
+    __attribute__((naked)) void beginningOfFrameLoop4();
+    __attribute__((naked)) void beginningOfFrameLoop5();
+    __attribute__((naked)) void beginningOfFrameLoop6();
     __attribute__((naked)) void isBreakGameProcLoopHook();
+    __attribute__((naked)) void updateGameFrameAlwaysReturn();
+    __attribute__((naked)) void updateGfSlowManagerAlwaysReturn();
     void beginFrame();
     void endFrame();
     void endMainLoop();
@@ -73,6 +79,7 @@ namespace FrameLogic {
 namespace FrameAdvance {
     // Variables
     extern bu32 framesToAdvance;
+    extern bu32 beforeFramesToAdvance;
     extern FrameData currentFrameData;
     extern u32 shouldSkipPadAlarmInstr;
     extern bool checkPad;
