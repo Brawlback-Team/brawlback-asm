@@ -55,14 +55,14 @@ void FillInMeleeObj() {
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
         g_GameGlobal->m_modeMelee->m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].unk1 = 0x80;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].unk1 = 0x80;
+        g_GameGlobal->m_modeMelee->m_playersInitData[0]._7[0x3] = 0x80;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1]._7[0x3] = 0x80;
 
         g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
         g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
 
-        g_GameGlobal->m_record1->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
-        g_GameGlobal->m_record1->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
+        g_GameGlobal->m_record->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
+        g_GameGlobal->m_record->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
 
         Util::BrawlbackControlsToGameControls(GMMelee::controlsChoices[0], ipPadConfig::getInstance()->controls[0]);
         Util::BrawlbackControlsToGameControls(GMMelee::controlsChoices[1], ipPadConfig::getInstance()->controls[1]);
@@ -70,7 +70,7 @@ void FillInMeleeObj() {
         // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
         // melee[P2_CHAR_ID_IDX+1] = 0;
         // melee[STAGE_ID_IDX] = stageChoice;
-        g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID = 0x01; // TODO uncomment and use above line, just testing with battlefield
+        g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind = Stages::Battle; // TODO uncomment and use above line, just testing with battlefield
     }
 }
 
@@ -88,7 +88,7 @@ bool gameHasStarted() {
 
 void fillOutGameSettings(GameSettings& settings) {
     settings.randomSeed = g_mtRandDefault.seed;
-    settings.stageID = g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID;
+    settings.stageID = g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind;
 
     bu8 p1_id = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind;
     //OSReport("P1 pre-override char id: %d\n", p1_id);
@@ -108,8 +108,8 @@ void fillOutGameSettings(GameSettings& settings) {
     PlayerSettings playerSettings[2];
     playerSettings[0].charID = p1_id;
     playerSettings[1].charID = p2_id;
-    playerSettings[0].rumble = g_GameGlobal->m_record1->m_menuData.rumble[0];
-    playerSettings[1].rumble = g_GameGlobal->m_record1->m_menuData.rumble[1];
+    playerSettings[0].rumble = g_GameGlobal->m_record->m_menuData.rumble[0];
+    playerSettings[1].rumble = g_GameGlobal->m_record->m_menuData.rumble[1];
     playerSettings[0].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[0]);
     playerSettings[1].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[1]);
     playerSettings[0].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID;
@@ -284,7 +284,7 @@ namespace Util {
         if(gameHasStarted())
         {
             ftManager* fighterManager = g_ftManager;
-            Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx));
+            Fighter* fighter = fighterManager->getFighter(fighterManager->getEntryIdFromIndex(pIdx), 0);
             ftOwner* ftowner = fighterManager->getOwner(fighterManager->getEntryIdFromIndex(pIdx));
 
             pfd.syncData.facingDir = fighter->m_moduleAccesser->getPostureModule()->getLr() < 0.0 ? -1 : 1;
@@ -378,7 +378,7 @@ namespace Match {
     void StartSceneMelee()
     {
         Utils::SaveRegs();
-        if(g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageID != 55)
+        if(g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind != Stages::OnlineTraining)
         {
             OSDisableInterrupts();
             //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
@@ -1352,7 +1352,7 @@ namespace NetMenu {
     void BBSetGameModeBitCorrectly() 
     {
         Utils::SaveRegs();
-        g_GameGlobal->m_modeMelee->m_meleeInitData._0x0[1] = g_GameGlobal->m_setRule->gameRule << 5;
+        g_GameGlobal->m_modeMelee->m_meleeInitData.m_0x1_5 = g_GameGlobal->m_setRule->m_rule;
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void BBSetGameModeBitCorrectly2() 
@@ -1545,12 +1545,12 @@ namespace RollbackHooks {
         SyringeCore::sySimpleHook(0x8014b3b8, reinterpret_cast<void*>(NetMenu::forceConnection));
         //SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
         SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
-        SyringeCore::sySimpleHook(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHook(0x80687f6c, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHook(0x806b1da0, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHook(0x806b3f28, reinterpret_cast<void*>(NetMenu::turnOffSSSTimer), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHook(0x80687c68, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnCSS), Modules::SORA_MENU_SEL_CHAR);        
-        SyringeCore::sySimpleHook(0x806b3a74, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnSSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x80686ae4, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x80687f6c, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x806b1da0, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x806b3f28, reinterpret_cast<void*>(NetMenu::turnOffSSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x80687c68, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnCSS), Modules::SORA_MENU_SEL_CHAR);        
+        SyringeCore::sySimpleHookRel(0x806b3a74, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnSSS), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::syInlineHook(0x8014AFF4, reinterpret_cast<void*>(NetMenu::startMatchingCallback));
         SyringeCore::sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
         SyringeCore::syInlineHook(0x806f2358, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop));
@@ -1570,15 +1570,15 @@ namespace RollbackHooks {
         SyringeCore::syInlineHook(0x806f27f8, reinterpret_cast<void*>(NetMenu::BBSetupNetMelee));
         SyringeCore::sySimpleHook(0x806f2c60, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen));
         SyringeCore::syInlineHook(0x806F2C5C, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen2));
-        SyringeCore::syReplaceFunc(0x81191d44, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), NULL, Modules::SORA_MENU_MAIN);
+        SyringeCore::syReplaceFuncRel(0x81191d44, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), NULL, Modules::SORA_MENU_MAIN);
         SyringeCore::syInlineHook(0x806f233c, reinterpret_cast<void*>(NetMenu::SkipDirectlyToTrainingRoom));
-        SyringeCore::syInlineHook(0x806830d8, reinterpret_cast<void*>(NetMenu::GetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::syInlineHook(0x8068300c, reinterpret_cast<void*>(NetMenu::SetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syInlineHookRel(0x806830d8, reinterpret_cast<void*>(NetMenu::GetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syInlineHookRel(0x8068300c, reinterpret_cast<void*>(NetMenu::SetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::syReplaceFunc(0x800cc540, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         SyringeCore::syReplaceFunc(0x801466ac, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         SyringeCore::syReplaceFunc(0x800ccec4, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
-        SyringeCore::syInlineHook(0x80687334, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHook(0x80687338, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::syInlineHookRel(0x80687334, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
+        SyringeCore::sySimpleHookRel(0x80687338, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
         SyringeCore::syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         SyringeCore::syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
         SyringeCore::syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
