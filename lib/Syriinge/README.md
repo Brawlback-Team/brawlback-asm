@@ -1,6 +1,6 @@
-# Syriinge
+# Syriinge 💉
 
-Syringe is a framework and API for injecting C++ code into Super Smash Bros. Brawl at runtime via plugin loading. Plugins are built into Nintendo Relocatable Module (.rel) files and loaded by Syriinge. Syriinge itself is loaded via gecko codes, which can be found in `Syringe.asm` and is a standard GCTRM assembly file.
+Syriinge is a framework and API for injecting C++ code into Super Smash Bros. Brawl at runtime via plugin loading. Plugins are built into Nintendo Relocatable Module (.rel) files and loaded by Syriinge. Syriinge itself is loaded via gecko codes, which can be found in `Syringe.asm` and is a standard GCTRM assembly file.
 
 ## Build Requirements
 
@@ -23,13 +23,13 @@ Following these steps will produce a `.rel` file to place on your SD card inside
 - Download or build the project
 - Add `sy_core.rel` to your mod/modpack's `module` folder
 - Copy `Syringe.asm` to your build's source files and `.include` it at the top of `RSBE01.txt`
-- Download or create plugins and add them to a folder called `plugins` inside your `/module` folder. (create this directory if it doesn't exist)
+- Download or create plugins and add them to a folder called `plugins` inside your `/pf` folder. (create this directory if it doesn't exist)
 
 ## Usage
 
-Syringe on it's own does not do anything meaningful. Syringe simply provides an API for hooking and injecting C++ code into the game at runtime. You'll need to download or create plugins to add custom functionality to your game. To see example plugins, refer to [this](https://github.com/Sammi-Husky/BrawlPlugins) repository.
+Syriinge on it's own does not do anything meaningful. Syriinge simply provides an API for hooking and injecting C++ code into the game at runtime. You'll need to download or create plugins to add custom functionality to your game. To see example plugins, refer to [this](https://github.com/Sammi-Husky/BrawlPlugins) repository.
 
-For creating your own plugins, you may find the [Template Repository]() helpful.
+For creating your own plugins, you may find the [Template Repository](https://github.com/Sammi-Husky/SyriingePluginTemplate) helpful.
 
 ## Credits
 
