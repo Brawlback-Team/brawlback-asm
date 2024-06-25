@@ -1,18 +1,32 @@
-224,1,00000228: InitNetwork__7SyringeFv
-224,1,00000458: Subscribe__Q211SyringeCore15ModuleLoadEventFPFP12gfModuleInfo_v
+224,1,00000000:__ct__Q27Syringe6PluginFPCc
+224,1,00000050:loadPlugin__Q27Syringe6PluginFv
+224,1,0000011c:unloadPlugin__Q27Syringe6PluginFv
+224,1,00000228:InitNetwork__7SyringeFv
+224,1,00000278:_prolog
+224,1,00000338:_epilog
+224,1,000003a8:_unresolved
+224,1,000003c0:_GLOBAL__sub_I_sy_core.cpp
+224,1,000003f0:__cxx_global_var_init
+224,1,00000424:__cxx_global_var_init.1
+224,1,00000458:Subscribe__Q211SyringeCore15ModuleLoadEventFPFP12gfModuleInfo_v
+224,1,00000494:process__Q211SyringeCore15ModuleLoadEventFv
+224,1,0000073c:onModuleLoaded__11SyringeCoreFP12gfModuleInfo
+224,1,00000770:applyRelHooks__11SyringeCoreFv
+224,1,0000083c:syInit__11SyringeCoreFv
 224,1,000008a4:syInlineHook__11SyringeCoreFCUlPCv
+224,1,000008e4:_inlineHook__11SyringeCoreFCUlPCvi
 224,1,00000a24:syInlineHookRel__11SyringeCoreFCUlPCvi
-224,1,00000a68:sySimpleHook__11SyringeCoreFCUlPCvi
-224,1,00000ca0:syReplaceFunc__11SyringeCoreFCUlPCvPPvi
-224,1,00000ce8:syReplaceFuncRel__11SyringeCoreFCUlPCvPPvi
-224,1,00000ca0:syReplaceFunc__11SyringeCoreFPCvPCvPPvi
-224,1,00000ed4:EncodeBranch__12SyringeUtilsFUlUlb
-224,1,00000f78:EncodeBranch__12SyringeUtilsFUlUl
-224,1,00000fb8: __ct__Q27Syringe7VersionFPCc
-224,1,00001018: __lt__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
-224,1,000010c0: __eq__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
-224,1,0000114c: __ne__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
-224,1,000011dc: versionToString__7SyringeFRCQ27Syringe7VersionPc
 224,1,00000a68:sySimpleHook__11SyringeCoreFCUlPCv
+224,1,00000aac:_replaceFunc__11SyringeCoreFCUlPCvPPvi
 224,1,00000c58:sySimpleHookRel__11SyringeCoreFCUlPCvi
 224,1,00000ca0:syReplaceFunc__11SyringeCoreFCUlPCvPPv
+224,1,00000ce8:syReplaceFuncRel__11SyringeCoreFCUlPCvPPvi
+224,1,00000d34:_faLoadPlugin__11SyringeCoreFP11FAEntryInfoPCc
+224,1,00000e04:syLoadPlugins__11SyringeCoreFPCc
+224,1,00000ed4:EncodeBranch__12SyringeUtilsFUlUlb
+224,1,00000f78:EncodeBranch__12SyringeUtilsFUlUl
+224,1,00000fb8:__ct__Q27Syringe7VersionFPCc
+224,1,00001018:__lt__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
+224,1,000010c0:__eq__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
+224,1,0000114c:__ne__7SyringeFRCQ27Syringe7VersionRCQ27Syringe7Version
+224,1,000011dc:versionToString__7SyringeFRCQ27Syringe7VersionPc
