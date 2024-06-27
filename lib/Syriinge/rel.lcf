@@ -3,7 +3,7 @@
 SECTIONS
 {
     GROUP :
-    {
+    {      
         .init   :{}
         .text   :{}
         .ctors  :{}

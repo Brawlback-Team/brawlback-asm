@@ -1,29 +1,44 @@
-#include "sy_core.h"
-#include "sy_utils.h"
 #include <OS/OSCache.h>
-#include <gf/gf_module.h>
+#include <OS/OSError.h>
+#include <fa/fa.h>
+#include <printf.h>
 #include <vector.h>
 
+#include "plugin.h"
+#include "sy_core.h"
+#include "sy_utils.h"
+
 namespace SyringeCore {
-    /**
-     * @brief Contains a list of pointers to Injections
-     */
     Vector<InjectionAbs*> Injections;
+    // Vector<Syringe::Plugin*> Plugins;
 
-    /**
-     * @brief hook used to re-inject hooks after dynamically loaded modules are loaded
-     * @note INTERNAL ONLY.
-     */
-    void onModuleLoaded()
+    namespace ModuleLoadEvent {
+        Vector<ModuleLoadCB> Callbacks;
+
+        void Subscribe(ModuleLoadCB cb)
+        {
+            Callbacks.push(cb);
+        }
+
+        void process()
+        {
+            register gfModuleInfo* info;
+
+            asm(
+                "mr %0, 30"
+                :"=r"(info)
+            );
+
+            int numCB = Callbacks.size();
+            for (int i = 0; i < numCB; i++)
+            {
+                Callbacks[i](info);
+            }
+        }
+    }
+
+    void doPatchesOnModule(gfModuleInfo* info)
     {
-        register gfModuleInfo* info;
-
-        asm(
-            "mr %0, 30"
-            :"=r"(info)
-        );
-
-
         gfModuleHeader* header = info->m_module->header;
 
         u32 textAddr = header->getTextSectionAddr();
@@ -45,7 +60,22 @@ namespace SyringeCore {
                 targetAddr += textAddr;
             }
 
-            if (inject->originalInstr == -1)
+            // sets original instruction now that module has been loaded into memory.
+            // This differs for replacements because only the trampline back
+            // needs the original instruction
+            if (inject->type == INJECT_TYPE_INLINE)
+            {
+                InlineHook* tmp = (InlineHook*)inject;
+                tmp->originalInstr = *(u32*)targetAddr;
+
+                u32 hookAddr = (u32)&tmp->originalInstr;
+                *(u32*)targetAddr = SyringeUtils::EncodeBranch(targetAddr, hookAddr);
+                OSReport("[Syringe] Patching %8x -> %8x\n", targetAddr, hookAddr);
+                // encode hook with branch back to injection point
+                u32 returnBranch = (u32)&tmp->instructions[9];
+                tmp->instructions[9] = SyringeUtils::EncodeBranch(returnBranch, (targetAddr + 4));
+            }
+            else if (inject->type == INJECT_TYPE_REPLACE)
             {
                 Hook* asHook = (Hook*)inject;
 
@@ -58,50 +88,60 @@ namespace SyringeCore {
 
                 u32 branchAddr = (u32)&asHook->branch;
                 *(u32*)targetAddr = SyringeUtils::EncodeBranch(targetAddr, branchAddr);
-            }
-            else
-            {
-                // refresh original instruction now that
-                // module has been loaded into memory
-                inject->originalInstr = *(u32*)targetAddr;
-
-                u32 hookAddr = (u32)&inject->originalInstr;
-                *(u32*)targetAddr = SyringeUtils::EncodeBranch(targetAddr, hookAddr);
+                OSReport("[Syringe] Patching %8x -> %8x\n", targetAddr, branchAddr);
             }
             ICInvalidateRange((void*)targetAddr, 0x04);
         }
     }
-
-    /**
-     * @brief Initializes the Syringe core systems.
-     * This function must be called before running any hooking operations.
-     */
-    void syInit()
+    void onModuleLoaded(gfModuleInfo* info)
     {
-        // Reload hooks every time a module is loaded
-        SyringeCore::syInlineHook(0x80026db4, reinterpret_cast<void*>(onModuleLoaded));
-        SyringeCore::syInlineHook(0x800272e0, reinterpret_cast<void*>(onModuleLoaded));
+        doPatchesOnModule(info);
+    }
+    void applyRelHooks()
+    {
+        gfModuleManager* manager = gfModuleManager::getInstance();
+
+        for (int i = 0; i < 16; i++)
+        {
+            gfModuleInfo* info = NULL;
+
+            // is module loaded
+            if (manager->m_moduleInfos[i].m_flags >> 4 & 1)
+            {
+                info = &manager->m_moduleInfos[i];
+            }
+
+            if (info != NULL)
+            {
+                doPatchesOnModule(info);
+            }
+        }
     }
 
-    /**
-     * @brief Injects a hook at the target address.
-     * @note Hooks injected via this function WILL automatically return execution to the original function.
-     *
-     * @param address address to inject our hook at
-     * @param replacement pointer to the function to run
-     * @param moduleId Optional. Only needed if this hook is inside a dynamically loaded module.
-     */
-    void syInlineHook(const u32 address, const void* replacement, int moduleId)
+    void syInit()
+    {
+        // Creates an event that's fired whenever a module is loaded
+        SyringeCore::syInlineHook(0x80026db4, reinterpret_cast<void*>(ModuleLoadEvent::process));
+        SyringeCore::syInlineHook(0x800272e0, reinterpret_cast<void*>(ModuleLoadEvent::process));
+
+        // subscribe to onModuleLoaded event to handle applying hooks
+        ModuleLoadEvent::Subscribe(static_cast<ModuleLoadCB>(onModuleLoaded));
+    }
+
+    void _inlineHook(const u32 address, const void* replacement, int moduleId)
     {
         // set up our trampoline for calling original
         InlineHook* hook = new InlineHook();
-        hook->originalInstr = *(u32*)address;
+        hook->type = INJECT_TYPE_INLINE;
         hook->moduleId = moduleId;
         hook->tgtAddr = address;
 
-        // no need to patch immediately if target is inside a rel
+        // // no need to patch immediately if target is inside a rel
         if (moduleId == -1)
         {
+            OSReport("[Syringe] Patching %8x -> %8x\n", address, (u32)replacement);
+            hook->originalInstr = *(u32*)address;
+
             // patch target func with hook
             u32 hookAddr = (u32)&hook->originalInstr;
             *(u32*)address = SyringeUtils::EncodeBranch(address, hookAddr);
@@ -120,56 +160,28 @@ namespace SyringeCore {
 
         ICInvalidateRange((void*)address, 0x04);
     }
-    /**
-     * @brief Injects an inline hook into a dynamically loaded module on load.
-     * @note Hooks injected via this function WILL automatically return execution to the original function.
-     *
-     * @param offset offset inside the module's .text section to insert the hook
-     * @param replacement pointer to the function to inject
-     * @param moduleId ID of the target module
-     */
+    void syInlineHook(const u32 address, const void* replacement)
+    {
+        _inlineHook(address, replacement, -1);
+    }
     void syInlineHookRel(const u32 offset, const void* replacement, int moduleId)
     {
-        syInlineHook(offset, replacement, moduleId);
-    }
-    /**
-     * @brief Injects a simple hook at the target address.
-     * @note Hooks injected through this function WILL NOT automatically branch back to the original after returning.
-     *
-     * @param address address to inject the hook at
-     * @param replacement pointer to function the hook will point to
-     * @param moduleId Optional. Only needed if this hook is inside a dynamically loaded module.
-     */
-    void sySimpleHook(const u32 address, const void* replacement, int moduleId)
-    {
-        syReplaceFunc(address, replacement, NULL, moduleId);
-    }
-    /**
-     * @brief Injects a simple hook into a dynamically loaded module on load.
-     * @note Hooks injected through this function WILL NOT automatically branch back to the original after returning.
-     *
-     * @param offset offset inside the module's .text section to insert the hook
-     * @param replacement pointer to function the hook will point to
-     * @param moduleId ID of the target module
-     */
-    void sySimpleHookRel(const u32 offset, const void* replacement, int moduleId)
-    {
-        sySimpleHook(offset, replacement, moduleId);
+        _inlineHook(offset, replacement, moduleId);
     }
 
-    /**
-     * @brief Replaces the function at the target address with the function pointed to by "replacement".
-     * @note Replacement functions will not automatically call or return to the original function.
-     * To call the original function, use the parameter "original"
-     *
-     * @param address address of the function to replace
-     * @param replacement pointer to the replacement function
-     * @param original pointer to the original function. Useful for calling the original behavior.
-     * @param moduleId Optional. Only needed if this hook is inside a dynamically loaded module.
-     */
-    void syReplaceFunc(const u32 address, const void* replacement, void** original, int moduleId)
+    void sySimpleHook(const u32 address, const void* replacement)
+    {
+        _replaceFunc(address, replacement, NULL, -1);
+    }
+    void sySimpleHookRel(const u32 offset, const void* replacement, int moduleId)
+    {
+        _replaceFunc(offset, replacement, NULL, moduleId);
+    }
+
+    void _replaceFunc(const u32 address, const void* replacement, void** original, int moduleId)
     {
         Hook* hook = new Hook();
+        hook->type = INJECT_TYPE_REPLACE;
         hook->moduleId = moduleId;
         hook->tgtAddr = address;
 
@@ -178,7 +190,12 @@ namespace SyringeCore {
             // encode our trampoline branch
             // back to original func
             Trampoline* tramp = new Trampoline();
-            tramp->originalInstr = *(u32*)address;
+
+            // only read immediately if patch is inside a rel
+            if (moduleId == -1)
+            {
+                tramp->originalInstr = *(u32*)address;
+            }
 
             u32 trampBranch = (u32)&tramp->branch;
             tramp->branch = SyringeUtils::EncodeBranch(trampBranch, address + 4);
@@ -195,40 +212,55 @@ namespace SyringeCore {
         if (moduleId == -1)
         {
             // patch target func with hook
+            OSReport("[Syringe] Patching %8x -> %8x\n", address, (u32)replacement);
             *(u32*)address = SyringeUtils::EncodeBranch(address, hookBranch);
             ICInvalidateRange((void*)address, 0x04);
         }
 
         Injections.push(hook);
     }
-    /**
-     * @brief Replaces a function inside of a dynamically loaded module on load.
-     * @note Replacement functions will not automatically call or return to the original function.
-     * To call the original function, use the parameter "original"
-     *
-     * @param offset offset inside the module's .text section of the function to replace
-     * @param replacement pointer to the replacement function
-     * @param original pointer to the original function. Useful for calling the original behavior.
-     * @param moduleId ID of the target module
-     */
+    void syReplaceFunc(const u32 address, const void* replacement, void** original)
+    {
+        _replaceFunc(address, replacement, original, -1);
+    }
     void syReplaceFuncRel(const u32 offset, const void* replacement, void** original, int moduleId)
     {
-        syReplaceFunc(offset, replacement, original, moduleId);
+        _replaceFunc(offset, replacement, original, moduleId);
     }
 
-    /**
-     * @brief Replaces the function at the target address with the function pointed to by "replacement".
-     * @note Replacement functions will not automatically call or return to the original function.
-     * To call the original function, use the parameter "original"
-     *
-     * @param symbol address of the function to replace
-     * @param replacement pointer to the replacement function
-     * @param original pointer to the original function. Useful for calling the original behavior.
-     * @param moduleId Optional. Only needed if this hook is inside a dynamically loaded module.
-     */
-    void syReplaceFunc(const void* symbol, const void* replacement, void** original, int moduleId)
+    void _faLoadPlugin(FAEntryInfo* info, const char* folder)
     {
-        return syReplaceFunc((u32)symbol, replacement, original, moduleId);
-    }
+        char tmp[0x80];
+        if (info->name[0] == 0)
+            sprintf(tmp, "%s/%s", folder, info->shortname);
+        else
+            sprintf(tmp, "%s/%s", folder, info->name);
 
+        // Syringe::Plugin* plg = new (Heaps::Syringe) Syringe::Plugin(tmp);
+        Syringe::Plugin plg = Syringe::Plugin(tmp);
+
+        if (!plg.loadPlugin())
+            OSReport("[Syringe] Failed to load plugin (%s)\n", tmp);
+
+        // Plugins.push(plg);
+    }
+    int syLoadPlugins(const char* folder)
+    {
+        FAEntryInfo info;
+        int count = 0;
+        char tmp[0x80];
+        sprintf(tmp, "%spf/%s/*.rel", MOD_PATCH_DIR, folder);
+        if (FAFsfirst(tmp, 0x20, &info) == 0)
+        {
+            _faLoadPlugin(&info, folder);
+            count++;
+
+            while (FAFsnext(&info) == 0)
+            {
+                _faLoadPlugin(&info, folder);
+                count++;
+            }
+        }
+        return count;
+    }
 } // namespace SyringeCore
