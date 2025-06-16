@@ -50,7 +50,58 @@ namespace Utils {
         }
         return dest;
     }
-    __attribute__((naked)) void SaveRegs()
+    bu32 reg2;
+    bu32 reg3;
+    bu32 reg4;
+    bu32 reg5;
+    bu32 reg6;
+    bu32 reg7;
+    bu32 reg8;
+    bu32 reg9;
+    bu32 reg10;
+    bu32 reg11;
+    bu32 reg12;
+    bu32 reg13;
+    void StoreRegs()
+    {
+        Utils::SaveRegs();
+        asm volatile(
+            "stw %0, 2\n\t"
+            "stw %1, 3\n\t"
+            "stw %2, 4\n\t"
+            "stw %3, 5\n\t"
+            "stw %4, 6\n\t"
+            "stw %5, 7\n\t"
+            "stw %6, 8\n\t"
+            "stw %7, 9\n\t"
+            "stw %8, 10\n\t"
+            "stw %9, 11\n\t"
+            "stw %10, 12\n\t"
+            "stw %11, 13\n\t"
+            : "=m"(reg2), "=m"(reg3), "=m"(reg4), "=m"(reg5), "=m"(reg6), "=m"(reg7), "=m"(reg8), "=m"(reg9), "=m"(reg10), "=m"(reg11), "=m"(reg12), "=m"(reg13)
+        );
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void UnstoreRegs()
+    {
+        asm volatile(
+            "lwz 2, %0\n\t"
+            "lwz 3, %1\n\t"
+            "lwz 4, %2\n\t"
+            "lwz 5, %3\n\t"
+            "lwz 6, %4\n\t"
+            "lwz 7, %5\n\t"
+            "lwz 8, %6\n\t"
+            "lwz 9, %7\n\t"
+            "lwz 10, %8\n\t"
+            "lwz 11, %9\n\t"
+            "lwz 12, %10\n\t"
+            "lwz 13, %11\n\t"
+            :
+            : "m"(reg2), "m"(reg3), "m"(reg4), "m"(reg5), "m"(reg6), "m"(reg7), "m"(reg8), "m"(reg9), "m"(reg10), "m"(reg11), "m"(reg12), "m"(reg13)
+        );
+    }
+    void SaveRegs()
     {
         asm volatile(
             "stw 0, 0x0004 (1)\n\t"

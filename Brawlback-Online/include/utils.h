@@ -8,6 +8,18 @@
 
 namespace Utils {
     extern bool setControls;
+    extern bu32 reg2;
+    extern bu32 reg3;
+    extern bu32 reg4;
+    extern bu32 reg5;
+    extern bu32 reg6;
+    extern bu32 reg7;
+    extern bu32 reg8;
+    extern bu32 reg9;
+    extern bu32 reg10;
+    extern bu32 reg11;
+    extern bu32 reg12;
+    extern bu32 reg13;
     u32 EncodeBranch(u32 start, u32 dest, bool linked);
     u32 EncodeBranch(u32 start, u32 dest);
 
@@ -15,6 +27,8 @@ namespace Utils {
 
     __attribute__((naked)) void SaveRegs();
     __attribute__((naked)) void RestoreRegs();
+    void StoreRegs();
+    __attribute__((naked)) void UnstoreRegs();
     void printRegs();
 
     Vector<bu8> uint16ToVector(bu16 num);
@@ -44,4 +58,10 @@ T bufferToObject(u8* buffer)
   T obj;
   memmove(&obj, buffer, sizeof(T));
   return obj;
+}
+
+template<typename T>
+T Max(T x, T y)
+{ 
+  return (((x) > (y)) ? (x) : (y)); 
 }

@@ -48,6 +48,7 @@ namespace FrameLogic {
     extern bool fixStaleInputs;
     extern bool shouldSkipTask;
     extern bu32 r3_value;
+    extern bs32 processFrames;
     // Functions
     void ReduceStickNoise();
     void FixStaleInputs();
@@ -55,13 +56,15 @@ namespace FrameLogic {
     void FrameDataLogic();
     void SendFrameCounterPointerLoc();
     bool ShouldSkipGfTaskProcess(gfTask* task, bu32 task_type);
+    void GameLoop(void* gameApp, bu32 frames);
 
     // Hooks
     void initFrameCounter();
     void updateFrameCounter();
     void beginningOfMainGameLoop();
-    void afterRender();
     void beginningOfFrameLoop();
+    void setFrameAdvanceCounter();
+    __attribute__((naked)) void gameProcHook();
     __attribute__((naked)) void beginningOfFrameLoop2();
     __attribute__((naked)) void beginningOfFrameLoop3();
     __attribute__((naked)) void beginningOfFrameLoop4();
@@ -71,12 +74,16 @@ namespace FrameLogic {
     __attribute__((naked)) void updateGameFrameAlwaysReturn();
     __attribute__((naked)) void updateGfSlowManagerAlwaysReturn();
     void beginFrame();
-    void endFrame();
     void endMainLoop();
     void gfTaskProcessHook();
     __attribute__((naked)) void gfTaskProcessHook2();
     __attribute__((naked)) void fixEffects();
     __attribute__((naked)) void fixEffects2();
+    __attribute__((naked)) void fixEffects3();
+    __attribute__((naked)) void fixEffects4();
+    __attribute__((naked)) void fixEffects5();
+    __attribute__((naked)) void fixEffects6();
+    __attribute__((naked)) void fixEffects7();
     void setFixStaleInputsTrue();
 }
 namespace FrameAdvance {
@@ -95,6 +102,7 @@ namespace FrameAdvance {
     void ProcessGameSimulationFrame(FrameData* inputs);
     void setFrameAdvanceFromEmu();
     void getGamePadStatusInjection(gfPadStatus* status, int port, bool isGamePad);
+    void UpdateSync(bu32 frame);
 
     // Hooks
     void fixPadInconsistency();
@@ -284,15 +292,15 @@ namespace GMMelee {
     // Variables
     extern bool isMatchChoicesPopulated;
     extern int charChoices[MAX_NUM_PLAYERS];
-    extern int fileIndexChoices[MAX_NUM_PLAYERS];
+    extern s8 fileIndexChoices[MAX_NUM_PLAYERS];
     extern bool rumbleChoices[MAX_NUM_PLAYERS];
-    extern int costumeChoices[MAX_NUM_PLAYERS];
+    extern s8 costumeChoices[MAX_NUM_PLAYERS];
     extern  BrawlbackControls controlsChoices[MAX_NUM_PLAYERS];
     extern int stageChoice;
     #define STAGE_ID_IDX 27
 
     // Functions
-    void PopulateMatchSettings(int chars[4], int costumes[4], int fileIndices[4], bool rumble[4], BrawlbackControls controls[4], int stageID);
+    void PopulateMatchSettings(int chars[4], s8 costumes[4], s8 fileIndices[4], bool rumble[4], BrawlbackControls controls[4], int stageID);
     void ResetMatchChoicesPopulated();
 
     // Hooks

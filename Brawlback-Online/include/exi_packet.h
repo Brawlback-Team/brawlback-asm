@@ -19,6 +19,7 @@ namespace EXICommand
     const u8 CMD_TIMESYNC = 16;
     const u8 CMD_ROLLBACK = 17;
     const u8 CMD_FRAMEADVANCE = 18;
+    const u8 CMD_UPDATESYNC = 39;
 
     const u8 CMD_REPLAY_START_REPLAYS_STRUCT = 19;
     const u8 CMD_REPLAY_REPLAYS_STRUCT = 20;
