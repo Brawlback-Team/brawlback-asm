@@ -1922,8 +1922,8 @@ namespace RollbackHooks {
         //SyringeCore::syInlineHook(0x8005c7bc, reinterpret_cast<void*>(FrameAdvance::untrackEfParticle));
 
         // FrameLogic Namespace
-        //SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
-        //SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
+        SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
+        SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
         SyringeCore::sySimpleHook(0x80061A80, reinterpret_cast<void*>(FrameLogic::fixEffects));
         SyringeCore::sySimpleHook(0x80061a30, reinterpret_cast<void*>(FrameLogic::fixEffects2));
         SyringeCore::sySimpleHookRel(0x00008B78, reinterpret_cast<void*>(FrameLogic::fixEffects3), Modules::SORA_MELEE);
