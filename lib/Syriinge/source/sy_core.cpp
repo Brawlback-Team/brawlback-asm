@@ -1,7 +1,7 @@
+#include <FA.h>
 #include <OS/OSCache.h>
 #include <OS/OSError.h>
-#include <fa/fa.h>
-#include <printf.h>
+#include <stdio.h>
 #include <vector.h>
 
 #include "plugin.h"
@@ -9,6 +9,7 @@
 #include "sy_utils.h"
 
 namespace SyringeCore {
+    CoreApi* API = NULL;
     Vector<InjectionAbs*> Injections;
     // Vector<Syringe::Plugin*> Plugins;
 
@@ -24,10 +25,9 @@ namespace SyringeCore {
         {
             register gfModuleInfo* info;
 
-            asm(
-                "mr %0, 30"
-                :"=r"(info)
-            );
+            asm("mr %0, 30\n\t" 
+                 : "=r"(info)
+                );
 
             int numCB = Callbacks.size();
             for (int i = 0; i < numCB; i++)
@@ -72,8 +72,8 @@ namespace SyringeCore {
                 *(u32*)targetAddr = SyringeUtils::EncodeBranch(targetAddr, hookAddr);
                 OSReport("[Syringe] Patching %8x -> %8x\n", targetAddr, hookAddr);
                 // encode hook with branch back to injection point
-                u32 returnBranch = (u32)&tmp->instructions[9];
-                tmp->instructions[9] = SyringeUtils::EncodeBranch(returnBranch, (targetAddr + 4));
+                u32 returnBranch = (u32)&tmp->instructions[11];
+                tmp->instructions[11] = SyringeUtils::EncodeBranch(returnBranch, (targetAddr + 4));
             }
             else if (inject->type == INJECT_TYPE_REPLACE)
             {
@@ -83,7 +83,9 @@ namespace SyringeCore {
                 // patching the target with the hook branch
                 if (asHook->trampoline != NULL)
                 {
+                    u32 returnBranch = (u32)&asHook->trampoline->branch;
                     asHook->trampoline->originalInstr = *(u32*)targetAddr;
+                    asHook->trampoline->branch = SyringeUtils::EncodeBranch(returnBranch, (targetAddr + 4));
                 }
 
                 u32 branchAddr = (u32)&asHook->branch;
@@ -120,12 +122,14 @@ namespace SyringeCore {
 
     void syInit()
     {
+        CoreApi* api = new (Heaps::Syringe) CoreApi();
+        API = api;
         // Creates an event that's fired whenever a module is loaded
-        SyringeCore::syInlineHook(0x80026db4, reinterpret_cast<void*>(ModuleLoadEvent::process));
-        SyringeCore::syInlineHook(0x800272e0, reinterpret_cast<void*>(ModuleLoadEvent::process));
+        api->syInlineHook(0x80026db4, reinterpret_cast<void*>(ModuleLoadEvent::process));
+        api->syInlineHook(0x800272e0, reinterpret_cast<void*>(ModuleLoadEvent::process));
 
         // subscribe to onModuleLoaded event to handle applying hooks
-        ModuleLoadEvent::Subscribe(static_cast<ModuleLoadCB>(onModuleLoaded));
+        api->moduleLoadEventSubscribe(static_cast<ModuleLoadCB>(onModuleLoaded));
     }
 
     void _inlineHook(const u32 address, const void* replacement, int moduleId)
@@ -149,35 +153,17 @@ namespace SyringeCore {
 
         // encode hook with jump to our func
         u32 replAddr = reinterpret_cast<u32>(replacement);
-        u32 replBranchAddr = (u32)&hook->instructions[4];
-        hook->instructions[4] = SyringeUtils::EncodeBranch(replBranchAddr, replAddr, true);
+        u32 replBranchAddr = (u32)&hook->instructions[5];
+        hook->instructions[5] = SyringeUtils::EncodeBranch(replBranchAddr, replAddr, true);
 
         // encode hook with branch back to injection point
-        u32 returnBranch = (u32)&hook->instructions[9];
-        hook->instructions[9] = SyringeUtils::EncodeBranch(returnBranch, (address + 4));
+        u32 returnBranch = (u32)&hook->instructions[11];
+        hook->instructions[11] = SyringeUtils::EncodeBranch(returnBranch, (address + 4));
 
         Injections.push(hook);
 
         ICInvalidateRange((void*)address, 0x04);
     }
-    void syInlineHook(const u32 address, const void* replacement)
-    {
-        _inlineHook(address, replacement, -1);
-    }
-    void syInlineHookRel(const u32 offset, const void* replacement, int moduleId)
-    {
-        _inlineHook(offset, replacement, moduleId);
-    }
-
-    void sySimpleHook(const u32 address, const void* replacement)
-    {
-        _replaceFunc(address, replacement, NULL, -1);
-    }
-    void sySimpleHookRel(const u32 offset, const void* replacement, int moduleId)
-    {
-        _replaceFunc(offset, replacement, NULL, moduleId);
-    }
-
     void _replaceFunc(const u32 address, const void* replacement, void** original, int moduleId)
     {
         Hook* hook = new Hook();
@@ -219,16 +205,7 @@ namespace SyringeCore {
 
         Injections.push(hook);
     }
-    void syReplaceFunc(const u32 address, const void* replacement, void** original)
-    {
-        _replaceFunc(address, replacement, original, -1);
-    }
-    void syReplaceFuncRel(const u32 offset, const void* replacement, void** original, int moduleId)
-    {
-        _replaceFunc(offset, replacement, original, moduleId);
-    }
-
-    void _faLoadPlugin(FAEntryInfo* info, const char* folder)
+    bool _faLoadPlugin(FAEntryInfo* info, const char* folder)
     {
         char tmp[0x80];
         if (info->name[0] == 0)
@@ -240,9 +217,13 @@ namespace SyringeCore {
         Syringe::Plugin plg = Syringe::Plugin(tmp);
 
         if (!plg.loadPlugin())
+        {
             OSReport("[Syringe] Failed to load plugin (%s)\n", tmp);
+            return false;
+        }
 
         // Plugins.push(plg);
+        return true;
     }
     int syLoadPlugins(const char* folder)
     {
@@ -252,15 +233,46 @@ namespace SyringeCore {
         sprintf(tmp, "%spf/%s/*.rel", MOD_PATCH_DIR, folder);
         if (FAFsfirst(tmp, 0x20, &info) == 0)
         {
-            _faLoadPlugin(&info, folder);
-            count++;
+            // Load first found plugin
+            if (_faLoadPlugin(&info, folder))
+                count++;
 
+            // Loop over and load the rest if there are more
             while (FAFsnext(&info) == 0)
             {
-                _faLoadPlugin(&info, folder);
-                count++;
+                if (_faLoadPlugin(&info, folder))
+                    count++;
             }
         }
         return count;
     }
 } // namespace SyringeCore
+
+void CoreApi::syInlineHook(const u32 address, const void* replacement)
+{
+    SyringeCore::_inlineHook(address, replacement, -1);
+}
+void CoreApi::syInlineHookRel(const u32 offset, const void* replacement, int moduleId)
+{
+    SyringeCore::_inlineHook(offset, replacement, moduleId);
+}
+void CoreApi::sySimpleHook(const u32 address, const void* replacement)
+{
+    SyringeCore::_replaceFunc(address, replacement, NULL, -1);
+}
+void CoreApi::sySimpleHookRel(const u32 offset, const void* replacement, int moduleId)
+{
+    SyringeCore::_replaceFunc(offset, replacement, NULL, moduleId);
+}
+void CoreApi::syReplaceFunc(const u32 address, const void* replacement, void** original)
+{
+    SyringeCore::_replaceFunc(address, replacement, original, -1);
+}
+void CoreApi::syReplaceFuncRel(const u32 offset, const void* replacement, void** original, int moduleId)
+{
+    SyringeCore::_replaceFunc(offset, replacement, original, moduleId);
+}
+void CoreApi::moduleLoadEventSubscribe(SyringeCore::ModuleLoadCB cb)
+{
+    SyringeCore::ModuleLoadEvent::Subscribe(cb);
+}

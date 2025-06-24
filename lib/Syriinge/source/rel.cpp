@@ -1,14 +1,9 @@
 #include <OS/OSError.h>
-#include <fa/fa.h>
-#include <gf/gf_heap_manager.h>
-#include <gf/gf_module.h>
-#include <net/net.h>
-#include <printf.h>
+#include <SO/SOBasic.h>
 
 #include "sy_core.h"
 
 namespace Syringe {
-
     extern "C" {
     typedef void (*PFN_voidfunc)();
     __attribute__((section(".ctors"))) extern PFN_voidfunc _ctors[];

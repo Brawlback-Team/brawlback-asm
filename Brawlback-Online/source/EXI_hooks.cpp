@@ -1,7 +1,5 @@
 #include "EXI_hooks.h"
-#include <string.h>
-#include <OS/OSError.h>
-#include "utils.h"
+#include "mem_exp_hooks.h"
 namespace EXIHooks {
     void writeEXI(void* data, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency) {
         //need to make new buffer to ensure data is aligned to cache block

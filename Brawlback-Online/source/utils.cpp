@@ -1,6 +1,6 @@
 #include "utils.h"
-#include "BrawlbackTypes.h"
 #include "mem_exp_hooks.h"
+#include "OS/OSError.h"
 namespace Utils {
     bool setControls = false;
     u32 EncodeBranch(u32 start, u32 dest, bool linked)

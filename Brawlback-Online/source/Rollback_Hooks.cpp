@@ -1,17 +1,14 @@
 #include "Rollback_Hooks.h"
 #include "sy_core.h"
-#include <EXI/EXIBios.h>
-#include <gf/gf_heap_manager.h>
-#include <gf/gf_pad_status.h>
-#include <gf/gf_task.h>
 #include <modules.h>
-#include "ip/ip_pad_config.h"
-#include "if/if_mngr.h"
-#include "ft/ft_manager.h"
-#include "sc/sc_melee.h"
-#include "ec/ec_mgr.h"
-#include "ip/ip_switch.h"
-
+#include <ip/ip_pad_config.h>
+#include <if/if_mngr.h>
+#include <ft/ft_manager.h>
+#include <ec/ec_mgr.h>
+#include <ip/ip_switch.h>
+#include "EXI_Hooks.h"
+#include "utils.h"
+#include <st/loader/st_loader_manager.h>
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -46,31 +43,31 @@ void FillInMeleeObj() {
         
         OSReport("Filling in stuff!\n");
         
-        memmove(g_GameGlobal->m_modeMelee, defaultGmGlobalModeMelee, 800);
+        memmove(&g_globalMelee, defaultGmGlobalModeMelee, 800);
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
+        g_globalMelee.m_playersInitData[0].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[0]);
+        g_globalMelee.m_playersInitData[1].m_characterKind = static_cast<gmCharacterKind>(GMMelee::charChoices[1]);
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID = GMMelee::costumeChoices[0];
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_costumeID = GMMelee::costumeChoices[1];
+        g_globalMelee.m_playersInitData[0].m_colorNo = GMMelee::costumeChoices[0];
+        g_globalMelee.m_playersInitData[1].m_colorNo = GMMelee::costumeChoices[1];
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_colorFileIdx = GMMelee::fileIndexChoices[0];
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_colorFileIdx = GMMelee::fileIndexChoices[1];
+        g_globalMelee.m_playersInitData[0].m_colorFileNo = GMMelee::fileIndexChoices[0];
+        g_globalMelee.m_playersInitData[1].m_colorFileNo = GMMelee::fileIndexChoices[1];
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_state = 0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_state = 0;
+        g_globalMelee.m_playersInitData[0].m_state = 0;
+        g_globalMelee.m_playersInitData[1].m_state = 0;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_playerId = 0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_playerId = 1;
+        g_globalMelee.m_playersInitData[0].m_playerId = 0;
+        g_globalMelee.m_playersInitData[1].m_playerId = 1;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
+        g_globalMelee.m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
+        g_globalMelee.m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0]._7[0x3] = 0x80;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1]._7[0x3] = 0x80;
+        g_globalMelee.m_playersInitData[0].m_teamNo = 0x80;
+        g_globalMelee.m_playersInitData[1].m_teamNo = 0x80;
 
-        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_startPointIdx = 0;
-        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_startPointIdx = 1;
+        g_globalMelee.m_playersInitData[0].m_startPointIdx = 0;
+        g_globalMelee.m_playersInitData[1].m_startPointIdx = 1;
 
         g_GameGlobal->m_record->m_menuData.rumble[0] = GMMelee::rumbleChoices[0];
         g_GameGlobal->m_record->m_menuData.rumble[1] = GMMelee::rumbleChoices[1];
@@ -81,7 +78,7 @@ void FillInMeleeObj() {
         // melee[P1_CHAR_ID_IDX+1] = 0; // Set player type to human
         // melee[P2_CHAR_ID_IDX+1] = 0;
         // melee[STAGE_ID_IDX] = stageChoice;
-        g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind = Stages::Battle; // TODO uncomment and use above line, just testing with battlefield
+        g_globalMelee.m_meleeInitData.m_stageKind = Stages::Battle; // TODO uncomment and use above line, just testing with battlefield
     }
 }
 
@@ -99,11 +96,11 @@ bool gameHasStarted() {
 
 void fillOutGameSettings(GameSettings& settings) {
     settings.randomSeed = g_mtRandDefault.seed;
-    settings.stageID = g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind;
+    settings.stageID = g_globalMelee.m_meleeInitData.m_stageKind;
 
-    bu8 p1_id = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_characterKind;
+    bu8 p1_id = static_cast<bu8>(g_globalMelee.m_playersInitData[0].m_characterKind);
     //OSReport("P1 pre-override char id: %d\n", p1_id);
-    bu8 p2_id = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_characterKind;
+    bu8 p2_id = static_cast<bu8>(g_globalMelee.m_playersInitData[1].m_characterKind);
     //OSReport("P2 pre-override char id: %d\n", p2_id);
 
     // brawl loads all players into the earliest slots.
@@ -116,21 +113,16 @@ void fillOutGameSettings(GameSettings& settings) {
     // sequence. Gotta find another way to get it, or some better spot to grab the number of players
     settings.numPlayers = 2;
     //OSReport("Num Players: %u\n", (unsigned int)settings.numPlayers);
-    PlayerSettings playerSettings[2];
-    playerSettings[0].charID = p1_id;
-    playerSettings[1].charID = p2_id;
-    playerSettings[0].rumble = g_GameGlobal->m_record->m_menuData.rumble[0];
-    playerSettings[1].rumble = g_GameGlobal->m_record->m_menuData.rumble[1];
-    playerSettings[0].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[0]);
-    playerSettings[1].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[1]);
-    playerSettings[0].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_costumeID;
-    playerSettings[1].charColor = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_costumeID;
-    playerSettings[0].colorFileIndex = g_GameGlobal->m_modeMelee->m_playersInitData[0].m_colorFileIdx;
-    playerSettings[1].colorFileIndex = g_GameGlobal->m_modeMelee->m_playersInitData[1].m_colorFileIdx;
-
-    for (int i = 0; i < settings.numPlayers; i++) {
-        settings.playerSettings[i] = playerSettings[i];
-    }
+    settings.playerSettings[0].charID = p1_id;
+    settings.playerSettings[1].charID = p2_id;
+    settings.playerSettings[0].rumble = g_GameGlobal->m_record->m_menuData.rumble[0];
+    settings.playerSettings[1].rumble = g_GameGlobal->m_record->m_menuData.rumble[1];
+    settings.playerSettings[0].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[0]);
+    settings.playerSettings[1].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[1]);
+    settings.playerSettings[0].charColor = g_globalMelee.m_playersInitData[0].m_colorNo;
+    settings.playerSettings[1].charColor = g_globalMelee.m_playersInitData[1].m_colorNo;
+    settings.playerSettings[0].colorFileIndex = g_globalMelee.m_playersInitData[0].m_colorFileNo;
+    settings.playerSettings[1].colorFileIndex = g_globalMelee.m_playersInitData[1].m_colorFileNo;
 }
 
 
@@ -158,7 +150,7 @@ void MergeGameSettingsIntoGame(GameSettings& settings) {
     //OSReport("P1 char: %d  P2 char: %d\n", p1_char, p2_char);
     //OSReport("Stage id: %d\n", settings.stageID);
 
-    int chars[MAX_NUM_PLAYERS] = {p1_char, p2_char, -1, -1};
+    bu8 chars[MAX_NUM_PLAYERS] = {p1_char, p2_char, 0, 0};
     s8 costumes[MAX_NUM_PLAYERS] = {p1_costume, p2_costume, -1, -1};
     s8 fileIndices[MAX_NUM_PLAYERS] = {p1_file, p2_file, -1, -1};
     bool rumble[MAX_NUM_PLAYERS] = {settings.playerSettings[0].rumble, settings.playerSettings[1].rumble, true, true};
@@ -185,15 +177,15 @@ namespace Util {
     void printGameInputs(const gfPadStatus& pad) {
         
         OSReport(" -- Game Pad --\n");
-        OSReport(" LAnalogue: %u    RAnalogue %u\n", pad.LAnalogue, pad.RAnalogue);
-        OSReport("StickX: %hhu ", pad.stickX);
-        OSReport("StickY: %hhu ", pad.stickY);
-        OSReport("CStickX: %hhu ", pad.cStickX);
-        OSReport("CStickY: %hhu\n", pad.cStickY);
+        OSReport(" LAnalogue: %u    RAnalogue %u\n", pad.m_lTriggerAnalog, pad.m_rTriggerAnalog);
+        OSReport("StickX: %hhu ", pad.m_stickX);
+        OSReport("StickY: %hhu ", pad.m_stickY);
+        OSReport("CStickX: %hhu ", pad.m_subStickX);
+        OSReport("CStickY: %hhu\n", pad.m_subStickY);
         OSReport("Buttons: ");
-        OSReport("B1: 0x%x ", pad.buttons);
-        OSReport("B2: 0x%x ", pad._buttons);
-        OSReport("B3: 0x%x \n", pad.newPressedButtons);
+        OSReport("B1: 0x%x ", pad.m_buttonsCurrentFrame);
+        OSReport("B2: 0x%x ", pad.m_buttonsCurrentFrame2);
+        OSReport("B3: 0x%x \n", pad.m_buttonsPressedThisFrame);
         OSReport(" ---------\n");
         
     }
@@ -258,21 +250,21 @@ namespace Util {
 
     BrawlbackPad GamePadToBrawlbackPad(const gfPadStatus& pad) {
         BrawlbackPad ret = BrawlbackPad();
-        ret._buttons = pad._buttons;
-        ret.buttons = pad.buttons;
+        ret._buttons = pad.m_buttonsCurrentFrame.bits;
+        ret.buttons = pad.m_buttonsCurrentFrame2.bits;
         // *(ret.newPressedButtons-0x2) = (int)*(pad+0x14);
-        ret.holdButtons = pad.holdButtons;
-        ret.rapidFireButtons = pad.rapidFireButtons;
-        ret.releasedButtons = pad.releasedButtons;
-        ret.newPressedButtons = pad.newPressedButtons;
-        ret.LAnalogue = pad.LAnalogue;
-        ret.RAnalogue = pad.RAnalogue;
-        ret.LTrigger = pad.LTrigger;
-        ret.RTrigger = pad.RTrigger;
-        ret.cStickX = pad.cStickX;
-        ret.cStickY = pad.cStickY;
-        ret.stickX = pad.stickX;
-        ret.stickY = pad.stickY;
+        ret.holdButtons = pad.m_buttonsHeld.bits;
+        ret.rapidFireButtons = pad.m_buttonsPressedThisFrame.bits;
+        ret.releasedButtons = pad.m_buttonsReleasedThisFrame.bits;
+        ret.newPressedButtons = pad.m_buttonsPressedThisFrame2.bits;
+        ret.LAnalogue = pad.m_lTriggerAnalog;
+        ret.RAnalogue = pad.m_rTriggerAnalog;
+        ret.LTrigger = pad._0x36;
+        ret.RTrigger = pad._0x37;
+        ret.cStickX = pad.m_subStickX;
+        ret.cStickY = pad.m_subStickY;
+        ret.stickX = pad.m_stickX;
+        ret.stickY = pad.m_stickY;
 
         // OSReport("BUTTONS======\n");
         // OSReport("Buttons: 0x%x\n", pad._buttons);
@@ -326,24 +318,24 @@ namespace Util {
         // bu8 charId = GM_GLOBAL_MODE_MELEE->playerData[port].charId;
         // GM_GLOBAL_MODE_MELEE->playerData[port].playerType = isNotConnected ? 03 : 0 ; // Set to Human
 
-        gamePad->type = 0x0;
-        gamePad->isNotConnected = 0x0;
-        gamePad->_buttons = pad._buttons;
-        gamePad->buttons = pad.buttons;
-        gamePad->releasedButtons = pad.releasedButtons;
+        gamePad->m_controllerType = gfPadType::PadType::GCC;
+        gamePad->m_error = gfPadError::NONE;
+        gamePad->m_buttonsCurrentFrame.bits = pad._buttons;
+        gamePad->m_buttonsCurrentFrame2.bits = pad.buttons;
+        gamePad->m_buttonsReleasedThisFrame.bits = pad.releasedButtons;
         // int* addr  = (int*) &gamePad;
         // *(addr+0x14+0x2) = pad.buttons;
-        gamePad->holdButtons = pad.holdButtons;
-        gamePad->rapidFireButtons = pad.rapidFireButtons;
-        gamePad->newPressedButtons = pad.newPressedButtons;
-        gamePad->LAnalogue = pad.LAnalogue;
-        gamePad->RAnalogue = pad.RAnalogue;
-        gamePad->LTrigger = pad.LTrigger;
-        gamePad->RTrigger = pad.RTrigger;
-        gamePad->cStickX = pad.cStickX;
-        gamePad->cStickY = pad.cStickY;
-        gamePad->stickX = pad.stickX;
-        gamePad->stickY = pad.stickY;
+        gamePad->m_buttonsHeld.bits = pad.holdButtons;
+        gamePad->m_buttonsPressedThisFrame.bits = pad.rapidFireButtons;
+        gamePad->m_buttonsPressedThisFrame2.bits = pad.newPressedButtons;
+        gamePad->m_lTriggerAnalog = pad.LAnalogue;
+        gamePad->m_rTriggerAnalog = pad.RAnalogue;
+        gamePad->_0x36 = pad.LTrigger;
+        gamePad->_0x37 = pad.RTrigger;
+        gamePad->m_subStickX = pad.cStickX;
+        gamePad->m_subStickY = pad.cStickY;
+        gamePad->m_stickX = pad.stickX;
+        gamePad->m_stickY = pad.stickY;
         // OSReport("Buttons: 0x%x\n", pad.buttons);
         // OSReport("Buttons: 0x%x\n", pad.newPressedButtons);
 
@@ -400,7 +392,7 @@ namespace Match {
     void StartSceneMelee()
     {
         Utils::SaveRegs();
-        if(g_GameGlobal->m_modeMelee->m_meleeInitData.m_stageKind != Stages::OnlineTraining)
+        if(g_globalMelee.m_meleeInitData.m_stageKind != Stages::OnlineTraining)
         {
             //OSReport("  ~~~~~~~~~~~~~~~~  Start Scene Melee  ~~~~~~~~~~~~~~~~  \n");
             #ifdef NETPLAY_IMPL
@@ -601,7 +593,7 @@ namespace FrameAdvance {
         GetInputsForFrame(getCurrentFrame(), inputs);
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
         {
-            gfPadStatus* status = &g_PadSystem.gcPads[i];
+            gfPadStatus* status = &g_gfPadSystem->m_gameGcnPads[i];
             getGamePadStatusInjection(status, i, true);
         }
         bu32 queue = (0x805ba480);
@@ -619,7 +611,7 @@ namespace FrameAdvance {
         {
             memmove((void*)(queue + 2), &queue_param2, sizeof(bu16));
         }
-        push_gfPadStatusQueue((void*)queue, (&g_PadSystem + 0x40));
+        push_gfPadStatusQueue((void*)queue, (g_gfPadSystem + 0x40));
         
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
 
@@ -629,7 +621,7 @@ namespace FrameAdvance {
         Utils::SaveRegs();
         if(!Netplay::IsInMatch())
         {
-            g_PadSystem.updateLow();
+            g_gfPadSystem->updateLow();
         }
         Utils::RestoreRegs();
     }
@@ -702,8 +694,8 @@ namespace FrameAdvance {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
-            memmove(&FrameLogic::inputBuffer, &g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort], sizeof(FrameLogic::inputBuffer));
-            Util::InjectBrawlbackPadToPadStatus(&g_PadSystem.gcPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
+            memmove(&FrameLogic::inputBuffer, &g_gfPadSystem->m_gameGcnPads[Netplay::getGameSettings().localPlayerPort], sizeof(FrameLogic::inputBuffer));
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_gameGcnPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
         }
         Utils::RestoreRegs();
     }
@@ -810,13 +802,13 @@ namespace FrameLogic {
     bs32 processFrames = 1;
     void ReduceStickNoise()
     {
-        if(inputBuffer.stickX > -2 && inputBuffer.stickX < 2)
+        if(inputBuffer.m_stickX > -2 && inputBuffer.m_stickX < 2)
         {
-            inputBuffer.stickX = 0;
+            inputBuffer.m_stickX = 0;
         }
-        if(inputBuffer.stickY > -2 && inputBuffer.stickY < 2)
+        if(inputBuffer.m_stickY > -2 && inputBuffer.m_stickY < 2)
         {
-            inputBuffer.stickY = 0;
+            inputBuffer.m_stickY = 0;
         }
     }
     void FixStaleInputs() 
@@ -858,7 +850,7 @@ namespace FrameLogic {
     {
         bool returnVal = false;
         if (isRollback) { // if we're resimulating, disable certain tasks that don't need to run on resim frames.
-            char* taskName = task->m_taskName; // 0x0 offset of gfTask* is the task name
+            char* taskName = (char*)task->m_taskName; // 0x0 offset of gfTask* is the task name
             //OSReport("Processing task %s\n", taskName);
             returnVal = strstr(nonResimTasks, taskName) != (char*)0x0;
         }
@@ -933,7 +925,7 @@ namespace FrameLogic {
         }
         else
         {
-            g_PadSystem.updateSystem();
+            g_gfPadSystem->updateSystem();
             Utils::RestoreRegs();
             asm volatile(
                 "mr 3, 23\n\t"
@@ -955,7 +947,7 @@ namespace FrameLogic {
         {
             FrameAdvance::ProcessGameSimulationFrame(&FrameAdvance::currentFrameData);
             FrameAdvance::setFrameAdvanceFromEmu();
-            g_PadSystem.updateSystem();
+            g_gfPadSystem->updateSystem();
             if(FrameAdvance::framesToAdvance == 0)
             {
                 break;
@@ -967,7 +959,7 @@ namespace FrameLogic {
             bu32 procResult = gameProc(gameApp, i);
             if(1 < frames && clearPad) 
             {
-                g_PadSystem.clearPadEdgeRepert();
+                g_gfPadSystem->clearPadEdgeRepert();
                 clearPad = false;
             }
             if(procResult == 0)
@@ -1180,7 +1172,7 @@ namespace FrameLogic {
             : "=r"(task), "=r"(task_type)
         );
         
-        char* taskName = task->m_taskName;
+        char* taskName = (char*)task->m_taskName;
         if (!isRollback) 
         {
             shouldSkipTask = false;
@@ -1336,15 +1328,15 @@ namespace FrameLogic {
 u8 defaultGmGlobalModeMelee[0x320] = {0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2a, 0x81, 0x8, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x78, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x70, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0xff, 0xff, 0xff, 0x7, 0x57, 0xff, 0xf1, 0xff, 0x87, 0xf1, 0xff, 0x0, 0x3, 0xf0, 0x2f, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x28, 0x1d, 0x2, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x29, 0x0, 0x1, 0x0, 0x4, 0x0, 0x0, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3e, 0x3, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x78, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x15, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x6, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3f, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 namespace GMMelee {
     bool isMatchChoicesPopulated = false;
-    int charChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
+    bu8 charChoices[MAX_NUM_PLAYERS] = {0, 0, 0, 0};
     s8 costumeChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     s8 fileIndexChoices[MAX_NUM_PLAYERS] = {-1, -1, -1, -1};
     bool rumbleChoices[MAX_NUM_PLAYERS] = {true, true, true, true};
     BrawlbackControls controlsChoices[MAX_NUM_PLAYERS] = {BrawlbackControls{}, BrawlbackControls{}, BrawlbackControls{}, BrawlbackControls{}};
     int stageChoice = -1;
-    void PopulateMatchSettings(int chars[MAX_NUM_PLAYERS], s8 costumes[MAX_NUM_PLAYERS], s8 fileIndices[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], BrawlbackControls controls[MAX_NUM_PLAYERS], int stageID)
+    void PopulateMatchSettings(bu8 chars[MAX_NUM_PLAYERS], s8 costumes[MAX_NUM_PLAYERS], s8 fileIndices[MAX_NUM_PLAYERS], bool rumble[MAX_NUM_PLAYERS], BrawlbackControls controls[MAX_NUM_PLAYERS], int stageID)
     {
-        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
+        for (bu8 i = 0; i < MAX_NUM_PLAYERS; i++) {
             charChoices[i] = chars[i];
             rumbleChoices[i] = rumble[i];
             costumeChoices[i] = costumes[i];
@@ -1452,7 +1444,6 @@ namespace Netplay {
             NetMenu::message->printf(0, "Found Opponent");
             GameSettings gameSettingsFromOpponent;
             memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
-            FixGameSettingsEndianness(gameSettingsFromOpponent);
             MergeGameSettingsIntoGame(gameSettingsFromOpponent);
             gameSettings = gameSettingsFromOpponent;
             matched = true;
@@ -1752,7 +1743,7 @@ namespace NetMenu {
     void BBSetGameModeBitCorrectly() 
     {
         Utils::SaveRegs();
-        g_GameGlobal->m_modeMelee->m_meleeInitData.m_0x1_5 = g_GameGlobal->m_setRule->m_rule;
+        g_globalMelee.m_meleeInitData.m_gameRule = g_GameGlobal->m_setRule->m_rule;
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void BBSetGameModeBitCorrectly2() 
@@ -1901,105 +1892,105 @@ namespace NetMenu {
     }
 }
 namespace RollbackHooks {
-    void InstallHooks()
+    void InstallHooks(CoreApi* api)
     {
         // Match Namespace
-        SyringeCore::syInlineHookRel(0x000196BC, reinterpret_cast<void*>(Match::StopGameScMeleeHook), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x00016218, reinterpret_cast<void*>(Match::StartSceneMelee), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x0001BBE8, reinterpret_cast<void*>(Match::ExitSceneMelee), Modules::SORA_SCENE);
-        SyringeCore::syInlineHook(0x8003fac4, reinterpret_cast<void*>(Match::setRandSeed));
-        //SyringeCore::syInlineHook(0x80026258, reinterpret_cast<void*>(Match::dump_gfMemoryPool_hook));
-        //SyringeCore::syInlineHook(0x80025c6c, reinterpret_cast<void*>(Match::alloc_gfMemoryPool_hook));
-        //SyringeCore::syInlineHook(0x80025ec4, reinterpret_cast<void*>(Match::allocGfMemoryPoolEndHook));
-        //SyringeCore::syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
+        api->syInlineHookRel(0x000196BC, reinterpret_cast<void*>(Match::StopGameScMeleeHook), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00016218, reinterpret_cast<void*>(Match::StartSceneMelee), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x0001BBE8, reinterpret_cast<void*>(Match::ExitSceneMelee), Modules::SORA_SCENE);
+        api->syInlineHook(0x8003fac4, reinterpret_cast<void*>(Match::setRandSeed));
+        //api->syInlineHook(0x80026258, reinterpret_cast<void*>(Match::dump_gfMemoryPool_hook));
+        //api->syInlineHook(0x80025c6c, reinterpret_cast<void*>(Match::alloc_gfMemoryPool_hook));
+        //api->syInlineHook(0x80025ec4, reinterpret_cast<void*>(Match::allocGfMemoryPoolEndHook));
+        //api->syInlineHook(0x80025f40, reinterpret_cast<void*>(Match::free_gfMemoryPool_hook));
         // FrameAdvance Namespace
-        SyringeCore::syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
-        //SyringeCore::syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
-        SyringeCore::syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
-        SyringeCore::sySimpleHook(0x800171cc, reinterpret_cast<void*>(FrameAdvance::moveUpdateSystem));
-        //SyringeCore::sySimpleHook(0x801e8954, reinterpret_cast<void*>(FrameAdvance::fixVI));
-        //SyringeCore::syInlineHook(0x8005c6c4, reinterpret_cast<void*>(FrameAdvance::trackEfParticle));
-        //SyringeCore::syInlineHook(0x8005c7bc, reinterpret_cast<void*>(FrameAdvance::untrackEfParticle));
+        api->syInlineHook(0x80029468, reinterpret_cast<void*>(FrameAdvance::updateLowHook));
+        //api->syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameAdvance::handleFrameAdvanceHook));
+        api->syInlineHook(0x8004a9f8, reinterpret_cast<void*>(FrameAdvance::turnOnAllAppropriatePorts));
+        api->sySimpleHook(0x800171cc, reinterpret_cast<void*>(FrameAdvance::moveUpdateSystem));
+        //api->sySimpleHook(0x801e8954, reinterpret_cast<void*>(FrameAdvance::fixVI));
+        //api->syInlineHook(0x8005c6c4, reinterpret_cast<void*>(FrameAdvance::trackEfParticle));
+        //api->syInlineHook(0x8005c7bc, reinterpret_cast<void*>(FrameAdvance::untrackEfParticle));
 
         // FrameLogic Namespace
-        SyringeCore::syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
-        SyringeCore::sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
-        SyringeCore::sySimpleHook(0x80061A80, reinterpret_cast<void*>(FrameLogic::fixEffects));
-        SyringeCore::sySimpleHook(0x80061a30, reinterpret_cast<void*>(FrameLogic::fixEffects2));
-        SyringeCore::sySimpleHookRel(0x00008B78, reinterpret_cast<void*>(FrameLogic::fixEffects3), Modules::SORA_MELEE);
-        SyringeCore::sySimpleHook(0x800172C0, reinterpret_cast<void*>(FrameLogic::fixEffects4));
-        SyringeCore::sySimpleHook(0x800177ec, reinterpret_cast<void*>(FrameLogic::fixEffects5));
-        SyringeCore::sySimpleHook(0x80017820, reinterpret_cast<void*>(FrameLogic::fixEffects6));
-        //SyringeCore::syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
+        api->syInlineHook(0x8002dc74, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook));
+        api->sySimpleHook(0x8002dc78, reinterpret_cast<void*>(FrameLogic::gfTaskProcessHook2));
+        api->sySimpleHook(0x80061A80, reinterpret_cast<void*>(FrameLogic::fixEffects));
+        api->sySimpleHook(0x80061a30, reinterpret_cast<void*>(FrameLogic::fixEffects2));
+        api->sySimpleHookRel(0x00008B78, reinterpret_cast<void*>(FrameLogic::fixEffects3), Modules::SORA_MELEE);
+        api->sySimpleHook(0x800172C0, reinterpret_cast<void*>(FrameLogic::fixEffects4));
+        api->sySimpleHook(0x800177ec, reinterpret_cast<void*>(FrameLogic::fixEffects5));
+        api->sySimpleHook(0x80017820, reinterpret_cast<void*>(FrameLogic::fixEffects6));
+        //api->syInlineHook(0x8001739C, reinterpret_cast<void*>(FrameLogic::endMainLoop));
 
-        SyringeCore::syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
-        SyringeCore::sySimpleHook(0x80017350, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop));
-        SyringeCore::sySimpleHook(0x800172ac, reinterpret_cast<void*>(FrameLogic::setFrameAdvanceCounter));
-        //SyringeCore::sySimpleHook(0x80017354, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop2));
-        //SyringeCore::sySimpleHook(0x80017358, reinterpret_cast<void*>(FrameLogic::gameProcHook));
-        //SyringeCore::sySimpleHook(0x80033288, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop4));
-        //SyringeCore::sySimpleHook(0x80017770, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop5));
-        //SyringeCore::sySimpleHook(0x80017360, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop6));
-        //SyringeCore::sySimpleHook(0x8004add0, reinterpret_cast<void*>(FrameLogic::isBreakGameProcLoopHook));
-        //SyringeCore::syInlineHook(0x80017638, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
-        //SyringeCore::syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
-        SyringeCore::syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
-        SyringeCore::syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));
+        api->syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::beginningOfMainGameLoop));
+        api->sySimpleHook(0x80017350, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop));
+        api->sySimpleHook(0x800172ac, reinterpret_cast<void*>(FrameLogic::setFrameAdvanceCounter));
+        //api->sySimpleHook(0x80017354, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop2));
+        //api->sySimpleHook(0x80017358, reinterpret_cast<void*>(FrameLogic::gameProcHook));
+        //api->sySimpleHook(0x80033288, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop4));
+        //api->sySimpleHook(0x80017770, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop5));
+        //api->sySimpleHook(0x80017360, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop6));
+        //api->sySimpleHook(0x8004add0, reinterpret_cast<void*>(FrameLogic::isBreakGameProcLoopHook));
+        //api->syInlineHook(0x80017638, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
+        //api->syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
+        api->syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
+        api->syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));
 
         // GMMelee Namespace
-        SyringeCore::syInlineHookRel(0x00021AE8, reinterpret_cast<void*>(GMMelee::postSetupMelee), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00021AE8, reinterpret_cast<void*>(GMMelee::postSetupMelee), Modules::SORA_SCENE);
 
         // NetMenu Namespace
-        SyringeCore::sySimpleHook(0x8014B5F8, reinterpret_cast<void*>(NetMenu::setToLoggedIn));
-        SyringeCore::sySimpleHook(0x8014B5FC, reinterpret_cast<void*>(NetMenu::setToLoggedIn2));
-        SyringeCore::sySimpleHook(0x80033b48, reinterpret_cast<void*>(NetMenu::disableMiiRender));
-        SyringeCore::sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
-        SyringeCore::sySimpleHook(0x8014b4bc, reinterpret_cast<void*>(NetMenu::forceFriendCode));
-        SyringeCore::sySimpleHook(0x8014b3b8, reinterpret_cast<void*>(NetMenu::forceConnection));
-        //SyringeCore::syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
-        SyringeCore::sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
-        SyringeCore::sySimpleHookRel(0x00004220, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHookRel(0x000056A8, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHookRel(0x0000141C, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_STAGE);
-        SyringeCore::sySimpleHookRel(0x000035A4, reinterpret_cast<void*>(NetMenu::turnOffSSSTimer), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHookRel(0x000053A4, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnCSS), Modules::SORA_MENU_SEL_CHAR);        
-        SyringeCore::sySimpleHookRel(0x000030F0, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnSSS), Modules::SORA_MENU_SEL_STAGE);
-        SyringeCore::syInlineHook(0x8014AFF4, reinterpret_cast<void*>(NetMenu::startMatchingCallback));
-        SyringeCore::sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
-        SyringeCore::syInlineHookRel(0x00036E04, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x000371D8, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuCaseFive), Modules::SORA_SCENE);
-        SyringeCore::syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
-        SyringeCore::sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
-        SyringeCore::sySimpleHookRel(0x00259AB8, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember), Modules::SORA_MELEE);
-        SyringeCore::sySimpleHookRel(0x00259C58, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter), Modules::SORA_MELEE);
-        SyringeCore::sySimpleHookRel(0x00259B2C, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode), Modules::SORA_MELEE);
-        SyringeCore::sySimpleHookRel(0x00259E44, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived), Modules::SORA_MELEE);
-        SyringeCore::sySimpleHookRel(0x000372A8, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee), Modules::SORA_SCENE);
-        SyringeCore::sySimpleHookRel(0x00036FF4, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee2), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x00037534, reinterpret_cast<void*>(NetMenu::BBsetNextAnyOriakuBootScMelee), Modules::SORA_SCENE);
-        SyringeCore::sySimpleHookRel(0x00036E6C, reinterpret_cast<void*>(NetMenu::BBSkipRandomRulesetChange), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x00037538, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly), Modules::SORA_SCENE);
-        SyringeCore::sySimpleHookRel(0x0003753C, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly2), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x000372A4, reinterpret_cast<void*>(NetMenu::BBSetupNetMelee), Modules::SORA_SCENE);
-        SyringeCore::sySimpleHookRel(0x0003770C, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x00037708, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen2), Modules::SORA_SCENE);
-        SyringeCore::sySimpleHookRel(0x0002E4F8, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), Modules::SORA_MENU_MAIN);
-        SyringeCore::syInlineHookRel(0x00036DE8, reinterpret_cast<void*>(NetMenu::SkipDirectlyToTrainingRoom), Modules::SORA_SCENE);
-        SyringeCore::syInlineHookRel(0x00000814, reinterpret_cast<void*>(NetMenu::GetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::syInlineHookRel(0x00000748, reinterpret_cast<void*>(NetMenu::SetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::syReplaceFunc(0x800cc540, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
-        SyringeCore::syReplaceFunc(0x801466ac, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
-        SyringeCore::syReplaceFunc(0x800ccec4, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
-        SyringeCore::syInlineHookRel(0x00004A70, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::sySimpleHookRel(0x00004A74, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
-        SyringeCore::syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
-        SyringeCore::syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
-        SyringeCore::syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
+        api->sySimpleHook(0x8014B5F8, reinterpret_cast<void*>(NetMenu::setToLoggedIn));
+        api->sySimpleHook(0x8014B5FC, reinterpret_cast<void*>(NetMenu::setToLoggedIn2));
+        api->sySimpleHook(0x80033b48, reinterpret_cast<void*>(NetMenu::disableMiiRender));
+        api->sySimpleHook(0x800CCF70, reinterpret_cast<void*>(NetMenu::disableMatchmakingError));
+        api->sySimpleHook(0x8014b4bc, reinterpret_cast<void*>(NetMenu::forceFriendCode));
+        api->sySimpleHook(0x8014b3b8, reinterpret_cast<void*>(NetMenu::forceConnection));
+        //api->syInlineHook(0x801494A0, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook));
+        api->sySimpleHook(0x801494A4, reinterpret_cast<void*>(NetMenu::connectToAnybodyAsyncHook2));
+        api->sySimpleHookRel(0x00004220, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnCSS), Modules::SORA_MENU_SEL_CHAR);
+        api->sySimpleHookRel(0x000056A8, reinterpret_cast<void*>(NetMenu::turnOffCSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        api->sySimpleHookRel(0x0000141C, reinterpret_cast<void*>(NetMenu::disableCreateCounterOnSSS), Modules::SORA_MENU_SEL_STAGE);
+        api->sySimpleHookRel(0x000035A4, reinterpret_cast<void*>(NetMenu::turnOffSSSTimer), Modules::SORA_MENU_SEL_CHAR);
+        api->sySimpleHookRel(0x000053A4, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnCSS), Modules::SORA_MENU_SEL_CHAR);        
+        api->sySimpleHookRel(0x000030F0, reinterpret_cast<void*>(NetMenu::disableGetNetworkErrorOnSSS), Modules::SORA_MENU_SEL_STAGE);
+        api->syInlineHook(0x8014AFF4, reinterpret_cast<void*>(NetMenu::startMatchingCallback));
+        api->sySimpleHook(0x8014aff8, reinterpret_cast<void*>(NetMenu::startMatchingCallback2));
+        api->syInlineHookRel(0x00036E04, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuTop), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x000371D8, reinterpret_cast<void*>(NetMenu::setNextAnyOkirakuCaseFive), Modules::SORA_SCENE);
+        api->syInlineHook(0x8014B66C, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride));
+        api->sySimpleHook(0x8014b670, reinterpret_cast<void*>(NetMenu::netThreadTaskOverride2));
+        api->sySimpleHookRel(0x00259AB8, reinterpret_cast<void*>(NetMenu::BBisCompleteMeleeSettingAllMember), Modules::SORA_MELEE);
+        api->sySimpleHookRel(0x00259C58, reinterpret_cast<void*>(NetMenu::BBisWifiPreloadCharacter), Modules::SORA_MELEE);
+        api->sySimpleHookRel(0x00259B2C, reinterpret_cast<void*>(NetMenu::BBisCompleteCloseMatchingAllNode), Modules::SORA_MELEE);
+        api->sySimpleHookRel(0x00259E44, reinterpret_cast<void*>(NetMenu::BBisPlayerAssignReceived), Modules::SORA_MELEE);
+        api->sySimpleHookRel(0x000372A8, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee), Modules::SORA_SCENE);
+        api->sySimpleHookRel(0x00036FF4, reinterpret_cast<void*>(NetMenu::BBSkipgmInitGlobalMelee2), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00037534, reinterpret_cast<void*>(NetMenu::BBsetNextAnyOriakuBootScMelee), Modules::SORA_SCENE);
+        api->sySimpleHookRel(0x00036E6C, reinterpret_cast<void*>(NetMenu::BBSkipRandomRulesetChange), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00037538, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly), Modules::SORA_SCENE);
+        api->sySimpleHookRel(0x0003753C, reinterpret_cast<void*>(NetMenu::BBSetGameModeBitCorrectly2), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x000372A4, reinterpret_cast<void*>(NetMenu::BBSetupNetMelee), Modules::SORA_SCENE);
+        api->sySimpleHookRel(0x0003770C, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00037708, reinterpret_cast<void*>(NetMenu::ExitWifiCSSReturnsToDirectOrQuickplayScreen2), Modules::SORA_SCENE);
+        api->sySimpleHookRel(0x0002E4F8, reinterpret_cast<void*>(NetMenu::SkipDirectlyToCSS), Modules::SORA_MENU_MAIN);
+        api->syInlineHookRel(0x00036DE8, reinterpret_cast<void*>(NetMenu::SkipDirectlyToTrainingRoom), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x00000814, reinterpret_cast<void*>(NetMenu::GetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        api->syInlineHookRel(0x00000748, reinterpret_cast<void*>(NetMenu::SetRulesFromCSSBoot), Modules::SORA_MENU_SEL_CHAR);
+        api->syReplaceFunc(0x800cc540, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        api->syReplaceFunc(0x801466ac, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        api->syReplaceFunc(0x800ccec4, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        api->syInlineHookRel(0x00004A70, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel), Modules::SORA_MENU_SEL_CHAR);
+        api->sySimpleHookRel(0x00004A74, reinterpret_cast<void*>(NetMenu::RemoveDisconnectPanel2), Modules::SORA_MENU_SEL_CHAR);
+        api->syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
+        api->syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
+        api->syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
         // NetReport Namespace
-        //SyringeCore::syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
-       // SyringeCore::syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
-        //SyringeCore::syInlineHook(0x8095f894, reinterpret_cast<void*>(NetReport::netReportHook3));
-        //SyringeCore::syInlineHook(0x80147ec0, reinterpret_cast<void*>(NetReport::netReportHook4));
-        //SyringeCore::syInlineHook(0x800c8f68, reinterpret_cast<void*>(NetReport::netMinReportHook));
+        //api->syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
+       // api->syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
+        //api->syInlineHook(0x8095f894, reinterpret_cast<void*>(NetReport::netReportHook3));
+        //api->syInlineHook(0x80147ec0, reinterpret_cast<void*>(NetReport::netReportHook4));
+        //api->syInlineHook(0x800c8f68, reinterpret_cast<void*>(NetReport::netMinReportHook));
     }
 }

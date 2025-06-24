@@ -28,7 +28,8 @@ LD 		:= $(LLVMPREFIX)/bin/ld.lld
 CCFLAGS		:= -target powerpc-gekko-ibm-kuribo-eabi -fuse-ld=lld \
 			   -nostdlib -nodefaultlibs -fno-addrsig -fno-exceptions \
 			   -fno-c++-static-destructors -fno-use-cxa-atexit \
-			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec
+			   -r -flto -ffast-math -fpermissive -fno-unwind-tables -finline-functions -fdeclspec \
+			   -u _prolog -u _epilog -u _unresolved
 CXXFLAGS	:= $(CCFLAGS)
 LDFLAGS		:= -T $(TOPDIR)/test.ld --unresolved-symbols=ignore-all -e _prolog -r
 
@@ -67,7 +68,7 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 # For REL linking
 export LDFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ld)))
-export MAPFILE		:= $(LIB)/BrawlHeaders/RSBE01.lst $(SYRIINGE)/sy_core.lst $(CURDIR)/EXTRA.lst
+export MAPFILE		:= $(LIB)/BrawlHeaders/RSBE01.lst $(CURDIR)/EXTRA.lst
 export LCF			:= $(TOPDIR)/rel.lcf
 
 #---------------------------------------------------------------------------------

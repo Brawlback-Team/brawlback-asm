@@ -1,5 +1,4 @@
 #include "mem_exp_hooks.h"
-#include <MEM/mem_expHeap.h>
 
 namespace MemExpHooks {
     MEMHeapHandle mainHeap;

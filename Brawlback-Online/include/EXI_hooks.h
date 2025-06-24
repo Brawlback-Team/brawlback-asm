@@ -1,11 +1,5 @@
 #pragma once
 #include "EXI/EXIBios.h"
-#include "EXI/EXICommon.h"
-#include "memoryFuncs.h"
-#include "MEM/mem_expHeap.h"
-#include "OS/OSCache.h"
-#include "mem_exp_hooks.h"
-#include "BrawlbackTypes.h"
 
 namespace EXIHooks {
     void writeEXI(void* source, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency);

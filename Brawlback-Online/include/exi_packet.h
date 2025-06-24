@@ -1,6 +1,4 @@
 #pragma once
-#include "utils.h"
-#include "EXI_hooks.h"
 #include <types.h>
 namespace EXICommand
 {

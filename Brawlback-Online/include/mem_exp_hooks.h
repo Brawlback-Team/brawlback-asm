@@ -1,5 +1,6 @@
 #pragma once
-#include <MEM/mem_heapCommon.h>
+#include <revolution/MEM/mem_expHeap.h>
+#include <revolution/MEM/mem_heapCommon.h>
 
 namespace MemExpHooks {
     extern MEMHeapHandle mainHeap;

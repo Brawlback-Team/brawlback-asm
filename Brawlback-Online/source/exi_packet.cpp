@@ -1,6 +1,8 @@
 #include "exi_packet.h"
 #include <memory.h>
-#include <OS/OSInterrupt.h>
+#include <OS/OSError.h>
+#include "mem_exp_hooks.h"
+#include "EXI_hooks.h"
 u8 EXIPacket::getCmd() { return this->cmd; }
 
 EXIPacket::EXIPacket() {

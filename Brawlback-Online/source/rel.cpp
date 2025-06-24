@@ -1,4 +1,3 @@
-#include <OS/OSError.h>
 #include <gf/gf_file_io.h>
 #include <gf/gf_task.h>
 #include <memory.h>
@@ -6,7 +5,7 @@
 #include <gf/gf_memory_pool.h>
 #include <sy_core.h>
 #include "Rollback_Hooks.h"
-
+#include "mem_exp_hooks.h"
 namespace Syringe
 {
     const PluginMeta META = {
@@ -21,12 +20,12 @@ namespace Syringe
         __attribute__((section(".ctors"))) extern PFN_voidfunc _ctors[];
         __attribute__((section(".ctors"))) extern PFN_voidfunc _dtors[];
 
-        const PluginMeta *_prolog();
+        const PluginMeta *_prolog(CoreApi* api);
         void _epilog();
         void _unresolved();
     }
 
-    const PluginMeta *_prolog()
+    const PluginMeta *_prolog(CoreApi* api)
     {
         // Run global constructors
         PFN_voidfunc *ctor;
@@ -36,7 +35,7 @@ namespace Syringe
         }
 
         MemExpHooks::initializeMemory((void*) 0x94000000, 0xF4240);
-        RollbackHooks::InstallHooks();
+        RollbackHooks::InstallHooks(api);
 
         return &META;
     }

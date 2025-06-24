@@ -1,28 +1,18 @@
 #pragma once
-#include <types.h>
-#include <OS/OSInterrupt.h>
-#include <OS/OSError.h>
 #include <gf/gf_frame.h>
 #include <gf/gf_task.h>
 #include <gf/gf_pad_system.h>
-//#include <ft/ft_manager.h>
 #include <gm/gm_global.h>
 #include <gm/gm_global_mode_melee.h>
 #include <gf/gf_game_application.h>
 #include <gf/gf_scene.h>
 #include <sc/sc_melee.h>
 #include <mt/mt_rand.h>
-#include "mu/mu_msg.h"
-#include <OS/OSTime.h>
-#include <ExiStructures.h>
+#include <mu/mu_msg.h>
+#include "ExiStructures.h"
 #include <ip/controls.h>
-//#include <ft/ft_manager.h>
-
-#include "EXI_hooks.h"
-#include "utils.h"
 #include "exi_packet.h"
-
-#include "ms/message.h"
+#include <sy_core.h>
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -291,7 +281,7 @@ extern u8 defaultGmGlobalModeMelee[0x320];
 namespace GMMelee {
     // Variables
     extern bool isMatchChoicesPopulated;
-    extern int charChoices[MAX_NUM_PLAYERS];
+    extern bu8 charChoices[MAX_NUM_PLAYERS];
     extern s8 fileIndexChoices[MAX_NUM_PLAYERS];
     extern bool rumbleChoices[MAX_NUM_PLAYERS];
     extern s8 costumeChoices[MAX_NUM_PLAYERS];
@@ -300,7 +290,7 @@ namespace GMMelee {
     #define STAGE_ID_IDX 27
 
     // Functions
-    void PopulateMatchSettings(int chars[4], s8 costumes[4], s8 fileIndices[4], bool rumble[4], BrawlbackControls controls[4], int stageID);
+    void PopulateMatchSettings(bu8 chars[4], s8 costumes[4], s8 fileIndices[4], bool rumble[4], BrawlbackControls controls[4], int stageID);
     void ResetMatchChoicesPopulated();
 
     // Hooks
@@ -308,5 +298,5 @@ namespace GMMelee {
 }
 
 namespace RollbackHooks {
-    void InstallHooks();
+    void InstallHooks(CoreApi* api);
 }
