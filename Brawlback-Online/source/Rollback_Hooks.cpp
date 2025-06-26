@@ -9,6 +9,8 @@
 #include "EXI_Hooks.h"
 #include "utils.h"
 #include <st/loader/st_loader_manager.h>
+#include <sc/sc_sel_char.h>
+#include <mu/selchar/mu_selchar_player_area.h>
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -54,17 +56,14 @@ void FillInMeleeObj() {
         g_globalMelee.m_playersInitData[0].m_colorFileNo = GMMelee::fileIndexChoices[0];
         g_globalMelee.m_playersInitData[1].m_colorFileNo = GMMelee::fileIndexChoices[1];
 
-        g_globalMelee.m_playersInitData[0].m_state = 0;
-        g_globalMelee.m_playersInitData[1].m_state = 0;
+        g_globalMelee.m_playersInitData[0].m_state = 0x80;
+        g_globalMelee.m_playersInitData[1].m_state = 0x80;
 
         g_globalMelee.m_playersInitData[0].m_playerId = 0;
         g_globalMelee.m_playersInitData[1].m_playerId = 1;
 
         g_globalMelee.m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
         g_globalMelee.m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
-
-        g_globalMelee.m_playersInitData[0].m_teamNo = 0x80;
-        g_globalMelee.m_playersInitData[1].m_teamNo = 0x80;
 
         g_globalMelee.m_playersInitData[0].m_startPointIdx = 0;
         g_globalMelee.m_playersInitData[1].m_startPointIdx = 1;
@@ -99,8 +98,6 @@ void fillOutGameSettings(GameSettings& settings) {
     settings.stageID = g_globalMelee.m_meleeInitData.m_stageKind;
 
     bu8 p1_id = static_cast<bu8>(g_globalMelee.m_playersInitData[0].m_characterKind);
-    //OSReport("P1 pre-override char id: %d\n", p1_id);
-    bu8 p2_id = static_cast<bu8>(g_globalMelee.m_playersInitData[1].m_characterKind);
     //OSReport("P2 pre-override char id: %d\n", p2_id);
 
     // brawl loads all players into the earliest slots.
@@ -114,15 +111,10 @@ void fillOutGameSettings(GameSettings& settings) {
     settings.numPlayers = 2;
     //OSReport("Num Players: %u\n", (unsigned int)settings.numPlayers);
     settings.playerSettings[0].charID = p1_id;
-    settings.playerSettings[1].charID = p2_id;
     settings.playerSettings[0].rumble = g_GameGlobal->m_record->m_menuData.rumble[0];
-    settings.playerSettings[1].rumble = g_GameGlobal->m_record->m_menuData.rumble[1];
     settings.playerSettings[0].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[0]);
-    settings.playerSettings[1].controls = Util::GameControlsToBrawlbackControls(ipPadConfig::getInstance()->controls[1]);
-    settings.playerSettings[0].charColor = g_globalMelee.m_playersInitData[0].m_colorNo;
-    settings.playerSettings[1].charColor = g_globalMelee.m_playersInitData[1].m_colorNo;
-    settings.playerSettings[0].colorFileIndex = g_globalMelee.m_playersInitData[0].m_colorFileNo;
-    settings.playerSettings[1].colorFileIndex = g_globalMelee.m_playersInitData[1].m_colorFileNo;
+    settings.playerSettings[0].charColor = g_GameGlobal->m_selCharData->m_playersInitData[0].m_colorNo;
+    settings.playerSettings[0].colorFileIndex = g_GameGlobal->m_selCharData->m_playersInitData[0].m_colorFileNo;
 }
 
 
@@ -1442,10 +1434,8 @@ namespace Netplay {
 
         if (cmd_byte == EXICommand::CMD_SETUP_PLAYERS) {
             NetMenu::message->printf(0, "Found Opponent");
-            GameSettings gameSettingsFromOpponent;
-            memmove(&gameSettingsFromOpponent, read_data + 1, sizeof(GameSettings));
-            MergeGameSettingsIntoGame(gameSettingsFromOpponent);
-            gameSettings = gameSettingsFromOpponent;
+            memmove(&gameSettings, read_data + 1, sizeof(GameSettings));
+            MergeGameSettingsIntoGame(gameSettings);
             matched = true;
         }
         else {
@@ -1606,10 +1596,10 @@ namespace NetMenu {
         
         OSReport("Booting to scMelee...\n");
         
-        ChangeStruct3Scenes((u8*)0x90ff3f60, Scene::MemoryChange, Scene::InitialChange);
-        gfSceneManager::getInstance()->setNextScene(gfSceneManager::getInstance(), "scMelee", 0);
+        ChangeStruct3Scenes((u8*)gfSceneManager::getInstance()->searchSequence("sqNetAnyOkiraku"), Scene::MemoryChange, Scene::InitialChange);
+        gfSceneManager::getInstance()->setNextScene("scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
-        gfSceneManager::getInstance()->changeNextScene(gfSceneManager::getInstance());
+        gfSceneManager::getInstance()->changeNextScene();
     }
     void startMatchingCallback() {
         Utils::SaveRegs();
