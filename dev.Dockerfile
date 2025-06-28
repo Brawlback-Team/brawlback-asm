@@ -12,6 +12,9 @@ RUN python3 -m pip install --break-system-packages --user -r tools/requirements.
 # remove requirements.txt
 RUN rm -rf ./tools
 
+# install build.sh script dependencies
+RUN apt-get install -y wget unzip 7zip mtools dosfstools
+
 
 # prevent the container from exiting to allow development in it
 CMD ["sleep", "infinity"]
