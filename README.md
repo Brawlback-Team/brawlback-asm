@@ -3,6 +3,7 @@ Syriinge plugin for both online and offline Brawlback experiences.
 
 # Requirements
 * This repo. Remember to pull with recursive submodules.
+* GCTRealMate. Can be retrieved from the P+ files.
 
 # Instructions
 1. From the root of this repository, run
@@ -17,11 +18,14 @@ Syriinge plugin for both online and offline Brawlback experiences.
     - and [elf2rel](https://github.com/Sammi-Husky/elf2rel/) binaries.
 
 2. Run `make`.
-3. Place the Brawlback module (`Brawlback-Online.rel`) into pf/plugins.
-4. Place the syriinge core module (`sy_core.rel`) into pf/module.
-5. Place BrawlbackUtils.asm and Syringe.asm in \<mod root\>/Source, add the line `.include Source/BrawlbackUtils.asm` and `.include Source/Syringe.asm` to \<mod root\>/RSBE01.txt, and drag that file on top of GCTRealMate.exe to rebuild the GCT file (or run `GCTRealMate RSBE01.txt` or equivalent).
-6. Sync ("Convert Folder to File Now") the virtual SD card.
-7. Launch the game using the mod launcher of your choice from step 5.
+3. Create an SD.raw file using [Dolphin](https://dolphin-emu.org/docs/guides/virtual-sd-card-guide/#Creating_a_Virtual_SD_Card).
+4. Put a folder vBrawl into the root of the SD card. Nest within this folder some folders: \<SD root\>/pf/plugins, \<SD root\>/pf/module, and \<SD root\>/Source. Optionally, place any number of files from the \<ISO root>\/DATA/files folder into the pf folder (this will improve load times).
+5. Place the Brawlback module (`Brawlback-Online.rel`) into pf/plugins.
+6. Place the syriinge core module (`sy_core.rel`) into pf/module.
+7. Place GCTRealMate and RSBE01.txt into the \<SD root>\
+6. Place Hooktype.asm, FilePatchCode.asm, BrawlbackUtils.asm, and Syringe.asm in \<SD root\>/Source and drag RSBE01.txt on top of GCTRealMate to rebuild the GCT file (or run `GCTRealMate RSBE01.txt` or equivalent).
+8. Sync ("Convert Folder to File Now") the virtual SD card.
+9. Launch the game using the BrawlbackLauncher.elf.
 
 # Acknowledgements
 - DukeItOut for GCTRM

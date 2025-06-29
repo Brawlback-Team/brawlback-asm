@@ -15,7 +15,7 @@
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
 #define P4_CHAR_ID_IDX P3_CHAR_ID_IDX + 0x5C
-
+const char* sqNetAnyOkiraku = "sqNetAnyOkiraku";
 extern "C" void __cxa_pure_virtual() { while (1); }
 
 bu32 frameCounter = 0;
@@ -1596,7 +1596,7 @@ namespace NetMenu {
         
         OSReport("Booting to scMelee...\n");
         
-        ChangeStruct3Scenes((u8*)gfSceneManager::getInstance()->searchSequence("sqNetAnyOkiraku"), Scene::MemoryChange, Scene::InitialChange);
+        ChangeStruct3Scenes((u8*)gfSceneManager::getInstance()->searchSequence(sqNetAnyOkiraku), Scene::MemoryChange, Scene::InitialChange);
         gfSceneManager::getInstance()->setNextScene("scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
         gfSceneManager::getInstance()->changeNextScene();
@@ -1765,6 +1765,21 @@ namespace NetMenu {
             "ori 12, 12, 0x2c64\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void BBBootTosqNetAnyOkiraku()
+    {
+        asm (
+            "lwz 4, %0\n\t"
+            "mr 3, 19\n\t"
+            "li 5, 0\n\t"
+            "lis 12, 0x806D\n\t"
+            "ori 12, 12, 0xD5FC\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "m" (sqNetAnyOkiraku)
+            : "5", "4"
         );
     }
     void SkipDirectlyToCSS() 
@@ -1976,6 +1991,7 @@ namespace RollbackHooks {
         api->syReplaceFunc(0x80146b80, reinterpret_cast<void*>(Utils::ReturnImmediately), NULL);
         api->syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
         api->syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
+        api->sySimpleHookRel(0x000220A4, reinterpret_cast<void*>(NetMenu::BBBootTosqNetAnyOkiraku), Modules::SORA_SCENE);
         // NetReport Namespace
         //api->syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // api->syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
