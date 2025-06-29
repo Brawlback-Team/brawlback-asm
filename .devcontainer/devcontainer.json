@@ -1,0 +1,15 @@
+// devcontainer.json reference: https://containers.dev/implementors/json_reference/
+{
+  "name": "brawlback-dev-vscode",
+  "build": {
+    "dockerfile": "../dev.Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd" // C++ IntelliSense https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd
+      ]
+    }
+  }
+}
