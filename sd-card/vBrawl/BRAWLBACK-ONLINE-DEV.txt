@@ -2,7 +2,7 @@
 .include Source/BrawlbackUtils.asm
 .include Source/Hooktype.asm
 .include Source/Syringe.asm
-.include Source/BrawlbackDevelopmentEnv.asm
+.include Source/BrawlbackDevEnv.asm
 #########################################
 [vBrawl] Global Brawl Netplay Settings V1
 #########################################
