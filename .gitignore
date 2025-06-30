@@ -3,7 +3,9 @@
 *.elf
 *.exe
 *.dll
+*.GCT
 
 build/
 .idea/
 .vscode/
+sd-card/vBrawl/pf
