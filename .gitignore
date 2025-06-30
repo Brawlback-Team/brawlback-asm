@@ -1,6 +1,7 @@
 *.rel
 *.map
-*.elf
+Brawlback-Online/*.elf
+lib/Syriinge/*.elf
 *.exe
 *.dll
 *.GCT
