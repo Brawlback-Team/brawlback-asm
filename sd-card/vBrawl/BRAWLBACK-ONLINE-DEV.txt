@@ -1,7 +1,8 @@
-.include FilePatchCode.asm
-.include BrawlbackUtils.asm
-.include Hooktype.asm
-.include Syringe.asm
+.include Source/FilePatchCode.asm
+.include Source/BrawlbackUtils.asm
+.include Source/Hooktype.asm
+.include Source/Syringe.asm
+.include Source/BrawlbackDevelopmentEnv.asm
 #########################################
 [vBrawl] Global Brawl Netplay Settings V1
 #########################################
@@ -617,18 +618,3 @@ HOOK @ $80690180
 * 040E5DE8 60000000
 * 04953184 60000000
 * 04953224 60000000
-
-############################################
-[vBrawl] FASTBOOT: "Skip" tmp files [glitch]
-############################################
-* 046bfdd4 2c030002
-* 046c01a8 2c030004
-* 046c02a8 2c030005
-* 046c0370 2c030004
-* 285B51E6 000010A0
-* 0659C570 00000005
-* 2F746D30 2F000000
-* E2100000 00000000
-* 0659C570 00000005
-* 2F746D31 2F000000
-* E0000000 80008000
