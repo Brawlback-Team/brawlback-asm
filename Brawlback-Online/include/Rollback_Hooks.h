@@ -255,7 +255,7 @@ namespace NetMenu {
     void BBSetupCharacters();
     void BBSetupNetMelee();
     __attribute__((naked)) void ExitWifiCSSReturnsToDirectOrQuickplayScreen();
-    __attribute__((naked)) void BBBootTosqNetAnyOkiraku();
+    void BBBootTosqNetAnyOkiraku();
     void ExitWifiCSSReturnsToDirectOrQuickplayScreen2();;
     void SkipDirectlyToCSS();
     void SkipDirectlyToTrainingRoom();

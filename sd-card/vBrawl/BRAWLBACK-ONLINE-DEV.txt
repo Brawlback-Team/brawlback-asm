@@ -109,8 +109,6 @@ HOOK @ $8002D3A0
 	stb r5, 0x2b1(r28)
 	li r30, 0x0
 }
-op b 0x10  @ $80078E14
-op nop     @ $806DD5FC
 op b 0xC   @ $808E00A8
 op b 0x298 @ $806CADE8
 * C26DCD4C 0000000E

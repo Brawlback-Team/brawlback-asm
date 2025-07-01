@@ -11,6 +11,7 @@
 #include <st/loader/st_loader_manager.h>
 #include <sc/sc_sel_char.h>
 #include <mu/selchar/mu_selchar_player_area.h>
+#include <mu/wifi/mu_wifi_interface.h>
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -1593,9 +1594,7 @@ namespace NetMenu {
     }
     void BootToScMelee()
     {
-        
         OSReport("Booting to scMelee...\n");
-        
         ChangeStruct3Scenes((u8*)gfSceneManager::getInstance()->searchSequence(sqNetAnyOkiraku), Scene::MemoryChange, Scene::InitialChange);
         gfSceneManager::getInstance()->setNextScene("scMelee", 0);
         ChangeGfSceneField(Scene::Idle);
@@ -1767,14 +1766,21 @@ namespace NetMenu {
             "bctr\n\t"
         );
     }
-    __attribute__((naked)) void BBBootTosqNetAnyOkiraku()
+    void BBBootTosqNetAnyOkiraku()
     {
+        Utils::SaveRegs();
+        g_muWifiInterfaceTask->create();
+        Utils::RestoreRegs();
         asm (
             "lwz 4, %0\n\t"
             "mr 3, 19\n\t"
             "li 5, 0\n\t"
-            "lis 12, 0x806D\n\t"
-            "ori 12, 12, 0xD5FC\n\t"
+            "lis 12, 0x806d\n\t"
+            "ori 12, 12, 0xd600\n\t"
+            "lwz 0, 0x0014 (1)\n\t"
+            "lwz 31, 0x000C (1)\n\t"
+            "addi 1, 1, 16\n\t"
+            "mtlr 0\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
             :
