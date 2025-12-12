@@ -6,7 +6,7 @@
 #include <ft/ft_manager.h>
 #include <ec/ec_mgr.h>
 #include <ip/ip_switch.h>
-#include "EXI_Hooks.h"
+#include "EXI_hooks.h"
 #include "utils.h"
 #include <st/loader/st_loader_manager.h>
 #include <sc/sc_sel_char.h>
