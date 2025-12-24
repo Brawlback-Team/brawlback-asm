@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <gf/gf_file_io_request.h>
 #include <gf/gf_memory_pool.h>
+#include <gf/gf_heap_manager.h>
 #include <sy_core.h>
 #include "Rollback_Hooks.h"
 #include "mem_exp_hooks.h"
@@ -33,8 +34,7 @@ namespace Syringe
         {
             (*ctor)();
         }
-
-        MemExpHooks::initializeMemory((void*) 0x94000000, 0xF4240);
+        MemExpHooks::initializeMemory((void*) 0x93604000, 0x4000);
         RollbackHooks::InstallHooks(api);
 
         return &META;

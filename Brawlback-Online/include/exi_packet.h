@@ -18,6 +18,12 @@ namespace EXICommand
     const u8 CMD_ROLLBACK = 17;
     const u8 CMD_FRAMEADVANCE = 18;
     const u8 CMD_UPDATESYNC = 39;
+    const u8 CMD_END_FRAME = 40;
+    const u8 CMD_END_LOOP = 41;
+    const u8 CMD_START_LOOP = 42;
+    const u8 CMD_GET_PORT = 43;
+    const u8 CMD_GET_REMOTE_INPUTS = 44;
+    const u8 CMD_GET_LOCAL_INPUTS = 45;
 
     const u8 CMD_REPLAY_START_REPLAYS_STRUCT = 19;
     const u8 CMD_REPLAY_REPLAYS_STRUCT = 20;

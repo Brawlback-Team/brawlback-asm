@@ -13,6 +13,10 @@
 #include <ip/controls.h>
 #include "exi_packet.h"
 #include <sy_core.h>
+#include <mu/mu_object.h>
+#include <gf/gf_archive.h>
+#include <nw4r/g3d/g3d_scnmdl.h>
+#include <nw4r/g3d/g3d_scngroup.h>
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -35,10 +39,14 @@ namespace FrameLogic {
     extern PlayerFrameData playerFrame;
     extern gfPadStatus lastLocalInput;
     extern gfPadStatus inputBuffer;
+    extern gfPadStatus sysPadBuffer;
     extern bool fixStaleInputs;
     extern bool shouldSkipTask;
     extern bu32 r3_value;
     extern bs32 processFrames;
+    extern bu32 setupPause;
+    extern u32 advanceFrames;
+    extern u8 port;
     // Functions
     void ReduceStickNoise();
     void FixStaleInputs();
@@ -65,6 +73,11 @@ namespace FrameLogic {
     __attribute__((naked)) void updateGfSlowManagerAlwaysReturn();
     void beginFrame();
     void endMainLoop();
+    void startFrameLoop();
+    void getInputs();
+    __attribute__((naked)) void startFrameLoop2();
+    __attribute__((naked)) void fixFrameLoop();
+    void endFrameLoop();
     void gfTaskProcessHook();
     __attribute__((naked)) void gfTaskProcessHook2();
     __attribute__((naked)) void fixEffects();
@@ -89,6 +102,7 @@ namespace FrameAdvance {
     void StallOneFrame();
     void ResetFrameAdvance();
     void GetInputsForFrame(bu32 frame, FrameData* inputs);
+    void HandlePauseMenuSetupShow();
     void ProcessGameSimulationFrame(FrameData* inputs);
     void setFrameAdvanceFromEmu();
     void getGamePadStatusInjection(gfPadStatus* status, int port, bool isGamePad);
@@ -212,6 +226,14 @@ namespace NetMenu {
     extern bool onQuickplayMenus;
     extern int register4;
     extern MuMsg* message;
+    extern MuObject* pauseMenu[4];
+    extern gfArchive* pauseArchive;
+    extern ScnGroup* pauseModel;
+    extern nw4r::g3d::ResFileData* menuData;
+    extern MuMsg* pauseMusicMessage;
+    extern bu8 numPauseModels;
+    extern bu32 showPauseMenu;
+    extern bu16 lastFrameShowPauseMenu;
     // Functions
     void ChangeGfSceneField(bu32 scene);
     void ChangeStruct3Scenes(bu8* structure, bu32 scene, bu32 nextScene);
@@ -262,6 +284,12 @@ namespace NetMenu {
     void GetRulesFromCSSBoot();
     void SetRulesFromCSSBoot();
     void ReplaceTrainingRoomText();
+    void StartReplacementPauseMenu();
+    __attribute__((naked)) void RenderReplacementPauseMenu();
+    void OpenReplacementPauseMenu();
+    void CloseReplacementPauseMenu();
+    void OverridePauseSetting();
+    __attribute__((naked)) void OverridePauseSetting2();
 }
 
 namespace NetReport {

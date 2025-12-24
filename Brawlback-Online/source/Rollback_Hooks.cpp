@@ -12,6 +12,12 @@
 #include <sc/sc_sel_char.h>
 #include <mu/selchar/mu_selchar_player_area.h>
 #include <mu/wifi/mu_wifi_interface.h>
+#include <gf/gf_archive.h>
+#include <sr/sr_common.h>
+#include <gf/gf_heap_manager.h>
+#include <gf/gf_3d_scene.h>
+#include <nw4r/g3d/g3d_scngroup.h>
+#include <gf/gf_memory_pool.h>
 #define P1_CHAR_ID_IDX 0x98
 #define P2_CHAR_ID_IDX P1_CHAR_ID_IDX + 0x5C
 #define P3_CHAR_ID_IDX P2_CHAR_ID_IDX + 0x5C
@@ -36,9 +42,17 @@ void renderNormal(void* gfGameApplication);
 void startOfGameLoop();
 bu32 gameProc(void* gfGameApplication, bu32 unk);
 void setSkipLowEffect(void* gfGameApplication, bu32 unk);
+void constructGfArchive(gfArchive* archive);
+int BindResAnmScn(void* param1, void* param2);
+gfTask* menuRootCreate(char* taskName, int unk1, gfArchive* archive, int unk2);
+void* constructScnMdlExpand(MEMAllocator* memAllocator, void* unk1, bu32 unk2, void* model);
+int BindResFile(void* unk1, void* unk2);
+ScnGroup* ConstructScnGroup(MEMAllocator* memAllocator, void* unk1, int unk2);
+bu32 SetChoice(void* unk1, int unk2);
+int getBgmTitleDataPlayId(void* sndBgmRateSystem, int unk1);
 
 bu32 getCurrentFrame() {
-    return g_GameFrame.persistentFrameCounter;
+    return frameCounter;
 }
 
 void FillInMeleeObj() {
@@ -57,14 +71,17 @@ void FillInMeleeObj() {
         g_globalMelee.m_playersInitData[0].m_colorFileNo = GMMelee::fileIndexChoices[0];
         g_globalMelee.m_playersInitData[1].m_colorFileNo = GMMelee::fileIndexChoices[1];
 
-        g_globalMelee.m_playersInitData[0].m_state = 0x80;
-        g_globalMelee.m_playersInitData[1].m_state = 0x80;
+        g_globalMelee.m_playersInitData[0].m_state = 0x0;
+        g_globalMelee.m_playersInitData[1].m_state = 0x0;
 
         g_globalMelee.m_playersInitData[0].m_playerId = 0;
         g_globalMelee.m_playersInitData[1].m_playerId = 1;
 
         g_globalMelee.m_playersInitData[0].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
         g_globalMelee.m_playersInitData[1].m_stockCount = g_GameGlobal->m_setRule->m_stockCount;
+
+        g_GameGlobal->m_modeMelee->m_playersInitData[0].m_teamNo = 0x80;
+        g_GameGlobal->m_modeMelee->m_playersInitData[1].m_teamNo = 0x80;
 
         g_globalMelee.m_playersInitData[0].m_startPointIdx = 0;
         g_globalMelee.m_playersInitData[1].m_startPointIdx = 1;
@@ -301,7 +318,7 @@ namespace Util {
             pfd.syncData.stocks = (bu8)ftowner->getStockCount();
         }
         pfd.pad = Util::GamePadToBrawlbackPad(FrameLogic::inputBuffer);
-        pfd.sysPad = Util::GamePadToBrawlbackPad(FrameLogic::inputBuffer);
+        pfd.sysPad = Util::GamePadToBrawlbackPad(FrameLogic::sysPadBuffer);
     }
     void InjectBrawlbackPadToPadStatus(gfPadStatus* gamePad, const BrawlbackPad& pad, int port) {
 
@@ -580,14 +597,39 @@ namespace FrameAdvance {
         EXIHooks::readEXI(inputs, sizeof(FrameData), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
         Util::FixFrameDataEndianness(inputs);
     }
+    void HandlePauseMenuSetupShow()
+    {
+        SetChoice(g_IfMngr->m_field_0x18, NetMenu::showPauseMenu ? 2 : 0);
+        for(int i = 0; i < 4; i++) {
+            if(NetMenu::showPauseMenu && NetMenu::pauseMenu[i]->m_modelAnim->m_anmObjVisRes != nullptr) {
+                NetMenu::pauseMenu[i]->setFrameVisible(0);
+            }
+        }
+        if(NetMenu::showPauseMenu) {
+            g_gfSceneRoot->layerUpdateFrame(8);
+        }
+        if(NetMenu::pauseArchive == nullptr)
+        {
+            NetMenu::pauseArchive = new (Heaps::PauseMenu) gfArchive();
+            NetMenu::pauseArchive->readFileRequest("/menu/brawlback/brawlback_pause.pac", Heaps::PauseMenu, 0, 1, Heaps::PauseMenu);
+        }
+        else if(NetMenu::menuData == nullptr && NetMenu::pauseArchive->m_returnStatus == 0) 
+        {
+            NetMenu::menuData = (nw4r::g3d::ResFileData*)NetMenu::pauseArchive->getData(Data_Type_Misc, 30, 0xfffe);
+            delete NetMenu::pauseArchive;
+        }
+    }
     // should be called on every simulation frame
     void ProcessGameSimulationFrame(FrameData* inputs)
     {
         GetInputsForFrame(getCurrentFrame(), inputs);
         for(int i = 0; i < Netplay::getGameSettings().numPlayers; i++)
         {
-            gfPadStatus* status = &g_gfPadSystem->m_gameGcnPads[i];
-            getGamePadStatusInjection(status, i, true);
+            gfPadStatus* gamePadStatus = &g_gfPadSystem->m_systemPads[i];
+            getGamePadStatusInjection(gamePadStatus, i, true);
+
+            gfPadStatus* sysPadStatus = &g_gfPadSystem->m_debugGcnPads[i];
+            getGamePadStatusInjection(sysPadStatus, i, false);
         }
         bu32 queue = (0x805ba480);
         bu16 queue_param2 = *(bu16*)(queue + 2);
@@ -605,7 +647,7 @@ namespace FrameAdvance {
             memmove((void*)(queue + 2), &queue_param2, sizeof(bu16));
         }
         push_gfPadStatusQueue((void*)queue, (g_gfPadSystem + 0x40));
-        
+        HandlePauseMenuSetupShow();
         //OSReport("Using inputs %u %u  game frame: %u\n", inputs->playerFrameDatas[0].frame, inputs->playerFrameDatas[1].frame, gameLogicFrame);
 
         //Util::printFrameData(*inputs);
@@ -687,8 +729,15 @@ namespace FrameAdvance {
         Utils::SaveRegs();
         if(Netplay::IsInMatch())
         {
-            memmove(&FrameLogic::inputBuffer, &g_gfPadSystem->m_gameGcnPads[Netplay::getGameSettings().localPlayerPort], sizeof(FrameLogic::inputBuffer));
-            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_gameGcnPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
+            if(NetMenu::pauseMenu[0] != nullptr && g_gfPadSystem->m_systemPads[Netplay::getGameSettings().localPlayerPort].m_buttonsCurrentFrame.m_start && !NetMenu::lastFrameShowPauseMenu) 
+            {
+                NetMenu::showPauseMenu = !NetMenu::showPauseMenu;
+            }
+            NetMenu::lastFrameShowPauseMenu = g_gfPadSystem->m_systemPads[Netplay::getGameSettings().localPlayerPort].m_buttonsCurrentFrame.m_start;
+            memmove(&FrameLogic::sysPadBuffer, &g_gfPadSystem->m_debugGcnPads[Netplay::getGameSettings().localPlayerPort], sizeof(FrameLogic::sysPadBuffer));
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_debugGcnPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
+            memmove(&FrameLogic::inputBuffer, &g_gfPadSystem->m_systemPads[Netplay::getGameSettings().localPlayerPort], sizeof(FrameLogic::inputBuffer));
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[Netplay::getGameSettings().localPlayerPort], BrawlbackPad(), Netplay::getGameSettings().localPlayerPort);
         }
         Utils::RestoreRegs();
     }
@@ -789,28 +838,29 @@ namespace FrameLogic {
     PlayerFrameData playerFrame = PlayerFrameData();
     gfPadStatus lastLocalInputs;
     gfPadStatus inputBuffer;
+    gfPadStatus sysPadBuffer;
     bool fixStaleInputs = true;
     bool shouldSkipTask = false;
     bu32 r3_value;
     bs32 processFrames = 1;
-    void ReduceStickNoise()
+    void ReduceStickNoise(gfPadStatus& pad)
     {
-        if(inputBuffer.m_stickX > -2 && inputBuffer.m_stickX < 2)
+        if(pad.m_stickX > -2 && pad.m_stickX < 2)
         {
-            inputBuffer.m_stickX = 0;
+            pad.m_stickX = 0;
         }
-        if(inputBuffer.m_stickY > -2 && inputBuffer.m_stickY < 2)
+        if(pad.m_stickY > -2 && pad.m_stickY < 2)
         {
-            inputBuffer.m_stickY = 0;
+            pad.m_stickY = 0;
         }
     }
-    void FixStaleInputs() 
+    void FixStaleInputs(gfPadStatus& pad) 
     {
         if(fixStaleInputs)
         {
-            memmove(&inputBuffer, &lastLocalInputs, sizeof(lastLocalInputs));
+            memmove(&pad, &lastLocalInputs, sizeof(lastLocalInputs));
         }
-        memmove(&lastLocalInputs, &inputBuffer, sizeof(inputBuffer));
+        memmove(&lastLocalInputs, &pad, sizeof(pad));
         fixStaleInputs = false;
     }
     void WriteInputsForFrame()
@@ -818,7 +868,7 @@ namespace FrameLogic {
         bu8 localPlayerIdx = Netplay::localPlayerIdx;
         if (localPlayerIdx != Netplay::localPlayerIdxInvalid) {
             playerFrame.playerIdx = localPlayerIdx;
-            ReduceStickNoise();
+            ReduceStickNoise(inputBuffer);
             //FixStaleInputs();
             Util::PopulatePlayerFrameData(playerFrame, Netplay::getGameSettings().localPlayerPort, localPlayerIdx);
             FrameDataLogic();
@@ -867,12 +917,13 @@ namespace FrameLogic {
     {
         Utils::SaveRegs();
         frameCounter = 0;
+        SendFrameCounterPointerLoc();
         Utils::RestoreRegs();
     }
     void updateFrameCounter()
     {
         Utils::SaveRegs();
-        frameCounter = g_GameFrame.persistentFrameCounter;
+        frameCounter++;
         Utils::RestoreRegs();
     }
     void beginningOfMainGameLoop()
@@ -886,6 +937,7 @@ namespace FrameLogic {
         }
         Utils::RestoreRegs();
     }
+    bu32 setupPause = true;
     void beginningOfFrameLoop()
     {
         Utils::SaveRegs();
@@ -1153,7 +1205,83 @@ namespace FrameLogic {
     void endMainLoop()
     {
         Utils::SaveRegs();
+        EXIPacket::CreateAndSend(EXICommand::CMD_END_FRAME);
         Utils::RestoreRegs();
+    }
+
+    void endFrameLoop()
+    {
+        Utils::SaveRegs();
+        EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP);
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void fixFrameLoop()
+    {
+        asm volatile(
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x739c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    u32 advanceFrames = 1;
+    u8 port = 0;
+    void startFrameLoop()
+    {
+        Utils::SaveRegs();
+        EXIPacket::CreateAndSend(EXICommand::CMD_GET_PORT);
+        EXIHooks::readEXI(&port, sizeof(u8), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+        Util::printGameInputs(g_gfPadSystem->m_systemPads[port]);
+        BrawlbackPad pad = Util::GamePadToBrawlbackPad(g_gfPadSystem->m_systemPads[port]);
+        EXIPacket::CreateAndSend(EXICommand::CMD_START_LOOP, &pad, sizeof(BrawlbackPad));
+        EXIHooks::readEXI(&advanceFrames, sizeof(u32), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+        Utils::swapByteOrder(advanceFrames);
+        OSReport("ADVANCE FRAMES: %x\n", advanceFrames);
+        
+        Utils::RestoreRegs();
+        asm volatile(
+            "li 25, 0x0\n\t"
+        );
+    }
+    void getInputs()
+    {
+        // TODO: Doubles?
+        // This is kinda weird -- Probably what we need to actually do is make another struct with ports and stuff and send that
+        //                        for instances where the users change the ports in the netplay window.
+        Utils::SaveRegs();
+        BrawlbackPad pad;
+        EXIPacket::CreateAndSend(EXICommand::CMD_GET_REMOTE_INPUTS);
+        EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+        Utils::swapByteOrder(pad._buttons);
+        Utils::swapByteOrder(pad.buttons);
+        Utils::swapByteOrder(pad.holdButtons);
+        Utils::swapByteOrder(pad.releasedButtons);
+        Utils::swapByteOrder(pad.rapidFireButtons);
+        Utils::swapByteOrder(pad.newPressedButtons);
+        Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port == 0 ? 1 : 0], pad, port);
+        EXIPacket::CreateAndSend(EXICommand::CMD_GET_LOCAL_INPUTS);
+        EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+        Utils::swapByteOrder(pad._buttons);
+        Utils::swapByteOrder(pad.buttons);
+        Utils::swapByteOrder(pad.holdButtons);
+        Utils::swapByteOrder(pad.releasedButtons);
+        Utils::swapByteOrder(pad.rapidFireButtons);
+        Utils::swapByteOrder(pad.newPressedButtons);
+        Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port], pad, port);
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void startFrameLoop2()
+    {
+        asm (
+            "li 19, 0x0\n\t"
+            "lwz 24, %0\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x734c\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "m" (advanceFrames)
+        );
     }
     
     void gfTaskProcessHook()
@@ -1355,7 +1483,6 @@ namespace GMMelee {
         Utils::SaveRegs();
         
         OSReport("postSetupMelee\n");
-        
         FillInMeleeObj();
         Utils::RestoreRegs();
     }
@@ -1869,6 +1996,112 @@ namespace NetMenu {
             "mr	29, 3\n\t"
         );
     }
+    MuObject* pauseMenu[4] = {nullptr, nullptr, nullptr, nullptr};
+    void* ScnMdlExpand = nullptr;
+    gfArchive* pauseArchive = nullptr;
+    ScnGroup* pauseModel = nullptr;
+    nw4r::g3d::ResFileData* menuData = nullptr;
+    MuMsg* pauseMusicMessage = nullptr;
+    bu8 numPauseModels = 0;
+    bu32 showPauseMenu = false;
+    bu16 lastFrameShowPauseMenu = 0;
+    void StartReplacementPauseMenu()
+    {
+        Utils::SaveRegs();
+        if(menuData != nullptr)
+        {
+            nw4r::g3d::ResFile* data = new (Heaps::PauseMenu) nw4r::g3d::ResFile;
+            (*(nw4r::g3d::ResFileData**)(data)) = menuData;
+            data->Init();
+            char* pauseMenuObjectNames[3] = {"InfMtitle_TopN", "InfPause0010_TopN", "InfReset0010_TopN"};
+            NetMenu::pauseModel = ConstructScnGroup(gfHeapManager::getMEMAllocator(Heaps::PauseMenu), nullptr, 3);
+            for(int i = 0; i < 3; i++)
+            {
+                NetMenu::pauseMenu[i] = MuObject::create(data, pauseMenuObjectNames[i], 0, nullptr, Heaps::PauseMenu);
+                NetMenu::pauseMenu[i]->changeAnimN(pauseMenuObjectNames[i]);
+                NetMenu::pauseMenu[i]->m_modelAnim->setUpdateRate(0.0);
+                NetMenu::pauseModel->Insert(i, NetMenu::pauseMenu[i]->m_sceneModel);
+            }
+            ScnGroup* group = (ScnGroup*)g_IfMngr->m_field_0x18;
+            group->Insert(2, (nw4r::g3d::ScnObj*)NetMenu::pauseModel);
+        }
+        Utils::RestoreRegs();
+    }
+    __attribute__((naked)) void RenderReplacementPauseMenu()
+    {
+        asm volatile(
+            "li 5, 0x3\n\t"
+            "lis 12, 0x800d\n\t"
+            "ori 12, 12, 0xbf48\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void OpenReplacementPauseMenu() 
+    {
+        Utils::SaveRegs();
+        SetChoice(g_IfMngr->m_field_0x18, 2);
+        showPauseMenu = true;
+        Utils::RestoreRegs();
+        asm volatile(
+            "lwz 30, 0x0008 (31)\n\t"
+            "lwz 0, 0x0014 (1)\n\t"
+            "lwz 31, 0x000C (1)\n\t"
+            "addi 1, 1, 16\n\t"
+            "mtlr 0\n\t"
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x18c0\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    void CloseReplacementPauseMenu()
+    {
+        Utils::SaveRegs();
+        SetChoice(g_IfMngr->m_field_0x18, 0);
+        showPauseMenu = false;
+        Utils::RestoreRegs();
+        asm volatile(
+            "lwz 0, 0x0014 (1)\n\t"
+            "lwz 31, 0x000C (1)\n\t"
+            "addi 1, 1, 16\n\t"
+            "mtlr 0\n\t"
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x1950\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
+    __attribute__((naked)) void OverridePauseSetting() 
+    {
+        asm volatile(
+            "cmpwi %0, 1\n\t"
+            "beq SKIP_PAUSE\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x6904\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "SKIP_PAUSE:\n\t"
+            "li 4, 0x1\n\t"
+            "li 5, 0x2\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x6904\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            :
+            : "r"(showPauseMenu)
+        );
+    }
+    void OverridePauseSetting2()
+    {
+        asm volatile(
+            "li 0, 0\n\t"
+            "lis 12, 0x8096\n\t"
+            "ori 12, 12, 0x18cc\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+        );
+    }
     __attribute__((naked)) void RemoveDisconnectPanel2()
     {
         asm volatile(
@@ -1905,6 +2138,13 @@ namespace NetMenu {
 namespace RollbackHooks {
     void InstallHooks(CoreApi* api)
     {
+        api->syInlineHook(0x80017504, reinterpret_cast<void*>(FrameLogic::endMainLoop));
+        api->syInlineHook(0x800173a0, reinterpret_cast<void*>(FrameLogic::endFrameLoop));
+        api->syInlineHook(0x80017344, reinterpret_cast<void*>(FrameLogic::startFrameLoop));
+        api->sySimpleHook(0x80017348, reinterpret_cast<void*>(FrameLogic::startFrameLoop2));
+        api->syInlineHook(0x80017350, reinterpret_cast<void*>(FrameLogic::getInputs));
+        api->sySimpleHook(0x80017398, reinterpret_cast<void*>(FrameLogic::fixFrameLoop));
+        /*
         // Match Namespace
         api->syInlineHookRel(0x000196BC, reinterpret_cast<void*>(Match::StopGameScMeleeHook), Modules::SORA_SCENE);
         api->syInlineHookRel(0x00016218, reinterpret_cast<void*>(Match::StartSceneMelee), Modules::SORA_SCENE);
@@ -1943,8 +2183,8 @@ namespace RollbackHooks {
         //api->sySimpleHook(0x80017770, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop5));
         //api->sySimpleHook(0x80017360, reinterpret_cast<void*>(FrameLogic::beginningOfFrameLoop6));
         //api->sySimpleHook(0x8004add0, reinterpret_cast<void*>(FrameLogic::isBreakGameProcLoopHook));
-        //api->syInlineHook(0x80017638, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
-        //api->syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
+        api->syInlineHook(0x80017638, reinterpret_cast<void*>(FrameLogic::updateFrameCounter));
+        api->syInlineHook(0x8004e884, reinterpret_cast<void*>(FrameLogic::initFrameCounter));
         api->syInlineHook(0x80147394, reinterpret_cast<void*>(FrameLogic::beginFrame));
         api->syInlineHook(0x80029640, reinterpret_cast<void*>(FrameLogic::setFixStaleInputsTrue));
 
@@ -1998,6 +2238,11 @@ namespace RollbackHooks {
         api->syInlineHook(0x800fd49c, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText));
         api->syInlineHook(0x800fd4a4, reinterpret_cast<void*>(NetMenu::ReplaceTrainingRoomText2));
         api->sySimpleHookRel(0x000220A4, reinterpret_cast<void*>(NetMenu::BBBootTosqNetAnyOkiraku), Modules::SORA_SCENE);
+        api->syInlineHookRel(0x800dc704, reinterpret_cast<void*>(NetMenu::StartReplacementPauseMenu), Modules::SORA_MELEE);
+        api->sySimpleHook(0x800dbf44, reinterpret_cast<void*>(NetMenu::RenderReplacementPauseMenu));
+        api->sySimpleHookRel(0x00256E40, reinterpret_cast<void*>(NetMenu::OpenReplacementPauseMenu), Modules::SORA_MELEE);
+        api->sySimpleHookRel(0x00256F38, reinterpret_cast<void*>(NetMenu::CloseReplacementPauseMenu), Modules::SORA_MELEE);
+        api->sySimpleHook(0x80016900, reinterpret_cast<void*>(NetMenu::OverridePauseSetting));*/
         // NetReport Namespace
         //api->syInlineHook(0x800c7534, reinterpret_cast<void*>(NetReport::netReportHook));
        // api->syInlineHook(0x8119cd58, reinterpret_cast<void*>(NetReport::netReportHook2));
