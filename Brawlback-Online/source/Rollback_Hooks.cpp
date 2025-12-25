@@ -35,6 +35,24 @@ namespace Util {
         OSReport(" ---------\n");
         
     }
+    void InjectBrawlbackPadToPadStatus(gfPadStatus* gamePad, const BrawlbackPad& pad, int port) {
+        gamePad->m_controllerType = gfPadType::PadType::GCC;
+        gamePad->m_error = gfPadError::NONE;
+        gamePad->m_buttonsCurrentFrame.bits = pad._buttons;
+        gamePad->m_buttonsCurrentFrame2.bits = pad.buttons;
+        gamePad->m_buttonsReleasedThisFrame.bits = pad.releasedButtons;
+        gamePad->m_buttonsHeld.bits = pad.holdButtons;
+        gamePad->m_buttonsPressedThisFrame.bits = pad.rapidFireButtons;
+        gamePad->m_buttonsPressedThisFrame2.bits = pad.newPressedButtons;
+        gamePad->m_lTriggerAnalog = pad.LAnalogue;
+        gamePad->m_rTriggerAnalog = pad.RAnalogue;
+        gamePad->_0x36 = pad.LTrigger;
+        gamePad->_0x37 = pad.RTrigger;
+        gamePad->m_subStickX = pad.cStickX;
+        gamePad->m_subStickY = pad.cStickY;
+        gamePad->m_stickX = pad.stickX;
+        gamePad->m_stickY = pad.stickY;
+    }
     BrawlbackPad GamePadToBrawlbackPad(const gfPadStatus& pad) {
         BrawlbackPad ret = BrawlbackPad();
         ret._buttons = pad.m_buttonsCurrentFrame.bits;
