@@ -86,41 +86,62 @@ namespace Util {
 namespace FrameLogic {
     u32 advanceFrames = 1;
     u8 port = 0;
+    u32 rollbackOn = false;
+    bool networkChecked = false;
     
     void endMainLoop()
     {
         Utils::SaveRegs();
-        EXIPacket::CreateAndSend(EXICommand::CMD_END_FRAME);
+        if(rollbackOn)
+        {
+            
+            EXIPacket::CreateAndSend(EXICommand::CMD_END_FRAME);
+        }
         Utils::RestoreRegs();
     }
 
     void endFrameLoop()
     {
         Utils::SaveRegs();
-        EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP);
+        if(rollbackOn)
+        {
+            EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP);   
+        }
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void fixFrameLoop()
     {
-        asm volatile(
+        asm (
+            "cmpwi %0, 1\n\t"
+            "beq skip\n\t"
+            "lis 12, 0x8001\n\t"
+            "ori 12, 12, 0x73AC\n\t"
+            "mtctr 12\n\t"
+            "bctr\n\t"
+            "skip:\n\t"
             "lis 12, 0x8001\n\t"
             "ori 12, 12, 0x739c\n\t"
             "mtctr 12\n\t"
             "bctr\n\t"
+            :
+            : "m" (rollbackOn)
         );
     }
     void startFrameLoop()
     {
         Utils::SaveRegs();
-        EXIPacket::CreateAndSend(EXICommand::CMD_GET_PORT);
-        EXIHooks::readEXI(&port, sizeof(u8), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-        Util::printGameInputs(g_gfPadSystem->m_systemPads[port]);
-        BrawlbackPad pad = Util::GamePadToBrawlbackPad(g_gfPadSystem->m_systemPads[port]);
-        EXIPacket::CreateAndSend(EXICommand::CMD_START_LOOP, &pad, sizeof(BrawlbackPad));
-        EXIHooks::readEXI(&advanceFrames, sizeof(u32), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-        Utils::swapByteOrder(advanceFrames);
-        OSReport("ADVANCE FRAMES: %x\n", advanceFrames);
-        
+        if(rollbackOn)
+        {
+            
+            EXIPacket::CreateAndSend(EXICommand::CMD_GET_PORT);
+            EXIHooks::readEXI(&port, sizeof(u8), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+            Util::printGameInputs(g_gfPadSystem->m_systemPads[port]);
+            BrawlbackPad pad = Util::GamePadToBrawlbackPad(g_gfPadSystem->m_systemPads[port]);
+            EXIPacket::CreateAndSend(EXICommand::CMD_START_LOOP, &pad, sizeof(BrawlbackPad));
+            EXIHooks::readEXI(&advanceFrames, sizeof(u32), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+            Utils::swapByteOrder(advanceFrames);
+            OSReport("ADVANCE FRAMES: %x\n", advanceFrames);
+        }
         Utils::RestoreRegs();
         asm volatile(
             "li 25, 0x0\n\t"
@@ -128,29 +149,32 @@ namespace FrameLogic {
     }
     void getInputs()
     {
-        // TODO: Doubles?
-        // This is kinda weird -- Probably what we need to actually do is make another struct with ports and stuff and send that
-        //                        for instances where the users change the ports in the netplay window.
         Utils::SaveRegs();
-        BrawlbackPad pad;
-        EXIPacket::CreateAndSend(EXICommand::CMD_GET_REMOTE_INPUTS);
-        EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-        Utils::swapByteOrder(pad._buttons);
-        Utils::swapByteOrder(pad.buttons);
-        Utils::swapByteOrder(pad.holdButtons);
-        Utils::swapByteOrder(pad.releasedButtons);
-        Utils::swapByteOrder(pad.rapidFireButtons);
-        Utils::swapByteOrder(pad.newPressedButtons);
-        Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port == 0 ? 1 : 0], pad, port);
-        EXIPacket::CreateAndSend(EXICommand::CMD_GET_LOCAL_INPUTS);
-        EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
-        Utils::swapByteOrder(pad._buttons);
-        Utils::swapByteOrder(pad.buttons);
-        Utils::swapByteOrder(pad.holdButtons);
-        Utils::swapByteOrder(pad.releasedButtons);
-        Utils::swapByteOrder(pad.rapidFireButtons);
-        Utils::swapByteOrder(pad.newPressedButtons);
-        Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port], pad, port);
+        if(rollbackOn)
+        {
+            // TODO: Doubles?
+            // This is kinda weird -- Probably what we need to actually do is make another struct with ports and stuff and send that
+            //                        for instances where the users change the ports in the netplay window. 
+            BrawlbackPad pad;
+            EXIPacket::CreateAndSend(EXICommand::CMD_GET_REMOTE_INPUTS);
+            EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+            Utils::swapByteOrder(pad._buttons);
+            Utils::swapByteOrder(pad.buttons);
+            Utils::swapByteOrder(pad.holdButtons);
+            Utils::swapByteOrder(pad.releasedButtons);
+            Utils::swapByteOrder(pad.rapidFireButtons);
+            Utils::swapByteOrder(pad.newPressedButtons);
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port == 0 ? 1 : 0], pad, port);
+            EXIPacket::CreateAndSend(EXICommand::CMD_GET_LOCAL_INPUTS);
+            EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+            Utils::swapByteOrder(pad._buttons);
+            Utils::swapByteOrder(pad.buttons);
+            Utils::swapByteOrder(pad.holdButtons);
+            Utils::swapByteOrder(pad.releasedButtons);
+            Utils::swapByteOrder(pad.rapidFireButtons);
+            Utils::swapByteOrder(pad.newPressedButtons);
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port], pad, port);
+        }
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void startFrameLoop2()
@@ -166,6 +190,18 @@ namespace FrameLogic {
             : "m" (advanceFrames)
         );
     }
+    void getNetworkMode()
+    {
+        Utils::SaveRegs();
+        if(!networkChecked)
+        {
+            EXIPacket::CreateAndSend(EXICommand::CMD_ROLLBACK_CHECK);
+            EXIHooks::readEXI(&rollbackOn, sizeof(u32), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
+            Utils::swapByteOrder(rollbackOn);
+            networkChecked = true;
+        }
+        Utils::RestoreRegs();
+    }
 }
 namespace RollbackHooks {
     void InstallHooks(CoreApi* api)
@@ -176,5 +212,6 @@ namespace RollbackHooks {
         api->sySimpleHook(0x80017348, reinterpret_cast<void*>(FrameLogic::startFrameLoop2));
         api->syInlineHook(0x80017350, reinterpret_cast<void*>(FrameLogic::getInputs));
         api->sySimpleHook(0x80017398, reinterpret_cast<void*>(FrameLogic::fixFrameLoop));
+        api->syInlineHook(0x800171b4, reinterpret_cast<void*>(FrameLogic::getNetworkMode));
     }
 }

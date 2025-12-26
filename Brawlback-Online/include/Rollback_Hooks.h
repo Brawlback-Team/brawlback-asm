@@ -12,12 +12,15 @@ namespace FrameLogic {
     // Variables
     extern u32 advanceFrames;
     extern u8 port;
+    extern u32 rollbackOn;
+    extern bool networkChecked;
 
     // Hooks
     void beginFrame();
     void endMainLoop();
     void startFrameLoop();
     void getInputs();
+    void getNetworkMode();
     __attribute__((naked)) void startFrameLoop2();
     __attribute__((naked)) void fixFrameLoop();
 }

@@ -11,6 +11,7 @@ namespace EXICommand
     const u8 CMD_GET_PORT = 4;
     const u8 CMD_GET_REMOTE_INPUTS = 5;
     const u8 CMD_GET_LOCAL_INPUTS = 6;
+    const u8 CMD_ROLLBACK_CHECK = 7;
 }
 
 
