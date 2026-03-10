@@ -101,7 +101,7 @@ namespace Utils {
             : "m"(reg2), "m"(reg3), "m"(reg4), "m"(reg5), "m"(reg6), "m"(reg7), "m"(reg8), "m"(reg9), "m"(reg10), "m"(reg11), "m"(reg12), "m"(reg13)
         );
     }
-    void SaveRegs()
+    __attribute__((naked)) void SaveRegs()
     {
         asm volatile(
             "stw 0, 0x0004 (1)\n\t"

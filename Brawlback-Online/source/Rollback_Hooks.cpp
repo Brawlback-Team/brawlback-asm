@@ -4,6 +4,11 @@
 #include "EXI_Hooks.h"
 #include "utils.h"
 #include <OS/OS.h>
+#include <gf/gf_memory_pool.h>
+#include <sr/sr_common.h>
+#include <ft/ft_manager.h>
+#include <ut/ut_list.h>
+#include <gf/gf_heap_manager.h>
 
 namespace Util {
     void printInputs(const BrawlbackPad& pad) {
@@ -88,13 +93,45 @@ namespace FrameLogic {
     u8 port = 0;
     u32 rollbackOn = false;
     bool networkChecked = false;
+    const char* relevantHeaps = "Effect InfoInstance StageInstance Tmp WiiPad MenuInstance IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 OverlayFighter1 OverlayFighter2";
+    Vector<SavestateMemRegionInfo> memRegions = {};
+
+    void dump_gfMemoryPool_hook()
+    {
+        Utils::SaveRegs();
+        char** r30_reg_val;
+        bu32 addr_start;
+        bu32 addr_end;
+        bu32 mem_size;
+        bu8 id;
+        asm volatile(
+            "mr %0, 30\n\t"
+            "mr %1, 4\n\t"
+            "mr %2, 5\n\t"
+            "mr %3, 6\n\t"
+            "mr %4, 7\n\t"
+            : "=r"(r30_reg_val), "=r"(addr_start), "=r"(addr_end), "=r"(mem_size), "=r"(id)
+        );
+        DumpGfMemoryPoolHook(r30_reg_val, addr_start, addr_end, mem_size, id);
+        Utils::RestoreRegs();
+    }
+    void DumpGfMemoryPoolHook(char** r30_reg_val, bu32 addr_start, bu32 addr_end, bu32 mem_size, u8 id)
+    {
+        char* heap_name = *r30_reg_val;
+        SavestateMemRegionInfo memRegion;
+        memRegion.address = addr_start;
+        memRegion.size = mem_size;
+        memmove(memRegion.nameBuffer, heap_name, strlen(heap_name));
+        memRegion.nameBuffer[strlen(heap_name)] = '\0';
+        memRegion.nameSize = strlen(heap_name);
+        memRegions.push(memRegion);
+    }
     
     void endMainLoop()
     {
         Utils::SaveRegs();
         if(rollbackOn)
         {
-            
             EXIPacket::CreateAndSend(EXICommand::CMD_END_FRAME);
         }
         Utils::RestoreRegs();
@@ -105,14 +142,24 @@ namespace FrameLogic {
         Utils::SaveRegs();
         if(rollbackOn)
         {
-            EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP);   
+            gfHeapManager::dumpAll();
+            int size = memRegions.size();
+            SavestateMemRegionInfo* memRegionArray = new(Heaps::Syringe) SavestateMemRegionInfo[size];
+            for(int i = 0; i < size; i++)
+            {
+                memRegionArray[i] = memRegions.get(i);
+            }
+            EXIPacket::CreateAndSend(EXICommand::CMD_SIZE_SAVESTATES, &size, sizeof(int));
+            EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP, memRegionArray, sizeof(SavestateMemRegionInfo) * size);
+            memRegions.clear();
         }
         Utils::RestoreRegs();
     }
     __attribute__((naked)) void fixFrameLoop()
     {
         asm (
-            "cmpwi %0, 1\n\t"
+            "lwz 12, %0\n\t"
+            "cmpwi 12, 1\n\t"
             "beq skip\n\t"
             "lis 12, 0x8001\n\t"
             "ori 12, 12, 0x73AC\n\t"
@@ -164,7 +211,7 @@ namespace FrameLogic {
             Utils::swapByteOrder(pad.releasedButtons);
             Utils::swapByteOrder(pad.rapidFireButtons);
             Utils::swapByteOrder(pad.newPressedButtons);
-            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port == 0 ? 1 : 0], pad, port);
+            Util::InjectBrawlbackPadToPadStatus(&g_gfPadSystem->m_systemPads[port == 0 ? 1 : 0], pad, port == 0 ? 1 : 0);
             EXIPacket::CreateAndSend(EXICommand::CMD_GET_LOCAL_INPUTS);
             EXIHooks::readEXI(&pad, sizeof(BrawlbackPad), EXI_CHAN_1, 0, EXI_FREQ_32HZ);
             Utils::swapByteOrder(pad._buttons);
@@ -206,6 +253,8 @@ namespace FrameLogic {
 namespace RollbackHooks {
     void InstallHooks(CoreApi* api)
     {
+        // Rollback
+        api->syInlineHook(0x80026258, reinterpret_cast<void*>(FrameLogic::dump_gfMemoryPool_hook));
         api->syInlineHook(0x80017504, reinterpret_cast<void*>(FrameLogic::endMainLoop));
         api->syInlineHook(0x800173a0, reinterpret_cast<void*>(FrameLogic::endFrameLoop));
         api->syInlineHook(0x80017344, reinterpret_cast<void*>(FrameLogic::startFrameLoop));

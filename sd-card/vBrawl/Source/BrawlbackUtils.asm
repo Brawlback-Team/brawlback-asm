@@ -8,3 +8,23 @@ all your mem2 are belong to us [Glitch]
 * 20010008 00000000
 * 08003134 97FE0000
 * 20010004 00000000
+
+#########################################################
+Don't print out OSReport calls on DumpAll [WhiteTPoison]
+#########################################################
+op nop @ $80024a78
+op nop @ $80024a84
+op nop @ $80024a90
+op nop @ $80024aec
+op nop @ $80024adc
+op nop @ $80024ae0
+op nop @ $800260fc
+op nop @ $80026114
+op nop @ $800260f0
+op nop @ $800262ac
+op nop @ $80026278
+op nop @ $800260e0
+op nop @ $80026288
+op nop @ $8002619c
+op nop @ $800261b4
+op nop @ $800262e0
