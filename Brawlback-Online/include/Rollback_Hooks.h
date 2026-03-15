@@ -18,10 +18,6 @@ namespace FrameLogic {
     extern u8 port;
     extern u32 rollbackOn;
     extern bool networkChecked;
-    extern Vector<SavestateMemRegionInfo> memRegions;
-
-    // Functions
-    void DumpGfMemoryPoolHook(char** r30_reg_val, bu32 addr_start, bu32 addr_end, bu32 mem_size, u8 id);
 
     // Hooks
     void beginFrame();
@@ -29,7 +25,6 @@ namespace FrameLogic {
     void startFrameLoop();
     void getInputs();
     void getNetworkMode();
-    void dump_gfMemoryPool_hook();
     __attribute__((naked)) void startFrameLoop2();
     __attribute__((naked)) void fixFrameLoop();
 }

@@ -44,3 +44,5 @@
 80044a50:getNode__6utListFUi
 8004496c:remove__6utListFP10utListNode
 8084fc50:__ct__18ftDataTaskResourceFv
+800260b4:dump__13gfHeapManagerFP12gfMemoryPool
+80024458:registHeap__13gfHeapManagerFQ25Heaps8HeapTypeP12gfMemoryPool

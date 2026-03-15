@@ -9,6 +9,7 @@
 #include <ft/ft_manager.h>
 #include <ut/ut_list.h>
 #include <gf/gf_heap_manager.h>
+#include <gf/gf_frame.h>
 
 namespace Util {
     void printInputs(const BrawlbackPad& pad) {
@@ -93,39 +94,6 @@ namespace FrameLogic {
     u8 port = 0;
     u32 rollbackOn = false;
     bool networkChecked = false;
-    const char* relevantHeaps = "Effect InfoInstance StageInstance Tmp WiiPad MenuInstance IteamResource InfoResource CommonResource ItemInstance Fighter1Resoruce Fighter2Resoruce Fighter1Resoruce2 Fighter2Resoruce2 FighterTechqniq GameGlobal FighterKirbyResource1 GlobalMode ItemExtraResource FighterKirbyResource2 FighterKirbyResource3 OverlayFighter1 OverlayFighter2";
-    Vector<SavestateMemRegionInfo> memRegions = {};
-
-    void dump_gfMemoryPool_hook()
-    {
-        Utils::SaveRegs();
-        char** r30_reg_val;
-        bu32 addr_start;
-        bu32 addr_end;
-        bu32 mem_size;
-        bu8 id;
-        asm volatile(
-            "mr %0, 30\n\t"
-            "mr %1, 4\n\t"
-            "mr %2, 5\n\t"
-            "mr %3, 6\n\t"
-            "mr %4, 7\n\t"
-            : "=r"(r30_reg_val), "=r"(addr_start), "=r"(addr_end), "=r"(mem_size), "=r"(id)
-        );
-        DumpGfMemoryPoolHook(r30_reg_val, addr_start, addr_end, mem_size, id);
-        Utils::RestoreRegs();
-    }
-    void DumpGfMemoryPoolHook(char** r30_reg_val, bu32 addr_start, bu32 addr_end, bu32 mem_size, u8 id)
-    {
-        char* heap_name = *r30_reg_val;
-        SavestateMemRegionInfo memRegion;
-        memRegion.address = addr_start;
-        memRegion.size = mem_size;
-        memmove(memRegion.nameBuffer, heap_name, strlen(heap_name));
-        memRegion.nameBuffer[strlen(heap_name)] = '\0';
-        memRegion.nameSize = strlen(heap_name);
-        memRegions.push(memRegion);
-    }
     
     void endMainLoop()
     {
@@ -136,24 +104,17 @@ namespace FrameLogic {
         }
         Utils::RestoreRegs();
     }
-
     void endFrameLoop()
     {
         Utils::SaveRegs();
         if(rollbackOn)
         {
-            gfHeapManager::dumpAll();
-            int size = memRegions.size();
-            SavestateMemRegionInfo* memRegionArray = new(Heaps::Syringe) SavestateMemRegionInfo[size];
-            for(int i = 0; i < size; i++)
-            {
-                memRegionArray[i] = memRegions.get(i);
-            }
-            EXIPacket::CreateAndSend(EXICommand::CMD_SIZE_SAVESTATES, &size, sizeof(int));
-            EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP, memRegionArray, sizeof(SavestateMemRegionInfo) * size);
-            memRegions.clear();
+            EXIPacket::CreateAndSend(EXICommand::CMD_END_LOOP);
         }
         Utils::RestoreRegs();
+        asm volatile(
+            "cmplw 19, 24\n\t"
+        );
     }
     __attribute__((naked)) void fixFrameLoop()
     {
@@ -254,9 +215,8 @@ namespace RollbackHooks {
     void InstallHooks(CoreApi* api)
     {
         // Rollback
-        api->syInlineHook(0x80026258, reinterpret_cast<void*>(FrameLogic::dump_gfMemoryPool_hook));
         api->syInlineHook(0x80017504, reinterpret_cast<void*>(FrameLogic::endMainLoop));
-        api->syInlineHook(0x800173a0, reinterpret_cast<void*>(FrameLogic::endFrameLoop));
+        api->syInlineHook(0x800173a4, reinterpret_cast<void*>(FrameLogic::endFrameLoop));
         api->syInlineHook(0x80017344, reinterpret_cast<void*>(FrameLogic::startFrameLoop));
         api->sySimpleHook(0x80017348, reinterpret_cast<void*>(FrameLogic::startFrameLoop2));
         api->syInlineHook(0x80017350, reinterpret_cast<void*>(FrameLogic::getInputs));

@@ -154,6 +154,9 @@ SavestateMemRegionInfo::SavestateMemRegionInfo()
     address = 0;
     size = 0;
 }
+SavestateMemRegionInfo::~SavestateMemRegionInfo() 
+{
+}
 SavestateMemRegionInfo::SavestateMemRegionInfo(const SavestateMemRegionInfo &D )
 {
     for(int i = 0; i < MAX_HEAPNAME_SIZE; i++)

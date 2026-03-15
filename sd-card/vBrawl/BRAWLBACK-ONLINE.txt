@@ -1,5 +1,5 @@
 .include Source/FilePatchCode.asm
-.include Source/BrawlbackUtils.asm
+#.include Source/BrawlbackUtils.asm
 .include Source/Hooktype.asm
 .include Source/Syringe.asm
 #########################################
