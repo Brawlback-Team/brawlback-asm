@@ -46,3 +46,8 @@
 8084fc50:__ct__18ftDataTaskResourceFv
 800260b4:dump__13gfHeapManagerFP12gfMemoryPool
 80024458:registHeap__13gfHeapManagerFQ25Heaps8HeapTypeP12gfMemoryPool
+80025c58:gfMemoryPoolAlloc__FPvUli
+80025c58:gfMemoryPoolAlloc
+800249cc:gfHeapManagerGetHeap__FUi
+800249cc:gfHeapManagerGetHeap
+80203d0c:MEMFindContainHeap

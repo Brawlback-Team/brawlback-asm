@@ -1,9 +1,11 @@
 #include "EXI_hooks.h"
 #include "mem_exp_hooks.h"
+#include <gf/gf_memory_pool.h>
+#include <sr/sr_common.h>
 namespace EXIHooks {
     void writeEXI(void* data, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency) {
         //need to make new buffer to ensure data is aligned to cache block
-        void* alignedData = MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, size, 32);
+        void* alignedData = gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, size, 32);
         memmove(alignedData, data, size);
         DCFlushRange(alignedData, size);
         setupEXIDevice(channel, device, frequency);
@@ -11,11 +13,11 @@ namespace EXIHooks {
         syncEXITransfer(channel);
         removeEXIDevice(channel);
 
-        MemExpHooks::freeExp(alignedData);
+        gfMemoryPool::gfPoolFree((u32)alignedData);
     }
 
     void readEXI(void* destination, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency) {
-        void* alignedDestination = MEMAllocFromExpHeapEx(MemExpHooks::mainHeap, size, 32);
+        void* alignedDestination = gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, size, 32);
 
         setupEXIDevice(channel, device, frequency);
         EXIDma(channel, alignedDestination, size, 0, NULL);
@@ -25,7 +27,7 @@ namespace EXIHooks {
 
         memmove(destination, alignedDestination, size);
 
-        MemExpHooks::freeExp(alignedDestination);
+        gfMemoryPool::gfPoolFree((u32)alignedDestination);
     }
     void setupEXIDevice(EXIChannel channel, unsigned int device, EXIFreq frequency) {
         attachEXIDevice(channel);

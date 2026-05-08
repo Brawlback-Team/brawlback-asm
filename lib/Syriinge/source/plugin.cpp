@@ -25,7 +25,7 @@ namespace Syringe {
         this->module = gfModule::create(heapAddr, buffer, size);
 
         // Free the buffer and release the handle
-        free(buffer);
+        sysFree(buffer);
         handle.release();
 
         // Normally module prolog doesn't return anything, but in our case we stipulate

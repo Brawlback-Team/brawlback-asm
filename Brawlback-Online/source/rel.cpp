@@ -34,7 +34,6 @@ namespace Syringe
         {
             (*ctor)();
         }
-        MemExpHooks::initializeMemory((void*) 0x93604000, 0x4000);
         RollbackHooks::InstallHooks(api);
 
         return &META;
