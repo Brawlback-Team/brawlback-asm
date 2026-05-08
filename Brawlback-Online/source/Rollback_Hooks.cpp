@@ -2,7 +2,7 @@
 #include "sy_core.h"
 #include <modules.h>
 #include <cstring>
-#include "EXI_Hooks.h"
+#include "EXI_hooks.h"
 #include "utils.h"
 #include <OS/OS.h>
 #include <gf/gf_memory_pool.h>
