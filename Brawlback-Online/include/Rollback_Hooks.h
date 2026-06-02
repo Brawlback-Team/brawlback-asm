@@ -9,6 +9,7 @@
 #include <vector.h>
 #include <sr/sr_common.h>
 #include <OS/OSError.h>
+#include <gf/gf_file_io_manager.h>
 #if 1
 #define NETPLAY_IMPL
 #define ROLLBACK_IMPL
@@ -224,11 +225,15 @@ public:
 struct SavestateRegionInfo {
     bu32 address;
     bu32 size;
+    char nameBuffer[30];
+    u8 nameSize;
 };
 
 struct AllocationRegionEntry {
     bu32 address;
     bu32 size;
+    char nameBuffer[30];
+    u8 nameSize;
 };
 
 struct AllocationRegionDataHeader {
@@ -256,7 +261,7 @@ namespace FrameLogic {
     // Variables
     extern u32 advanceFrames;
     extern u8 port;
-    extern u32 rollbackOn;
+    extern bool rollbackOn;
     extern bool networkChecked;
     extern SyringeVector<SavestateRegionInfo> activeRegions;
 
@@ -268,8 +273,10 @@ namespace FrameLogic {
     void getNetworkMode();
     __attribute__((naked)) void startFrameLoop2();
     __attribute__((naked)) void fixFrameLoop();
-    void dump_gfMemoryPool_hook();
+    void dump_gfMemoryPool_hook(void* pool);
+    void dump_gfMemoryPool_hook2();
     void beginningOfFrameLoop();
+    void push_gfFileIOManager_hook(gfFileIOManager* mgr, gfFileIORequest* req);
 }
 
 namespace Util {

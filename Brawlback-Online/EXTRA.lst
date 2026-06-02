@@ -51,3 +51,12 @@
 800249cc:gfHeapManagerGetHeap__FUi
 800249cc:gfHeapManagerGetHeap
 80203d0c:MEMFindContainHeap
+800737e4:FUN_800737e4
+800737e4:FUN_800737e4__FP9sndSystem
+805b4fd8:g_gfApplication
+8001750c:frameStartInit__13gfApplicationFv
+805b8a00:g_taskScheduler
+8002e844:render__15gfTaskSchedulerFv
+801e0cc0:OSYieldThread
+80022f84:update__15gfFileIOManagerFv
+800235c0:freeRequest__15gfFileIOManagerFP15gfFileIORequest

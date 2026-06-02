@@ -17,6 +17,7 @@ namespace EXICommand
     const u8 CMD_LOAD_STATE_SIZE = 10;
     const u8 CMD_GET_MISSING_REGIONS = 11;
     const u8 CMD_START_LOOP_ROLLBACK = 12;
+    const u8 CMD_SEND_INPUTS = 13;
 }
 
 
