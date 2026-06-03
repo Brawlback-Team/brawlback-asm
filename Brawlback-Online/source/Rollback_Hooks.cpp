@@ -139,7 +139,7 @@ namespace FrameLogic {
     bool dumpAllCaptureInProgress = false;
     bool initialRegionCaptureComplete = false;
     bool regionMutationInProgress = false;
-    bool gameLogicStepInProgress = false;
+    bool gameLogicStepInProgress = true;
     void* allocationRegionPacketBuffer = 0;
     size_t allocationRegionPacketCapacity = 0;
     SyringeVector<SavestateRegionInfo> activeRegions;
@@ -229,6 +229,14 @@ namespace FrameLogic {
         return IsRequestInQueue(g_gfFileIOManager->getQueue1(), req);
     }
 
+    static bool IsRequestInQueue2(gfFileIORequest* req)
+    {
+        if (!g_gfFileIOManager) {
+            return false;
+        }
+        return IsRequestInQueue(g_gfFileIOManager->getQueue2(), req);
+    }
+
     static void PruneTrackedRequestsNotInQueues()
     {
         int writeIndex = 0;
@@ -256,7 +264,7 @@ namespace FrameLogic {
         }
     }
 
-    // Refresh request->generation mapping by observing queue1 only.
+    // Refresh request->generation mapping by observing both queues.
     // This avoids hooking gfFileIOManager::push directly.
     static void RefreshTrackedRequestGenerations()
     {
@@ -267,6 +275,7 @@ namespace FrameLogic {
 
         PruneTrackedRequestsNotInQueues();
         TrackQueuedRequests(g_gfFileIOManager->getQueue1());
+        TrackQueuedRequests(g_gfFileIOManager->getQueue2());
     }
 
     // Settle a single in-flight request before loadstate.
@@ -286,9 +295,26 @@ namespace FrameLogic {
             }
         }
         // Guard against update() having freed the request while we waited.
-        if (IsRequestInQueue1(req)) {
+        if (IsRequestInAnyQueue(req)) {
             g_gfFileIOManager->freeRequest(req);
         }
+    }
+
+    static void AddSnapshotRequest(gfFileIORequest* snapshot[], u32 snapshotGens[], int& count, gfFileIORequest* req)
+    {
+        if (!req || count >= kMaxTrackedRequests) {
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            if (snapshot[i] == req) {
+                return;
+            }
+        }
+
+        snapshot[count] = req;
+        snapshotGens[count] = GetTrackedGeneration(req);
+        count++;
     }
 
     // Before restoring game state, settle all queued IO requests.
@@ -305,7 +331,7 @@ namespace FrameLogic {
 
         RefreshTrackedRequestGenerations();
 
-        // Snapshot active queue1 before we start freeing (freeRequest mutates it).
+        // Snapshot both queues before we start freeing (freeRequest mutates them).
         static gfFileIORequest* snapshot[kMaxTrackedRequests];
         static u32 snapshotGens[kMaxTrackedRequests];
         int count = 0;
@@ -313,18 +339,20 @@ namespace FrameLogic {
         gfFileIORequestQueue* queue1 = g_gfFileIOManager->getQueue1();
         if (queue1) {
             for (u16 i = 0; i < queue1->getCount() && count < kMaxTrackedRequests; i++) {
-                gfFileIORequest* req = queue1->getRequest(i);
-                if (req) {
-                    snapshot[count] = req;
-                    snapshotGens[count] = GetTrackedGeneration(req);
-                    count++;
-                }
+                AddSnapshotRequest(snapshot, snapshotGens, count, queue1->getRequest(i));
+            }
+        }
+
+        gfFileIORequestQueue* queue2 = g_gfFileIOManager->getQueue2();
+        if (queue2) {
+            for (u16 i = 0; i < queue2->getCount() && count < kMaxTrackedRequests; i++) {
+                AddSnapshotRequest(snapshot, snapshotGens, count, queue2->getRequest(i));
             }
         }
 
         for (int i = 0; i < count; i++) {
             gfFileIORequest* req = snapshot[i];
-            if (!IsRequestInQueue1(req)) {
+            if (!IsRequestInAnyQueue(req)) {
                 continue; // already freed by update()
             }
             if (snapshotGens[i] > rollbackTargetGeneration) {
@@ -435,17 +463,7 @@ namespace FrameLogic {
         CaptureQueuedFileIORequestRanges(queue1);
         CaptureQueuedFileIORequestRanges(queue2);
     }
-
-    static bool ShouldTrackAddress(bu32 address)
-    {
-        for (int i = 0; i < trackedFileIORangeCount; i++) {
-            if (IsAddressInRange(address, trackedFileIORanges[i].start, trackedFileIORanges[i].size)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    
 
     static bool IsSensibleAllocationRange(bu32 address, bu32 size)
     {
@@ -461,6 +479,27 @@ namespace FrameLogic {
         bu32 end = address + size;
         if (end <= address) {
             return false;
+        }
+
+        return true;
+    }
+    static bool ShouldTrackRange(bu32 address, bu32 size)
+    {
+        if (!IsSensibleAllocationRange(address, size)) {
+            return false;
+        }
+
+        for (int i = 0; i < trackedFileIORangeCount; i++) {
+            bu32 trackedStart = trackedFileIORanges[i].start;
+            bu32 trackedSize = trackedFileIORanges[i].size;
+            bu32 trackedEnd = trackedStart + trackedSize;
+            bu32 rangeEnd = address + size;
+            if (trackedEnd <= trackedStart || rangeEnd <= address) {
+                continue;
+            }
+            if (address < trackedEnd && trackedStart < rangeEnd) {
+                return false;
+            }
         }
 
         return true;
@@ -549,7 +588,7 @@ namespace FrameLogic {
         bu32 address = (bu32)allocatedAddress;
         bu32 size = GetAllocatedBlockSize(allocatedAddress);
 
-        if (!ShouldTrackHeapName(heapName) || !IsSensibleAllocationRange(address, size) || HasActiveRegionAddress(address)) {
+        if (!ShouldTrackHeapName(heapName) || !ShouldTrackRange(address, size) || HasActiveRegionAddress(address)) {
             return;
         }
 
@@ -601,7 +640,7 @@ namespace FrameLogic {
             effectiveSize = AlignUp(effectiveSize, effectiveAlignment);
         }
 
-        if (!ShouldTrackAddress(address) || !IsSensibleAllocationRange(address, effectiveSize) || HasActiveRegionAddress(address)) {
+        if (!ShouldTrackRange(address, effectiveSize) || HasActiveRegionAddress(address)) {
             return;
         }
 
@@ -695,12 +734,6 @@ namespace FrameLogic {
 
         gameLogicStepInProgress = true;
         bu32 result = g_originalGameProc(gfGameApplication, unk);
-        gameLogicStepInProgress = false;
-
-        if(rollbackOn)
-        {
-            SendAllocationRegionsDynamic();
-        }
         return result;
     }
 
@@ -929,6 +962,7 @@ namespace FrameLogic {
         Utils::SaveRegs();
         if(rollbackOn)
         {
+            SendAllocationRegionsDynamic();
             EXIPacket::CreateAndSend(EXICommand::CMD_END_FRAME);
         }
         Utils::RestoreRegs();
@@ -1050,7 +1084,7 @@ namespace FrameLogic {
         strncpy(heap_name, heapNamePtr, sizeof(heap_name) - 1);
         heap_name[sizeof(heap_name) - 1] = '\0';
         bool sensible = IsSensibleAllocationRange(addr_start, mem_size);
-        if (ShouldTrackHeapName(heap_name) && sensible && ShouldTrackAddress(addr_start))
+        if (ShouldTrackHeapName(heap_name) && sensible && ShouldTrackRange(addr_start, mem_size))
         {
             SavestateRegionInfo regionInfo;
             regionInfo.address = addr_start;
@@ -1097,10 +1131,10 @@ namespace FrameLogic {
                 u32 rollbackTargetGeneration = (advanceFrames - 1 <= currentGeneration)
                     ? currentGeneration - (advanceFrames - 1)
                     : 0;
-                DrainFileIO(rollbackTargetGeneration);
+                //DrainFileIO(rollbackTargetGeneration);
 
                 RBK_LOG("Advancing %d frames\n", advanceFrames);
-                for(int i = 0; i < advanceFrames; i++)
+                for(int i = 0; i < advanceFrames - 1; i++)
                 {
                     // [Update Input]
                     getInputs();
