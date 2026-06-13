@@ -60,3 +60,7 @@
 801e0cc0:OSYieldThread
 80022f84:update__15gfFileIOManagerFv
 800235c0:freeRequest__15gfFileIOManagerFP15gfFileIORequest
+8001750c:frameStartInit__FPv
+8001b580:gfErrorCheck_check__Fv
+8001b07c:gfErrorManager_update__FPv
+801defe4:OSRegisterShutdownFunction

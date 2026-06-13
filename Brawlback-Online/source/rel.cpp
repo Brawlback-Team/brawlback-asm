@@ -41,6 +41,8 @@ namespace Syringe
 
     void _epilog()
     {
+        RollbackHooks::FlushBufferedRegionAddressesOnShutdown();
+
         // run the global destructors
         PFN_voidfunc *dtor;
         for (dtor = _dtors; *dtor; dtor++)

@@ -18,6 +18,10 @@ namespace EXICommand
     const u8 CMD_GET_MISSING_REGIONS = 11;
     const u8 CMD_START_LOOP_ROLLBACK = 12;
     const u8 CMD_SEND_INPUTS = 13;
+    const u8 CMD_GET_CALLBACK_CODES = 14;
+    const u8 CMD_EXECUTE_SAVE = 15;
+    const u8 CMD_EXECUTE_LOAD = 16;
+    const u8 CMD_EXECUTE_ADVANCE = 17;
 }
 
 

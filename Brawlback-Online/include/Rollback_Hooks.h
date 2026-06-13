@@ -9,6 +9,7 @@
 #include <vector.h>
 #include <sr/sr_common.h>
 #include <OS/OSError.h>
+#include <gf/gf_memory_pool.h>
 #include <gf/gf_file_io_manager.h>
 #if 1
 #define NETPLAY_IMPL
@@ -24,6 +25,25 @@ class SyringeVector {
     int capacity;
     int current;
 
+    static T* alloc_items(int itemCount)
+    {
+        if (itemCount <= 0) {
+            return nullptr;
+        }
+        return (T*)gfMemoryPool::alloc(
+            g_HeapInfos[Heaps::SavestateHeap].m_memoryPool,
+            (size_t)itemCount * sizeof(T),
+            32
+        );
+    }
+
+    static void free_items(T* ptr)
+    {
+        if (ptr != nullptr) {
+            gfMemoryPool::gfPoolFree((u32)ptr);
+        }
+    }
+
     bool ensure_capacity(int min_capacity)
     {
         if (min_capacity <= capacity && arr != nullptr) {
@@ -35,7 +55,7 @@ class SyringeVector {
             new_capacity *= 2;
         }
 
-        T* temp = new (Heaps::SavestateHeap) T[new_capacity];
+        T* temp = alloc_items(new_capacity);
         if (!temp) {
 #if SYRINGE_VECTOR_DEBUG
             OSReport("[SyringeVector] alloc failed cap=%d elem=%d\\n", new_capacity, (int)sizeof(T));
@@ -57,9 +77,7 @@ class SyringeVector {
             (int)sizeof(T)
         );
 #endif
-        if (arr != nullptr) {
-            delete[] arr;
-        }
+        free_items(arr);
         arr = temp;
         capacity = new_capacity;
         return true;
@@ -81,9 +99,7 @@ public:
 #if SYRINGE_VECTOR_DEBUG
         OSReport("[SyringeVector] dtor free ptr=%x cap=%d size=%d\n", (u32)arr, capacity, current);
 #endif
-        if (arr != nullptr) {
-            delete[] arr;
-        }
+        free_items(arr);
     }
 
     // Deleted copy constructor and assignment to prevent shallow copies
@@ -95,9 +111,7 @@ public:
     #if SYRINGE_VECTOR_DEBUG
         OSReport("[SyringeVector] clear free ptr=%x cap=%d\n", (u32)arr, capacity);
     #endif
-        if (arr != nullptr) {
-            delete[] arr;
-        }
+        free_items(arr);
         arr = nullptr;
         capacity = 0;
         current = 0;
@@ -150,7 +164,7 @@ public:
             return;
         }
 
-        T* temp = new (Heaps::SavestateHeap) T[capacity];
+        T* temp = alloc_items(capacity);
         if (!temp) {
             return;
         }
@@ -164,18 +178,25 @@ public:
             memcpy(&temp[index], &arr[index + 1], (size_t)trailingCount * sizeof(T));
         }
 
-        delete[] arr;
+        free_items(arr);
         arr = temp;
         current--;
     }
 
     T get(int index)
     {
-        if (index < current)
+        if (index >= 0 && index < current)
             return arr[index];
+
+        return T();
     }
 
-    void pop() { current--; }
+    void pop()
+    {
+        if (current > 0) {
+            current--;
+        }
+    }
 
     int size() { return current; }
 
@@ -218,6 +239,10 @@ public:
 
     T& operator[](int index)
     {
+        static T s_fallback = T();
+        if (arr == nullptr || current <= 0 || index < 0 || index >= current) {
+            return s_fallback;
+        }
         return arr[index];
     }
 };
@@ -269,14 +294,19 @@ namespace FrameLogic {
     void beginFrame();
     void endMainLoop();
     void startFrameLoop();
-    void getInputs();
+    void startFrameLoop3();
+    __attribute__((naked)) void startFrameLoop5();
+    void getInputs(bu32 frame);
     void getNetworkMode();
     __attribute__((naked)) void startFrameLoop2();
     __attribute__((naked)) void fixFrameLoop();
-    void dump_gfMemoryPool_hook(void* pool);
+    void dump_gfMemoryPool_hook();
     void dump_gfMemoryPool_hook2();
     void beginningOfFrameLoop();
     void push_gfFileIOManager_hook(gfFileIOManager* mgr, gfFileIORequest* req);
+    __attribute__((naked)) void fixEffects();
+    __attribute__((naked)) void fixEffects2();
+    __attribute__((naked)) void fixEffects3();
 }
 
 namespace Util {
@@ -289,4 +319,5 @@ namespace Util {
 
 namespace RollbackHooks {
     void InstallHooks(CoreApi* api);
+    void FlushBufferedRegionAddressesOnShutdown();
 }

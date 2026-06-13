@@ -9,12 +9,16 @@ u8 EXIPacket::getCmd() { return this->cmd; }
 
 EXIPacket::EXIPacket() {
     u8 EXICmd = EXICommand::CMD_UNKNOWN;
+    this->source = nullptr;
+    this->size = 0;
+    this->cmd = EXICmd;
+
     // enough for the EXICmd byte + size of the packet
     unsigned int new_size = sizeof(EXICmd);
 
     u8* new_packet = (u8*)gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, new_size, 4);
     if (!new_packet) {
-        OSReport("Failed to alloc %u bytes! Heap space available: %u\n", size, MemExpHooks::getFreeSize(MemExpHooks::mainHeap, 4));
+        OSReport("Failed to alloc %u bytes!\n", new_size);
         return;
     }
 
@@ -27,11 +31,15 @@ EXIPacket::EXIPacket() {
     this->cmd = EXICmd; 
 }
 EXIPacket::EXIPacket(u8 EXICmd) { 
+    this->source = nullptr;
+    this->size = 0;
+    this->cmd = EXICommand::CMD_UNKNOWN;
+
     unsigned int new_size = sizeof(EXICmd);
 
     u8* new_packet = (u8*)gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, new_size, 4);
     if (!new_packet) {
-        OSReport("Failed to alloc %u bytes! Heap space available: %u\n", size, MemExpHooks::getFreeSize(MemExpHooks::mainHeap, 4));
+        OSReport("Failed to alloc %u bytes!\n", new_size);
         return;
     }
 
@@ -45,6 +53,10 @@ EXIPacket::EXIPacket(u8 EXICmd) {
 }
 
 EXIPacket::EXIPacket(u8 EXICmd, void* source, unsigned int size) {
+    this->source = nullptr;
+    this->size = 0;
+    this->cmd = EXICommand::CMD_UNKNOWN;
+
     if (!source) size = 0; if (size <= 0) source = NULL; //sanity checks
 
     // enough for the EXICmd byte + size of the packet
@@ -52,7 +64,7 @@ EXIPacket::EXIPacket(u8 EXICmd, void* source, unsigned int size) {
 
     u8* new_packet = (u8*)gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, new_size, 32);
     if (!new_packet) {
-        OSReport("Failed to alloc %u bytes! Heap space available: %u\n", size, MemExpHooks::getFreeSize(MemExpHooks::mainHeap, 4));
+        OSReport("Failed to alloc %u bytes!\n", new_size);
         return;
     }
 
@@ -92,6 +104,10 @@ void EXIPacket::CreateAndSend(unsigned char EXICmd, void* source, unsigned int s
     // enough for the EXICmd byte + size of the packet
     unsigned int new_size = sizeof(EXICmd) + size;
     unsigned char* new_packet = (unsigned char*)gfMemoryPool::alloc(g_HeapInfos[Heaps::SavestateHeap].m_memoryPool, new_size, 32);
+    if (!new_packet) {
+        OSReport("Failed to alloc EXI packet (%u bytes)!", new_size);
+        return;
+    }
 
     // copy EXICmd byte into packet
     memmove(new_packet, &EXICmd, sizeof(EXICmd));

@@ -4,8 +4,10 @@
 namespace EXIHooks {
     void writeEXI(void* source, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency);
     void readEXI(void* destination, unsigned int size, EXIChannel channel, unsigned int device, EXIFreq frequency);
+    bool wasLastReadSuccessful();
+    bool wasLastWriteSuccessful();
 
-    void setupEXIDevice(EXIChannel channel, unsigned int device, EXIFreq frequency);
+    bool setupEXIDevice(EXIChannel channel, unsigned int device, EXIFreq frequency);
     void removeEXIDevice(EXIChannel channel);
 
     //These all return false if they fail, true if the succeed
