@@ -371,16 +371,6 @@ namespace FrameLogic {
         count++;
     }
 
-    static bool IsReadRequest(gfFileIORequest* req)
-    {
-        if (!req) {
-            return false;
-        }
-
-        return req->m_operationFlags == GF_FILE_IO_READ_OPERATION ||
-               req->m_operationFlags == GF_FILE_IO_READ_DIR_OPERATION;
-    }
-
     // Before restoring game state, settle all queued IO requests.
     // Requests from both queue1 and queue2 are snapshotted before restore so
     // in-flight IOS callbacks cannot mutate restored memory with stale payloads.
@@ -402,9 +392,7 @@ namespace FrameLogic {
         if (queue1) {
             for (u16 i = 0; i < queue1->getCount() && count < kMaxTrackedRequests; i++) {
                 gfFileIORequest* req = queue1->getRequest(i);
-                if (!IsReadRequest(req)) {
-                    AddSnapshotRequest(snapshot, snapshotGens, count, req);
-                }
+                AddSnapshotRequest(snapshot, snapshotGens, count, req);
             }
         }
 
@@ -412,9 +400,7 @@ namespace FrameLogic {
         if (queue2) {
             for (u16 i = 0; i < queue2->getCount() && count < kMaxTrackedRequests; i++) {
                 gfFileIORequest* req = queue2->getRequest(i);
-                if (!IsReadRequest(req)) {
-                    AddSnapshotRequest(snapshot, snapshotGens, count, req);
-                }
+                AddSnapshotRequest(snapshot, snapshotGens, count, req);
             }
         }
 
@@ -1468,17 +1454,17 @@ namespace FrameLogic {
 
         int frameCount = bufferedDumpAllFrames.size();
         int totalRegionCount = bufferedDumpAllRegions.size();
-        OSReport(
+        RBK_LOG(
             "[RBK] hook counters: beginLoop=%u endMainLoop=%u endMainLoopSamples=%u\n",
             beginningOfFrameLoopCallCount,
             endMainLoopCallCount,
             endMainLoopBufferedSampleCount
         );
-        OSReport("[RBK] dumpAll buffered frames=%d regions=%d\n", frameCount, totalRegionCount);
+        RBK_LOG("[RBK] dumpAll buffered frames=%d regions=%d\n", frameCount, totalRegionCount);
 
         for (int frameIdx = 0; frameIdx < frameCount; frameIdx++) {
             const BufferedFrameHeader& frame = bufferedDumpAllFrames[frameIdx];
-            OSReport(
+            RBK_LOG(
                 "[RBK] frame[%d] gen=%u regionCount=%u\n",
                 frameIdx,
                 frame.generation,
@@ -1493,7 +1479,7 @@ namespace FrameLogic {
 
             for (u32 idx = start; idx < end; idx++) {
                 const SavestateRegionInfo& region = bufferedDumpAllRegions[(int)idx];
-                OSReport(
+                RBK_LOG(
                     "[RBK]   region[%u] addr=%08x size=%08x name=%s\n",
                     idx - start,
                     region.address,
@@ -1709,7 +1695,7 @@ namespace FrameLogic {
     {
         pendingSaveCount = 0;
     }
-    static u8 uVar7 = 1;
+    static u32 uVar7 = 1;
     void startFrameLoop3()
     {
         Utils::SaveRegs();
@@ -1760,7 +1746,7 @@ namespace FrameLogic {
                         RBK_LOG("[RBK][ADVANCE] resultFrame=%d currentFrame(old)=%u\n", resultFrame, currentFrame);
                         currentFrame = (u32)resultFrame;
                         RBK_LOG("[RBK][ADVANCE] currentFrame(new)=%u\n", currentFrame);
-                        OSReport("Advance result frame: %d\n", resultFrame);
+                        RBK_LOG("Advance result frame: %d\n", resultFrame);
                         advanceFrames++;
                         getInputs((bu32)resultFrame);
                     }
@@ -1825,7 +1811,7 @@ namespace FrameLogic {
     {
         asm volatile(
             "li	19, 0\n\t"
-            "lbz 24, %0\n\t"
+            "lwz 24, %0\n\t"
             "lis 12, 0x8001\n\t"
             "ori 12, 12, 0x734c\n\t"
             "mtctr 12\n\t"
@@ -2030,7 +2016,7 @@ namespace FrameLogic {
                     g_gfPadSystem->m_systemPads[1] = inputBuffers[1][loopCounter];
                     runManualPadSystemUpdate();
                 }
-
+                EXIPacket::CreateAndSend(EXICommand::CMD_INCREMENT_FRAME);
                 bu32 result = g_originalGameProc(gfGameApplication, substep);
                 if ((substep + 1) < requestedSubsteps) {
                     result = 0;
@@ -2076,7 +2062,7 @@ namespace FrameLogic {
                 (u32)g_gfPadSystem
             );
         }
-
+        EXIPacket::CreateAndSend(EXICommand::CMD_INCREMENT_FRAME);
         bu32 result = g_originalGameProc(gfGameApplication, unk);
 
         // mainLoopSub breaks immediately when gameProc returns non-zero

@@ -22,6 +22,7 @@ namespace EXICommand
     const u8 CMD_EXECUTE_SAVE = 15;
     const u8 CMD_EXECUTE_LOAD = 16;
     const u8 CMD_EXECUTE_ADVANCE = 17;
+    const u8 CMD_INCREMENT_FRAME = 18;
 }
 
 
